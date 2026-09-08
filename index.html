@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F07B0F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>html,body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>고래 데일리 듣기</title>
@@ -24,6 +23,7 @@
   --orange-soft: #FDD9B4;
   --rust: #94480A;
   --done: #1E7A54;
+  --on-accent: #FFFFFF;
   --shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 8px 24px rgba(148, 72, 10, .07);
   --radius: 14px;
 }
@@ -42,6 +42,7 @@
     --orange-soft: #4A3320;
     --rust: #FFC58A;
     --done: #55C79A;
+    --on-accent: #12181F;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
     color-scheme: dark;
   }
@@ -57,6 +58,7 @@
   --orange-soft: #4A3320;
   --rust: #FFC58A;
   --done: #55C79A;
+  --on-accent: #12181F;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
   color-scheme: dark;
 }
@@ -87,12 +89,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #FFFFFF;
+  color: var(--on-accent);
   box-shadow: var(--shadow);
 }
 .badge {
-  background: rgba(255, 255, 255, .22);
-  border: 1px solid rgba(255, 255, 255, .5);
+  background: color-mix(in srgb, var(--on-accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on-accent) 45%, transparent);
   border-radius: 999px;
   padding: 3px 11px;
   font-weight: 700;
@@ -170,7 +172,7 @@ body {
 .pip.on {
   background: var(--orange);
   border-color: var(--orange);
-  color: #FFFFFF;
+  color: var(--on-accent);
   font-weight: 800;
 }
 .pip:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
@@ -187,7 +189,7 @@ body {
   border: none;
   border-radius: 12px;
   background: var(--orange);
-  color: #FFFFFF;
+  color: var(--on-accent);
   font-family: inherit;
   font-weight: 700;
   font-size: 16px;
@@ -356,7 +358,7 @@ select.chip { padding-right: 8px; max-width: 210px; }
 .lvbtn[aria-pressed="true"] {
   background: var(--orange);
   border-color: var(--orange);
-  color: #FFFFFF;
+  color: var(--on-accent);
 }
 .lvbtn:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
 .picker select {
@@ -420,6 +422,190 @@ select.chip { padding-right: 8px; max-width: 210px; }
 @media (max-width: 380px) {
   .row-en { font-size: 16.5px; }
   .mast-school { display: none; }
+}
+
+/* 레벨별 색. 종이와 같은 색을 씁니다. tools/palette.mjs 에서 만들어 넣습니다. */
+:root[data-level="phonics"] {
+  --paper: #FEF7F7;
+  --card: #FFFFFF;
+  --zebra: #FCEAEA;
+  --line: #FADCDC;
+  --orange: #E03131;
+  --orange-soft: #F6C5C5;
+  --rust: #8E1B1B;
+  --on-accent: #FFFFFF;
+}
+:root[data-level="lv240"] {
+  --paper: #FEFAF5;
+  --card: #FFFFFF;
+  --zebra: #FEF2E7;
+  --line: #FCE9D6;
+  --orange: #F07B0F;
+  --orange-soft: #FBDABC;
+  --rust: #94480A;
+  --on-accent: #FFFFFF;
+}
+:root[data-level="lv520"] {
+  --paper: #FEFCF5;
+  --card: #FFFFFF;
+  --zebra: #FEF8E6;
+  --line: #FDF3D5;
+  --orange: #F2B705;
+  --orange-soft: #FBEBB9;
+  --rust: #7A5A00;
+  --on-accent: #7A5A00;
+}
+:root[data-level="lv860"] {
+  --paper: #F6FBF8;
+  --card: #FFFFFF;
+  --zebra: #E8F6EF;
+  --line: #D9EFE3;
+  --orange: #1DA35C;
+  --orange-soft: #C0E5D1;
+  --rust: #0E6136;
+  --on-accent: #FFFFFF;
+}
+:root[data-level="lv1240"] {
+  --paper: #F6F9FD;
+  --card: #FFFFFF;
+  --zebra: #E9EFFA;
+  --line: #DAE4F6;
+  --orange: #2563C9;
+  --orange-soft: #C2D3F0;
+  --rust: #163E82;
+  --on-accent: #FFFFFF;
+}
+:root[data-level="lv1680"] {
+  --paper: #FAF7FC;
+  --card: #FFFFFF;
+  --zebra: #F2ECF9;
+  --line: #E9DEF4;
+  --orange: #7B3FBF;
+  --orange-soft: #DAC9ED;
+  --rust: #4C2079;
+  --on-accent: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+:root[data-level="phonics"]:not([data-theme="light"]) {
+  --paper: #1E1A20;
+  --card: #25252E;
+  --zebra: #331C22;
+  --line: #4B3E48;
+  --orange: #E96B6B;
+  --orange-soft: #431E23;
+  --rust: #F2A8A8;
+  --on-accent: #12181F;
+}
+:root[data-level="lv240"]:not([data-theme="light"]) {
+  --paper: #1F1E1E;
+  --card: #26282C;
+  --zebra: #36281C;
+  --line: #4D4843;
+  --orange: #F4A052;
+  --orange-soft: #47301B;
+  --rust: #F9C89A;
+  --on-accent: #12181F;
+}
+:root[data-level="lv520"]:not([data-theme="light"]) {
+  --paper: #1F221D;
+  --card: #262B2C;
+  --zebra: #36311B;
+  --line: #4E5142;
+  --orange: #F6CB4B;
+  --orange-soft: #483E19;
+  --rust: #FAE196;
+  --on-accent: #12181F;
+}
+:root[data-level="lv860"]:not([data-theme="light"]) {
+  --paper: #132023;
+  --card: #1B2A30;
+  --zebra: #142E29;
+  --line: #304E4E;
+  --orange: #5CBD8A;
+  --orange-soft: #15392E;
+  --rust: #A0D8BB;
+  --on-accent: #12181F;
+}
+:root[data-level="lv1240"]:not([data-theme="light"]) {
+  --paper: #131D29;
+  --card: #1C2736;
+  --zebra: #15243A;
+  --line: #31455E;
+  --orange: #628FD8;
+  --orange-soft: #172A48;
+  --rust: #A3BDE8;
+  --on-accent: #12181F;
+}
+:root[data-level="lv1680"]:not([data-theme="light"]) {
+  --paper: #181A29;
+  --card: #202535;
+  --zebra: #231E39;
+  --line: #3D405C;
+  --orange: #A075D1;
+  --orange-soft: #2B2145;
+  --rust: #C8AEE4;
+  --on-accent: #12181F;
+}
+}
+:root[data-theme="dark"][data-level="phonics"] {
+  --paper: #1E1A20;
+  --card: #25252E;
+  --zebra: #331C22;
+  --line: #4B3E48;
+  --orange: #E96B6B;
+  --orange-soft: #431E23;
+  --rust: #F2A8A8;
+  --on-accent: #12181F;
+}
+:root[data-theme="dark"][data-level="lv240"] {
+  --paper: #1F1E1E;
+  --card: #26282C;
+  --zebra: #36281C;
+  --line: #4D4843;
+  --orange: #F4A052;
+  --orange-soft: #47301B;
+  --rust: #F9C89A;
+  --on-accent: #12181F;
+}
+:root[data-theme="dark"][data-level="lv520"] {
+  --paper: #1F221D;
+  --card: #262B2C;
+  --zebra: #36311B;
+  --line: #4E5142;
+  --orange: #F6CB4B;
+  --orange-soft: #483E19;
+  --rust: #FAE196;
+  --on-accent: #12181F;
+}
+:root[data-theme="dark"][data-level="lv860"] {
+  --paper: #132023;
+  --card: #1B2A30;
+  --zebra: #142E29;
+  --line: #304E4E;
+  --orange: #5CBD8A;
+  --orange-soft: #15392E;
+  --rust: #A0D8BB;
+  --on-accent: #12181F;
+}
+:root[data-theme="dark"][data-level="lv1240"] {
+  --paper: #131D29;
+  --card: #1C2736;
+  --zebra: #15243A;
+  --line: #31455E;
+  --orange: #628FD8;
+  --orange-soft: #172A48;
+  --rust: #A3BDE8;
+  --on-accent: #12181F;
+}
+:root[data-theme="dark"][data-level="lv1680"] {
+  --paper: #181A29;
+  --card: #202535;
+  --zebra: #231E39;
+  --line: #3D405C;
+  --orange: #A075D1;
+  --orange-soft: #2B2145;
+  --rust: #C8AEE4;
+  --on-accent: #12181F;
 }
 </style>
 
@@ -514,6 +700,7 @@ select.chip { padding-right: 8px; max-width: 210px; }
 
   var day = DB.days[dayId];
   var level = DB.levels[day.L];
+  document.documentElement.setAttribute("data-level", day.L);
 
   function showPicker() {
     document.querySelector(".wrap").hidden = true;
@@ -525,6 +712,7 @@ select.chip { padding-right: 8px; max-width: 210px; }
     var pick = lvIds[0];
     try { pick = localStorage.getItem("whale-listen-level") || pick; } catch (e) {}
     if (lvIds.indexOf(pick) < 0) pick = lvIds[0];
+    document.documentElement.setAttribute("data-level", pick);
 
     var grid = $("lvGrid");
     var sel = $("daySel");
@@ -548,6 +736,7 @@ select.chip { padding-right: 8px; max-width: 210px; }
       b.setAttribute("aria-pressed", id === pick ? "true" : "false");
       b.addEventListener("click", function () {
         pick = id;
+        document.documentElement.setAttribute("data-level", id);
         try { localStorage.setItem("whale-listen-level", id); } catch (e) {}
         grid.querySelectorAll(".lvbtn").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
         b.setAttribute("aria-pressed", "true");
