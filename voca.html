@@ -333,9 +333,241 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 }
 </style>
 
+
+<style>
+/* =========================================================================
+   2026-09 디자인 리프레시
+   - 저학년: 햇살 드는 산호초. 채도 높은 색과 두꺼운 아래 그림자로 버튼이
+     실제로 눌리는 느낌을 준다.
+   - 고학년: 심해를 남보라 계열로 바꿔 어둡되 답답하지 않게 한다.
+   아래 규칙은 위쪽 원본 스타일을 덮어쓰기만 하므로 구조는 건드리지 않는다.
+========================================================================= */
+:root{
+  --bg:#E8F8FF; --bg-deep:#B7E6FB;
+  --surface:#FFFFFF; --surface-2:#F4FBFF; --surface-3:#E2F3FC;
+  --line:#D3ECF8; --line-strong:#A5D8EE;
+  --ink:#123243; --ink-2:#3F6F87; --ink-3:#7FA3B5;
+  --accent:#FF7A3D; --accent-deep:#D9531C; --on-accent:#FFFFFF;
+  --aqua:#1CB0F6; --aqua-deep:#0B84C4;
+  --sun:#FFC800; --kelp:#58CC02; --kelp-deep:#3F9A00; --danger:#FF4B5C;
+  --o1:#FF4B7D; --o1d:#C81E52;
+  --o2:#1CB0F6; --o2d:#0A7FBC;
+  --o3:#FFA412; --o3d:#C77400;
+  --o4:#58CC02; --o4d:#3E9601;
+  --r-lg:30px; --r-md:22px; --r-sm:15px;
+  --shadow:0 12px 26px -16px rgba(12,60,84,.55);
+  --shadow-lift:0 20px 40px -18px rgba(12,60,84,.6);
+  --hud:rgba(255,255,255,.9);
+}
+:root[data-track="senior"]{
+  --bg:#0C1533; --bg-deep:#050A1E;
+  --surface:#16214A; --surface-2:#1D2B5C; --surface-3:#27386F;
+  --line:#2F4179; --line-strong:#4C64A6;
+  --ink:#EAF0FF; --ink-2:#A6B7E4; --ink-3:#7285B6;
+  --accent:#7C68FF; --accent-deep:#4B36C9; --on-accent:#FFFFFF;
+  --aqua:#38BDF8; --aqua-deep:#0C87C4;
+  --sun:#FBBF24; --kelp:#34D399; --kelp-deep:#12946A; --danger:#FB7185;
+  --o1:#F43F5E; --o1d:#B31739;
+  --o2:#3B82F6; --o2d:#1B52B8;
+  --o3:#F59E0B; --o3d:#B36C00;
+  --o4:#10B981; --o4d:#07835B;
+  --r-lg:24px; --r-md:18px; --r-sm:13px;
+  --shadow:0 14px 30px -18px rgba(0,0,0,.9);
+  --shadow-lift:0 22px 44px -18px rgba(0,0,0,1);
+  --hud:rgba(14,24,58,.86);
+}
+
+/* ---------------------------------------------------------------- 배경 */
+.shell{
+  background:
+    radial-gradient(80% 42% at 18% 4%, color-mix(in srgb, var(--sun) 26%, transparent), transparent 62%),
+    radial-gradient(90% 46% at 88% 0%, color-mix(in srgb, var(--aqua) 30%, transparent), transparent 66%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+}
+.shell::after{
+  background-image:
+    repeating-linear-gradient(112deg, transparent 0 54px,
+      color-mix(in srgb, #fff 26%, transparent) 54px 92px, transparent 92px 150px);
+  opacity:.35;
+  mask-image:linear-gradient(180deg,#000,transparent 62%);
+  animation:rays 14s ease-in-out infinite alternate;
+}
+:root[data-track="senior"] .shell::after{
+  background-image:
+    repeating-linear-gradient(112deg, transparent 0 60px,
+      color-mix(in srgb, var(--aqua) 18%, transparent) 60px 96px, transparent 96px 168px);
+  opacity:.25;
+}
+@keyframes rays{from{transform:translateX(-16px)}to{transform:translateX(16px)}}
+
+/* ------------------------------------------------------------- 타이포 */
+.h-title{font-size:28px; letter-spacing:-.015em}
+.eyebrow{letter-spacing:.12em}
+
+/* -------------------------------------------------------------- 카드 */
+.card,.card-flat{border-width:2px}
+.card{box-shadow:0 10px 0 -6px color-mix(in srgb, var(--line) 70%, transparent), var(--shadow)}
+
+/* ------------------------------------------------------- 눌리는 버튼 */
+.btn{
+  border-width:2px; border-bottom-width:5px;
+  transition:transform .08s ease, box-shadow .08s ease, filter .15s ease;
+}
+.btn:active{transform:translateY(3px); border-bottom-width:2px}
+.btn-primary{
+  border:0; box-shadow:0 6px 0 var(--accent-deep), var(--shadow-lift);
+  letter-spacing:.01em;
+}
+.btn-primary:active{transform:translateY(5px); box-shadow:0 1px 0 var(--accent-deep)}
+.btn-primary:disabled{box-shadow:0 6px 0 color-mix(in srgb, var(--accent-deep) 45%, transparent)}
+.btn-ghost{border-bottom-width:3px}
+.who-go{border:0; box-shadow:0 5px 0 var(--accent-deep)}
+.who-go:active{transform:translateY(4px); box-shadow:0 1px 0 var(--accent-deep)}
+.iconbtn{border-width:2px; border-bottom-width:4px; transition:transform .08s ease}
+.iconbtn:active{transform:translateY(2px); border-bottom-width:2px}
+
+/* ------------------------------------------------------------ 선택지 */
+.opt{
+  border-radius:var(--r-md); font-weight:700; min-height:76px;
+  box-shadow:0 6px 0 var(--o1d), var(--shadow);
+  transition:transform .09s ease, box-shadow .09s ease, opacity .2s ease, filter .2s ease;
+}
+.opt[data-o="0"]{box-shadow:0 6px 0 var(--o1d), var(--shadow)}
+.opt[data-o="1"]{box-shadow:0 6px 0 var(--o2d), var(--shadow)}
+.opt[data-o="2"]{box-shadow:0 6px 0 var(--o3d), var(--shadow)}
+.opt[data-o="3"]{box-shadow:0 6px 0 var(--o4d), var(--shadow)}
+.opt:active{transform:translateY(5px)}
+.opt[data-o="0"]:active{box-shadow:0 1px 0 var(--o1d)}
+.opt[data-o="1"]:active{box-shadow:0 1px 0 var(--o2d)}
+.opt[data-o="2"]:active{box-shadow:0 1px 0 var(--o3d)}
+.opt[data-o="3"]:active{box-shadow:0 1px 0 var(--o4d)}
+.opt[data-mark="ok"]{outline:5px solid #fff; outline-offset:-5px; animation:optwin .45s ease}
+@keyframes optwin{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
+.opt[data-mark="no"]{animation:optno .35s ease}
+@keyframes optno{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}70%{transform:translateX(6px)}}
+.opt-en{font-size:20px}
+
+/* -------------------------------------------------------------- 문제 */
+.prompt{
+  border-width:2px; box-shadow:0 10px 0 -4px color-mix(in srgb, var(--line) 80%, transparent), var(--shadow);
+  animation:promptin .34s cubic-bezier(.2,1.1,.4,1) both;
+}
+@keyframes promptin{from{opacity:0; transform:translateY(14px) scale(.97)}to{opacity:1; transform:none}}
+.word-big{letter-spacing:-.02em}
+.blank{border-bottom-width:4px; animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+.pos-pill{font-weight:700}
+
+/* ------------------------------------------------------- 스피커·마이크 */
+.speaker{
+  width:96px; height:96px;
+  background:radial-gradient(120% 120% at 30% 25%, color-mix(in srgb,#fff 40%,var(--aqua)), var(--aqua));
+  box-shadow:0 7px 0 var(--aqua-deep), 0 0 0 0 color-mix(in srgb, var(--aqua) 55%, transparent);
+  transition:transform .09s ease, box-shadow .09s ease;
+}
+.speaker:active{transform:translateY(6px); box-shadow:0 1px 0 var(--aqua-deep)}
+.mic{
+  background:radial-gradient(120% 120% at 30% 25%, color-mix(in srgb,#fff 34%,var(--accent)), var(--accent));
+  box-shadow:0 8px 0 var(--accent-deep), var(--shadow-lift);
+}
+.mic:active{transform:translateY(6px); box-shadow:0 2px 0 var(--accent-deep)}
+.bar{background:linear-gradient(180deg,var(--aqua),var(--kelp)); border-radius:3px}
+
+/* ------------------------------------------------------------ 진행 표시 */
+.pip{height:8px; border-radius:999px; transition:background .25s ease}
+.pip[data-on="ok"]{box-shadow:0 0 0 2px color-mix(in srgb,var(--kelp) 30%,transparent)}
+.progress-pips{gap:5px}
+
+/* -------------------------------------------------------------- 피드백 */
+.feedback{border-width:2px; animation:fbin .32s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes fbin{from{opacity:0; transform:translateY(16px)}to{opacity:1; transform:none}}
+.feedback[data-ok="1"]{box-shadow:0 8px 0 -3px color-mix(in srgb,var(--kelp) 45%,transparent)}
+.feedback[data-ok="0"]{box-shadow:0 8px 0 -3px color-mix(in srgb,var(--danger) 40%,transparent)}
+.fb-title{font-size:22px}
+.floatpts{font-size:26px; text-shadow:0 2px 0 rgba(255,255,255,.55)}
+
+/* -------------------------------------------------------------- 고래 */
+.monster-svg{animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-9px) rotate(1.5deg)}}
+.monster-svg[data-mood="hit"]{animation:shake .32s ease}
+.monster-svg[data-mood="ko"]{animation:ko .8s ease forwards}
+.w-spout{transform-origin:126px 44px; animation:spout 2.6s ease-in-out infinite}
+@keyframes spout{0%,100%{transform:scaleY(.82) translateY(4px); opacity:.75}
+  50%{transform:scaleY(1.12) translateY(-4px); opacity:1}}
+.hpbar{height:16px; border-width:2px}
+.hpfill{background:linear-gradient(90deg,var(--kelp),var(--sun),var(--accent))}
+
+.gauge-swim{position:absolute; left:0; width:100%; display:grid; place-items:center;
+  pointer-events:none; animation:swim 9s ease-in-out infinite}
+.gauge-swim svg{width:96px; height:auto; opacity:.96}
+@keyframes swim{0%,100%{transform:translateX(-30%)}50%{transform:translateX(30%)}}
+
+/* ------------------------------------------------------------ 수심계 */
+.gauge{
+  height:120px; border-width:2px;
+  background:linear-gradient(180deg,#A6E6FA 0%,#2E9BD6 42%,#0B3F63 78%,#03121F 100%);
+}
+.gauge-depth{font-size:26px}
+
+/* -------------------------------------------------------------- 미션 */
+.mission-step{border-width:2px; border-radius:var(--r-md)}
+.mission-step::before{width:5px}
+.mission-step[data-state="active"]{transform:translateY(-3px)}
+.mission-t{font-size:14px}
+
+/* ------------------------------------------------------------ 로그인 */
+.who-card{border-width:2px; box-shadow:0 10px 0 -5px color-mix(in srgb,var(--line) 75%,transparent), var(--shadow)}
+.who-avatar{
+  background:linear-gradient(160deg,var(--aqua),var(--kelp)); color:#fff;
+  box-shadow:0 4px 0 var(--aqua-deep);
+}
+.who-book{border-width:2px}
+.pbar{height:10px; border-width:2px}
+.pfill{background:linear-gradient(90deg,var(--sun),var(--kelp))}
+.tag{font-weight:700}
+
+/* --------------------------------------------------------------- 기타 */
+.chip{border-width:2px; border-bottom-width:4px; font-size:16px}
+.chip:active{transform:translateY(2px); border-bottom-width:2px}
+.chip-placed{box-shadow:0 4px 0 var(--aqua-deep)}
+.slot{border-width:3px}
+.rowitem{border-width:2px}
+.field input,.field select{border-width:2px; border-bottom-width:4px}
+.score-bar{height:16px; border-width:2px}
+.readout div{border-width:2px}
+.shopitem{border-width:2px; box-shadow:0 6px 0 -3px color-mix(in srgb,var(--line) 70%,transparent)}
+.hud{border-bottom-width:2px}
+.bubble{animation-duration:9s}
+
+.splash{
+  background:
+    radial-gradient(70% 40% at 20% 8%, rgba(255,200,0,.45), transparent 60%),
+    linear-gradient(180deg,#E8F8FF,#7FCDEA);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .shell::after,.monster-svg,.w-spout,.blank{animation:none !important}
+}
+</style>
+
 <div id="root">
   <div class="splash">
     <div>
+      <svg width="150" height="118" viewBox="0 0 200 168" aria-hidden="true"
+           style="animation:bob 3.4s ease-in-out infinite">
+        <path d="M126 44 q4 -20 -2 -32" stroke="#8DE8FF" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <circle cx="132" cy="12" r="6" fill="#8DE8FF"/>
+        <circle cx="117" cy="20" r="4" fill="#8DE8FF" opacity=".7"/>
+        <path d="M30 92 q-16 -26 -26 -30 q6 16 2 30 q-4 14 -2 30 q10 -6 26 -30z" fill="#2E9BD6"/>
+        <path d="M172 92c0 29-27 48-64 48S30 121 30 92s28-48 78-48 64 19 64 48z" fill="#43B4E8"/>
+        <path d="M52 112 q52 30 108 4 q-16 24 -56 24 q-38 0 -52 -28z" fill="#E4F7FF"/>
+        <circle cx="150" cy="98" r="11" fill="#FF8FB0" opacity=".55"/>
+        <ellipse cx="131" cy="80" rx="12" ry="14" fill="#12222E"/>
+        <ellipse cx="160" cy="80" rx="12" ry="14" fill="#12222E"/>
+        <circle cx="135" cy="74" r="4.5" fill="#fff"/>
+        <circle cx="164" cy="74" r="4.5" fill="#fff"/>
+        <path d="M130 104 q16 20 32 2 q-4 16 -18 16 q-13 0 -14 -18z" fill="#12222E" opacity=".82"/>
+      </svg>
       <div style="font-size:30px">고래 보카 다이브</div>
       <div style="font-size:14px;opacity:.7;margin-top:8px">교재를 불러오는 중…</div>
     </div>
@@ -742,27 +974,66 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   }
 
   /* An anglerfish that the junior track fights: same drawing, three moods. */
+  // 아이들이 화면에서 처음 만나는 얼굴이라, 모서리를 모두 둥글게 잡고
+  // 눈·볼·물줄기를 크게 그렸다. hue 하나로 색을 돌려 레벨마다 다른 고래가 나온다.
   function Monster(props) {
-    var hue = props.hue, mood = props.mood;
-    return html`<svg className="monster-svg" data-mood=${mood} width="180" height="150" viewBox="0 0 180 150" role="img" aria-label="심해 몬스터">
+    var mood = props.mood;
+    var hue = 178 + (((props.hue | 0) % 90) + 90) % 90;   // 178~268: 청록에서 남보라까지
+    var body = 'hsl(' + hue + ' 76% 58%)';
+    var bodyDeep = 'hsl(' + (hue + 12) + ' 68% 40%)';
+    var belly = 'hsl(' + (hue - 8) + ' 88% 92%)';
+    var blush = 'hsl(348 88% 72%)';
+    var spout = 'hsl(' + (hue - 20) + ' 96% 82%)';
+    return html`<svg className="monster-svg" data-mood=${mood} width="200" height="168"
+        viewBox="0 0 200 168" role="img" aria-label="고래 친구">
       <defs>
-        <radialGradient id="mg" cx="38%" cy="34%">
-          <stop offset="0%" stopColor=${'hsl(' + hue + ' 78% 68%)'}/>
-          <stop offset="100%" stopColor=${'hsl(' + (hue + 18) + ' 62% 44%)'}/>
+        <radialGradient id="wg" cx="36%" cy="30%">
+          <stop offset="0%" stopColor=${'hsl(' + hue + ' 92% 74%)'}/>
+          <stop offset="100%" stopColor=${body}/>
         </radialGradient>
+        <linearGradient id="wf" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor=${bodyDeep}/>
+          <stop offset="100%" stopColor=${body}/>
+        </linearGradient>
       </defs>
-      <path d=${'M150 78c0 26-24 44-56 44S34 104 34 78 58 34 94 34s56 18 56 44z'} fill="url(#mg)"/>
-      <path d="M34 78c-10-12-20-20-28-22 6 12 6 32 0 44 8-2 18-10 28-22z" fill=${'hsl(' + (hue + 18) + ' 62% 44%)'}/>
-      <path d="M96 34c-2-10 2-20 10-26 0 8 4 12 10 14-6 4-10 8-12 14z" fill=${'hsl(' + (hue + 30) + ' 60% 50%)'}/>
-      <circle cx="118" cy="20" r="9" fill=${'hsl(' + (hue + 160) + ' 90% 70%)'} opacity=".95"/>
-      <circle cx="118" cy="20" r="15" fill=${'hsl(' + (hue + 160) + ' 90% 70%)'} opacity=".22"/>
-      <circle cx="112" cy="66" r="19" fill="#fff"/>
-      <circle cx=${mood === 'ko' ? 112 : 116} cy="68" r=${mood === 'ko' ? 5 : 9} fill="#12222E"/>
-      <circle cx="120" cy="63" r="3" fill="#fff"/>
+
+      <g className="w-spout" opacity=${mood === 'ko' ? 0 : 1}>
+        <path d="M126 44 q4 -20 -2 -32" stroke=${spout} strokeWidth="7" fill="none" strokeLinecap="round" opacity=".85"/>
+        <circle cx="132" cy="12" r="6" fill=${spout} opacity=".9"/>
+        <circle cx="117" cy="20" r="4" fill=${spout} opacity=".7"/>
+        <circle cx="139" cy="26" r="3.5" fill=${spout} opacity=".6"/>
+      </g>
+
+      <path d="M38 92 q-16 -8 -24 -34 q-6 16 -6 34 q0 18 6 34 q8 -26 24 -34z" fill="url(#wf)"/>
+      <path d="M34 84 q-10 -4 -16 -18 q10 4 18 12z" fill=${bodyDeep} opacity=".55"/>
+
+      <path d="M172 92c0 29-27 48-64 48S30 121 30 92s28-48 78-48 64 19 64 48z" fill="url(#wg)"/>
+      <path d="M62 62 q48 -26 94 4 q-14 -22 -50 -22 q-30 0 -44 18z" fill=${bodyDeep} opacity=".35"/>
+
+      <path d="M52 112 q52 30 108 4 q-16 24 -56 24 q-38 0 -52 -28z" fill=${belly} opacity=".95"/>
+
+      <path d="M86 118 q10 20 30 20 q-16 8 -32 -6z" fill=${bodyDeep} opacity=".9"/>
+
+      <circle cx="150" cy="98" r="11" fill=${blush} opacity=".55"/>
+      <circle cx="106" cy="104" r="9" fill=${blush} opacity=".38"/>
+
       ${mood === 'ko'
-        ? html`<path d="M96 96 q14 -10 28 0" stroke="#12222E" strokeWidth="4" fill="none" strokeLinecap="round"/>`
-        : html`<path d="M92 92 q16 14 34 2 l-4 10 q-16 8 -30 -12z" fill="#12222E" opacity=".85"/>`}
-      <path d="M96 92 l6 10 6-10 6 10 6-10" stroke="#fff" strokeWidth="3" fill="none" strokeLinejoin="round"/>
+        ? html`<g stroke="#12222E" strokeWidth="5" strokeLinecap="round">
+            <path d="M124 72 l14 14 M138 72 l-14 14"/>
+            <path d="M152 74 l12 12 M164 74 l-12 12"/>
+          </g>`
+        : html`<g>
+            <ellipse cx="131" cy="80" rx="12" ry="14" fill="#12222E"/>
+            <ellipse cx="160" cy="80" rx="12" ry="14" fill="#12222E"/>
+            <circle cx="135" cy="74" r="4.5" fill="#fff"/>
+            <circle cx="164" cy="74" r="4.5" fill="#fff"/>
+            <circle cx="128" cy="86" r="2.4" fill="#fff" opacity=".8"/>
+            <circle cx="157" cy="86" r="2.4" fill="#fff" opacity=".8"/>
+          </g>`}
+
+      ${mood === 'ko'
+        ? html`<path d="M132 116 q14 -12 28 0" stroke="#12222E" strokeWidth="5" fill="none" strokeLinecap="round"/>`
+        : html`<path d="M130 104 q16 20 32 2 q-4 16 -18 16 q-13 0 -14 -18z" fill="#12222E" opacity=".82"/>`}
     </svg>`;
   }
 
@@ -1210,6 +1481,9 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 
       <div className="gauge">
         <div className="gauge-fill" style=${{ height: (18 + pctDeep * 72) + '%' }}></div>
+        <div className="gauge-swim" style=${{ bottom: (10 + pctDeep * 52) + '%' }}>
+          <${Monster} hue=${(lv.depth || 120) % 360} mood="idle"/>
+        </div>
         <div className="gauge-label">
           <div style=${{ font: "600 10px/1 var(--f-num)", letterSpacing: '.16em', opacity: .8 }}>CURRENT DEPTH</div>
           <div style=${{ fontSize: '13px', marginTop: '4px' }}>${ZONE(depth)}</div>
