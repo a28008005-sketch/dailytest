@@ -2828,7 +2828,17 @@ nextRef.current = function () {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: code })
         });
-        result = await response.json();
+        result = await response.json().catch(function () { return null; });
+
+        // 학원 서버가 옛 버전이면 이 창구가 아예 없어 404가 온다.
+        // 그대로 두면 아이들에게 'Not found' 같은 알 수 없는 말이 보인다.
+        if (!response.ok && (!result || !result.error || !result.success)) {
+          if (response.status === 404) {
+            result = { success: false, error: '학원 서버가 아직 준비되지 않았습니다. 선생님께 알려 주세요' };
+          } else if (!result || typeof result.error !== 'string' || /^[\x00-\x7F]*$/.test(result.error)) {
+            result = { success: false, error: '지금은 들어갈 수 없습니다 (' + response.status + '). 선생님께 알려 주세요' };
+          }
+        }
       } catch (e) {
         result = { success: false, error: '인터넷 연결을 확인해 주세요' };
       }
