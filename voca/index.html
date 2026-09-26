@@ -852,8 +852,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       var settled = false;
       var done = function () { if (settled) return; settled = true; onEnd && onEnd(); };
       if (!window.speechSynthesis) { done(); return; }
-      var budget = Math.min(14000, 2500 + String(text).length * 110 / (rate || 0.95));
-      setTimeout(done, budget);
+      // 휴대폰은 목소리 목록을 늦게(최대 5초) 받는다. 예전에는 기다리는 시간까지
+      // 말할 시간에 넣어 계산해서, 목록이 늦게 오면 말하기도 전에 끝난 것으로
+      // 처리되어 첫 소리가 아예 나지 않았다. 말할 시간은 실제로 말을 시작할 때부터 잰다.
+      setTimeout(done, 20000);
       TTS.whenReady(function () {
         if (settled) return;
         try { speechSynthesis.cancel(); } catch (e) {}
@@ -861,11 +863,16 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         setTimeout(function () {
           if (settled) return;
           var u = new SpeechSynthesisUtterance(text);
-          if (TTS.voice) { u.voice = TTS.voice; u.lang = TTS.voice.lang; }
+          if (TTS.voice) { u.voice = TTS.voice; u.lang = String(TTS.voice.lang || 'en-US').replace('_', '-'); }
           else u.lang = 'en-US';
           u.rate = rate || 0.95; u.pitch = 1; u.volume = 1;
           u.onend = done;
           u.onerror = done;
+          // 안드로이드 크롬은 말하는 도중 이 객체를 치워 버려 끝 신호가 오지 않을 때가 있다.
+          TTS._current = u;
+          setTimeout(done, Math.min(14000, 2500 + String(text).length * 110 / (rate || 0.95)));
+          // 일시정지 상태로 굳어 있으면 speak() 해도 소리가 나지 않는다.
+          try { speechSynthesis.resume(); } catch (e) {}
           try { speechSynthesis.speak(u); } catch (e) { done(); }
         }, 60);
       });
@@ -1380,6 +1387,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
      speaking
   ===================================================================== */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   // Once the microphone turns out to be unavailable, every later question knows
   // it and offers read-aloud practice instead of a button that does nothing.
@@ -1426,6 +1434,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 
     var cleanup = useCallback(function () {
       cancelAnimationFrame(rafRef.current);
+      clearInterval(rafRef.current);
       if (recRef.current) {
         try { recRef.current.onend = null; recRef.current.onerror = null; recRef.current.stop(); } catch (e) {}
         recRef.current = null;
@@ -1500,53 +1509,39 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       setTimeout(function () { TTS.say(target, rate); }, 350);
     }
 
-    function meter(stream) {
-      var c = ac(); if (!c) return;
-      try {
-        var src2 = c.createMediaStreamSource(stream);
-        var an = c.createAnalyser(); an.fftSize = 256;
-        src2.connect(an);
-        var buf = new Uint8Array(an.frequencyBinCount);
-        var loop = function () {
-          an.getByteTimeDomainData(buf);
-          var sum = 0;
-          for (var i = 0; i < buf.length; i++) { var v = (buf[i] - 128) / 128; sum += v * v; }
-          var rms = Math.sqrt(sum / buf.length);
-          peakRef.current = Math.max(peakRef.current, rms);
-          setLevels(function (prev) { return prev.slice(1).concat([Math.min(1, rms * 6)]); });
-          rafRef.current = requestAnimationFrame(loop);
-        };
-        loop();
-      } catch (e) {}
+    // 인식을 이번 한 번만 멈추고 이유를 보여 준다. 횟수는 깎지 않는다.
+    function halt(msg, block) {
+      clearTimeout(watchRef.current); settledRef.current = true; cleanup(); setSt('idle');
+      if (block) { MIC.blocked = true; MIC.reason = msg; }
+      setMicMsg(msg);
+    }
+
+    // 소리 막대: 휴대폰에서는 인식기가 마이크를 혼자 써야 하므로 마이크를 따로
+    // 열어 소리 크기를 재지 않는다. 대신 인식기가 '소리가 들린다'고 알려 주면 막대를 움직인다.
+    function wiggle() {
+      clearInterval(rafRef.current);
+      rafRef.current = setInterval(function () {
+        var on = peakRef.current > 0.045;
+        setLevels(function (prev) { return prev.slice(1).concat([on ? 0.25 + Math.random() * 0.75 : Math.random() * 0.08]); });
+      }, 90);
     }
 
     function start() {
       if (st === 'rec') return;
       settledRef.current = false; peakRef.current = 0; bestRef.current = ''; interimRef.current = '';
-      setTxt(''); setScore(null); setMercy(false); setSt('rec'); buzz(12);
+      setTxt(''); setScore(null); setMercy(false); setMicMsg(''); setSt('rec'); buzz(12);
+
+      // 원어민 소리가 아직 나오고 있으면 인식기가 그 소리를 아이 목소리로 알아듣는다.
+      try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
 
       watchRef.current = setTimeout(function () {
         judge(heard(), peakRef.current > 0.045);
       }, 12000);
 
-      var gum = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-      if (gum) {
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
-          MIC.blocked = false; MIC.reason = ''; setMicMsg('');
-          streamRef.current = s; meter(s);
-        }).catch(function (err) {
-          MIC.blocked = true;
-          MIC.reason = (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError'))
-            ? '마이크 사용이 허용되지 않았습니다. 주소창의 자물쇠 표시에서 마이크를 허용해 주세요.'
-            : '이 화면에서는 마이크를 쓸 수 없습니다.';
-          setMicMsg(MIC.reason);
-          if (!SR) { clearTimeout(watchRef.current); settledRef.current = true; cleanup(); setSt('idle'); }
-        });
-      } else {
-        MIC.blocked = true;
-        MIC.reason = micBlockReason() || '마이크를 쓸 수 없습니다.';
-        setMicMsg(MIC.reason);
-      }
+      // 예전에는 여기서 소리 크기를 재려고 마이크(getUserMedia)를 먼저 열었다.
+      // 안드로이드·아이폰은 마이크를 한 곳만 쓸 수 있어서, 그러면 음성 인식기가
+      // 마이크를 못 잡아 아무 말도 인식되지 않았다. 이제는 인식기만 마이크를 쓴다.
+      wiggle();
 
       var r = null;
       if (SR) { try { r = new SR(); } catch (e) { r = null; } }
@@ -1565,14 +1560,19 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
           }
           setTxt(heard());
         };
+        r.onaudiostart = function () { peakRef.current = Math.max(peakRef.current, 0.01); };
+        r.onsoundstart = r.onspeechstart = function () { peakRef.current = 0.1; };
         r.onerror = function (e) {
-          if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
-            MIC.blocked = true;
-            MIC.reason = '마이크 사용이 허용되지 않았습니다. 주소창의 자물쇠 표시에서 마이크를 허용해 주세요.';
-            setMicMsg(MIC.reason);
-            clearTimeout(watchRef.current); settledRef.current = true; cleanup(); setSt('idle');
+          var code = e && e.error;
+          if (code === 'not-allowed' || code === 'service-not-allowed') {
+            halt(IOS
+              ? '마이크나 받아쓰기가 꺼져 있어요. 설정 → 일반 → 키보드 → 받아쓰기를 켜고, 설정 → Safari → 마이크를 허용해 주세요.'
+              : '마이크 사용이 허용되지 않았습니다. 주소창 왼쪽 자물쇠(또는 ⓘ) → 권한 → 마이크를 허용해 주세요.', true);
             return;
           }
+          if (code === 'network') { halt('음성 인식은 인터넷이 연결되어 있어야 해요. 와이파이를 확인하고 다시 눌러 주세요.'); return; }
+          if (code === 'audio-capture') { halt('다른 앱이 마이크를 쓰고 있어요. 통화·녹음 앱을 끄고 다시 눌러 주세요.'); return; }
+          if (code === 'language-not-supported') { halt('이 기기는 영어 음성 인식을 지원하지 않아요.', true); return; }
           judge(heard(), peakRef.current > 0.045);
         };
         r.onend = function () { judge(heard(), peakRef.current > 0.045); };
@@ -1643,6 +1643,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         ${!scored ? '소리내어 읽고 확인을 누르세요'
           : st === 'rec' ? (txt || '듣는 중…')
           : (tries ? '다시 한 번 또박또박 말해 보세요' : '마이크를 누르고 큰 소리로 말해 보세요')}
+      </div>` : null}
+
+      ${scored && micMsg && st !== 'rec' ? html`<div style=${{ fontSize: '13px', color: 'var(--danger)', textAlign: 'center', lineHeight: 1.5, maxWidth: '32ch' }}>
+        ${micMsg}
       </div>` : null}
 
       ${scored ? html`<div className="try-dots" aria-label="남은 기회">
@@ -2962,6 +2966,14 @@ nextRef.current = function () {
 :root[data-can-install="1"] #whale-install{display:block}
 :root[data-locked="1"] #whale-switch,:root[data-locked="1"] #whale-install{display:none}
 
+/* 카카오톡 안 등 소리·마이크가 안 되는 화면 알림 */
+#whale-inapp{position:fixed;left:8px;right:8px;top:8px;z-index:10001;display:flex;gap:8px;align-items:center;
+  padding:10px 10px 10px 14px;border-radius:14px;background:#FFE55C;color:#06263F;box-shadow:0 8px 20px -8px rgba(0,0,0,.6);
+  font:600 13px/1.45 'IBM Plex Sans KR',system-ui,sans-serif}
+#whale-inapp span{flex:1}
+#whale-inapp button{flex:0 0 auto;border:0;border-radius:10px;padding:9px 11px;cursor:pointer;
+  font:700 13px/1 'IBM Plex Sans KR',system-ui,sans-serif;background:#06263F;color:#FFE55C}
+#whale-inapp button[data-x]{background:transparent;color:#06263F;padding:6px}
 /* 설치 방법 안내 */
 #whale-howto{position:fixed;inset:0;z-index:10000;background:rgba(3,16,26,.72);display:flex;align-items:flex-end;justify-content:center}
 #whale-howto .wh-sheet{width:100%;max-width:480px;max-height:90vh;overflow-y:auto;background:#0D3055;color:#EDF6FF;
@@ -3301,6 +3313,32 @@ nextRef.current = function () {
     return w;
   }
 
+  function openOutside() {
+    var here = location.href.split('#')[0];
+    if (inKakao) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
+    else if (isAndroid) location.href = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+    else window.open(here, '_blank');
+  }
+
+  /* 카카오톡·네이버 앱 안의 화면은 원어민 소리(음성 읽기)와 음성 인식을 지원하지 않는다.
+     아이가 소리도 마이크도 안 된다고 느끼는 가장 흔한 경우라서, 맨 위에 알려 준다. */
+  function mediaBanner() {
+    var noVoice = !window.speechSynthesis;
+    if (!inApp && !noVoice) return;
+    var b = document.createElement('div');
+    b.id = 'whale-inapp';
+    b.innerHTML = '<span>' + (inApp
+      ? (inKakao ? '카카오톡' : '다른 앱') + ' 안에서 열려 있어서 <b>소리와 마이크가 동작하지 않아요.</b>'
+      : '이 브라우저는 <b>소리 읽기를 지원하지 않아요.</b> 안드로이드는 크롬, 아이폰은 사파리로 열어 주세요.') +
+      '</span>' + (inApp ? '<button type="button" data-open="1">' + (isIOS ? '사파리' : '크롬') + '로 열기</button>' : '') +
+      '<button type="button" data-x="1" aria-label="닫기">✕</button>';
+    b.addEventListener('click', function (e) {
+      if (e.target.closest('[data-open]')) openOutside();
+      if (e.target.closest('[data-x]')) b.remove();
+    });
+    document.body.appendChild(b);
+  }
+
   function installApp() {
     var here = location.href.split('#')[0];
     if (inApp) {
@@ -3311,11 +3349,7 @@ nextRef.current = function () {
         '<li>' + (isIOS ? '사파리' : '크롬') + '에서 열리면 <b>📲 앱으로 설치</b>를 다시 눌러 주세요.</li></ol>' +
         '<p class="note">버튼이 안 되면 오른쪽 위 <b>⋮</b> 또는 <b>공유</b> 메뉴에서 “다른 브라우저로 열기”를 골라 주세요.</p>',
         '<button type="button" data-open="1">브라우저로 열기</button>');
-      w.querySelector('[data-open]').addEventListener('click', function () {
-        if (inKakao) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
-        else if (isAndroid) location.href = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-        else window.open(here, '_blank');
-      });
+      w.querySelector('[data-open]').addEventListener('click', openOutside);
       return;
     }
     if (deferred) {
@@ -3368,6 +3402,7 @@ nextRef.current = function () {
 
   function start() {
     floatingButtons();
+    mediaBanner();
     markInstallable();
     if (!get(K_CODE)) showGate();
   }
