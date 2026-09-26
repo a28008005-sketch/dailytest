@@ -852,16 +852,21 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       var settled = false;
       var done = function () { if (settled) return; settled = true; onEnd && onEnd(); };
       if (!window.speechSynthesis) { done(); return; }
+      // 목소리 준비를 기다리는 사이 다음 문제로 넘어가면, 앞 문제 소리가 뒤늦게
+      // 이어서 나오지 않도록 가장 마지막에 부탁한 소리만 낸다.
+      var turn = TTS._turn = (TTS._turn || 0) + 1;
       // 휴대폰은 목소리 목록을 늦게(최대 5초) 받는다. 예전에는 기다리는 시간까지
       // 말할 시간에 넣어 계산해서, 목록이 늦게 오면 말하기도 전에 끝난 것으로
       // 처리되어 첫 소리가 아예 나지 않았다. 말할 시간은 실제로 말을 시작할 때부터 잰다.
       setTimeout(done, 20000);
       TTS.whenReady(function () {
         if (settled) return;
+        if (turn !== TTS._turn) { done(); return; }
         try { speechSynthesis.cancel(); } catch (e) {}
         // Chrome drops an utterance queued in the same tick as cancel().
         setTimeout(function () {
           if (settled) return;
+          if (turn !== TTS._turn) { done(); return; }
           var u = new SpeechSynthesisUtterance(text);
           if (TTS.voice) { u.voice = TTS.voice; u.lang = String(TTS.voice.lang || 'en-US').replace('_', '-'); }
           else u.lang = 'en-US';
@@ -1578,7 +1583,9 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         r.onend = function () { judge(heard(), peakRef.current > 0.045); };
         recRef.current = r;
         try { r.start(); } catch (e) { judge('', false); return; }
-        setTimeout(function () { if (recRef.current) { try { recRef.current.stop(); } catch (e) {} } }, 7000);
+        // 이번 녹음만 7초 뒤에 멈춘다. 빨리 끝내고 '다시 말하기'를 누른 경우,
+        // 앞 녹음의 타이머가 새 녹음을 중간에 끊지 않게 하기 위함이다.
+        setTimeout(function () { if (recRef.current === r) { try { r.stop(); } catch (e) {} } }, 7000);
       } else {
         clearTimeout(watchRef.current); settledRef.current = true; cleanup(); setSt('idle');
       }

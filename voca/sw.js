@@ -8,7 +8,7 @@
  * - 글꼴·라이브러리·아이콘은 보관본을 먼저 쓴다. 바뀔 일이 거의 없기 때문이다.
  * - 학원 서버(로그인·진도 저장)는 절대 보관하지 않는다. 항상 실제 서버로 간다.
  */
-var VERSION = 'whaley-2026-09-26b';
+var VERSION = 'whaley-2026-09-27';
 var SHELL = [
   './',
   './manifest.webmanifest',
