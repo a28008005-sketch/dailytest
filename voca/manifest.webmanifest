@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "웨일리 보카 · 고래영어",
+  "short_name": "웨일리 보카",
+  "description": "고래영어학원 스마트 단어장 — 매일 단어와 문장을 듣고, 고르고, 말해 보는 학습 앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#03152B",
+  "theme_color": "#0A3A63",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#0A3A63"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="웨일리 보카"></head><body>
 <title>웨일리 보카</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
@@ -2915,38 +2915,70 @@ nextRef.current = function () {
 
 
 <style>
-/* 학습코드 로그인 — 한 대의 기기를 여러 아이가 번갈아 쓰기 때문에,
-   이름을 고르는 대신 자기 코드를 넣어야 자기 진도로 들어간다. */
+/* 로그인 — 부모님 휴대폰 번호 뒤 4자리.
+   출결 번호와 같은 번호를 써서 아이가 번호 하나만 기억하면 되게 한다.
+   한 대의 기기를 여러 아이가 번갈아 쓰기 때문에, 이름을 고르는 대신
+   자기 번호를 눌러야 자기 진도로 들어간다. */
 #whale-gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
-  padding:20px;background:linear-gradient(180deg,#0A3A63,#03152B);font-family:'IBM Plex Sans KR',system-ui,sans-serif}
-#whale-gate .box{width:100%;max-width:380px;background:#0D3055;border:2px solid #1D4C7C;border-radius:22px;
-  padding:26px 22px;box-shadow:0 22px 46px -20px rgba(0,0,0,.95);color:#EDF6FF;text-align:center}
-#whale-gate h2{margin:12px 0 4px;font-family:'Jua',system-ui,sans-serif;font-size:26px;font-weight:400}
-#whale-gate p{margin:0 0 18px;font-size:13px;color:#A9C8E8;line-height:1.6}
-#whale-gate input{width:100%;padding:15px 14px;border-radius:14px;border:2px solid #2F6EA8;border-bottom-width:4px;
-  background:#0B2A4C;color:#EDF6FF;font:700 22px/1 ui-monospace,Menlo,monospace;text-align:center;
-  letter-spacing:.22em;text-transform:uppercase}
-#whale-gate input::placeholder{color:#5D7D94;letter-spacing:.1em;font-size:15px}
-#whale-gate button{width:100%;margin-top:12px;padding:16px;border:0;border-radius:18px;color:#06263F;
-  background:linear-gradient(180deg,#FFE55C,#FFD400);box-shadow:0 6px 0 #C79A00;
-  font-family:'Jua',system-ui,sans-serif;font-size:19px;cursor:pointer}
-#whale-gate button:active{transform:translateY(4px);box-shadow:0 2px 0 #C79A00}
-#whale-gate button:disabled{opacity:.6;box-shadow:0 6px 0 rgba(199,154,0,.4);cursor:progress}
-#whale-gate .msg{margin-top:14px;font-size:13px;color:#FF9BB0;min-height:18px;line-height:1.5}
-#whale-gate .lv{display:block;width:100%;margin-top:10px;padding:14px;border-radius:16px;border:2px solid #2F6EA8;
-  background:#123A64;color:#EDF6FF;font:700 15px/1.3 'IBM Plex Sans KR',system-ui,sans-serif;cursor:pointer;text-align:left}
-#whale-gate .lv small{display:block;margin-top:4px;font-weight:400;color:#A9C8E8;font-size:12px}
+  padding:16px;overflow-y:auto;background:linear-gradient(180deg,#0A3A63,#03152B);
+  font-family:'IBM Plex Sans KR',system-ui,sans-serif}
+#whale-gate .box{width:100%;max-width:360px;margin:auto;background:#0D3055;border:2px solid #1D4C7C;border-radius:22px;
+  padding:22px 20px 20px;box-shadow:0 22px 46px -20px rgba(0,0,0,.95);color:#EDF6FF;text-align:center}
+#whale-gate h2{margin:8px 0 6px;font-family:'Jua',system-ui,sans-serif;font-size:26px;font-weight:400}
+#whale-gate p{margin:0 0 14px;font-size:14px;color:#A9C8E8;line-height:1.6}
+#whale-gate p b{color:#FFE55C}
+#whale-gate .dots{display:flex;justify-content:center;gap:10px;margin:4px 0 6px}
+#whale-gate .dot{width:52px;height:60px;border-radius:14px;border:2px solid #2F6EA8;border-bottom-width:4px;
+  background:#0B2A4C;display:grid;place-items:center;font:700 28px/1 ui-monospace,Menlo,monospace;color:#EDF6FF}
+#whale-gate .dot[data-on="1"]{border-color:#FFD400}
+#whale-gate .dots[data-shake="1"]{animation:wg-shake .35s ease}
+@keyframes wg-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}70%{transform:translateX(7px)}}
+#whale-gate .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+#whale-gate .key{padding:0;height:60px;border:2px solid #2F6EA8;border-bottom-width:5px;border-radius:16px;
+  background:#123A64;color:#EDF6FF;font:700 26px/1 'IBM Plex Sans KR',system-ui,sans-serif;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#whale-gate .key:active{transform:translateY(3px);border-bottom-width:2px}
+#whale-gate .key.small{font-size:15px;color:#A9C8E8}
+#whale-gate .key:disabled{opacity:.5;cursor:progress}
+#whale-gate .msg{margin-top:12px;font-size:14px;color:#FF9BB0;min-height:20px;line-height:1.5}
+#whale-gate .pick{display:block;width:100%;margin-top:10px;padding:15px;border-radius:16px;border:2px solid #2F6EA8;
+  border-bottom-width:5px;background:#123A64;color:#EDF6FF;font:700 17px/1.3 'IBM Plex Sans KR',system-ui,sans-serif;
+  cursor:pointer;text-align:left}
+#whale-gate .pick small{display:block;margin-top:4px;font-weight:400;color:#A9C8E8;font-size:12px}
+#whale-gate .link{margin-top:14px;background:none;border:0;color:#A9C8E8;font:600 13px/1.4 'IBM Plex Sans KR',system-ui,sans-serif;
+  text-decoration:underline;cursor:pointer}
+#whale-gate .install{display:none;width:100%;margin-top:16px;padding:13px;border-radius:16px;border:0;cursor:pointer;
+  color:#06263F;background:linear-gradient(180deg,#FFE55C,#FFD400);box-shadow:0 5px 0 #C79A00;
+  font:400 17px/1 'Jua',system-ui,sans-serif}
+:root[data-can-install="1"] #whale-gate .install{display:block}
 /* 코드 화면이 떠 있는 동안에는 뒤쪽 앱 화면을 아예 가린다.
    앞 아이의 이름이나 학생 고르기가 잠깐이라도 비치지 않게 하기 위함이다. */
 :root[data-locked="1"] #root{visibility:hidden}
-#whale-switch{position:fixed;left:12px;bottom:12px;z-index:900;padding:9px 14px;border-radius:999px;
+#whale-switch,#whale-install{position:fixed;bottom:12px;z-index:900;padding:9px 14px;border-radius:999px;
   border:2px solid #2F6EA8;background:rgba(6,39,68,.92);color:#A9C8E8;
   font:700 12px/1 'IBM Plex Sans KR',system-ui,sans-serif;cursor:pointer}
-:root[data-locked="1"] #whale-switch{display:none}
+#whale-switch{left:12px}
+#whale-install{right:12px;display:none;color:#FFE55C;border-color:#C79A00}
+:root[data-can-install="1"] #whale-install{display:block}
+:root[data-locked="1"] #whale-switch,:root[data-locked="1"] #whale-install{display:none}
+
+/* 설치 방법 안내 */
+#whale-howto{position:fixed;inset:0;z-index:10000;background:rgba(3,16,26,.72);display:flex;align-items:flex-end;justify-content:center}
+#whale-howto .wh-sheet{width:100%;max-width:480px;max-height:90vh;overflow-y:auto;background:#0D3055;color:#EDF6FF;
+  border:2px solid #1D4C7C;border-bottom:0;border-radius:22px 22px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+  font:15px/1.65 'IBM Plex Sans KR',system-ui,sans-serif}
+#whale-howto h3{margin:0 0 10px;font:400 22px/1.3 'Jua',system-ui,sans-serif}
+#whale-howto ol{margin:0 0 12px;padding-left:22px}
+#whale-howto li{margin:6px 0}
+#whale-howto b{color:#FFE55C}
+#whale-howto .note{font-size:13px;color:#A9C8E8}
+#whale-howto button{width:100%;margin-top:10px;padding:14px;border-radius:16px;border:0;cursor:pointer;
+  font:400 17px/1 'Jua',system-ui,sans-serif;color:#06263F;background:linear-gradient(180deg,#FFE55C,#FFD400);box-shadow:0 5px 0 #C79A00}
+#whale-howto button.ghost{background:#123A64;color:#A9C8E8;box-shadow:none;border:2px solid #2F6EA8}
 </style>
 
 <script>
-/* 학습코드로 들어오고, 진도는 학원 서버에 둔다.
+/* 부모님 휴대폰 뒤 4자리로 들어오고, 진도는 학원 서버에 둔다.
    기기에만 저장하면 집에서 열었을 때 처음부터 다시 하게 되고,
    한 대를 여러 아이가 쓰면 앞 아이 진도에 이어서 하게 된다. */
 (function () {
@@ -2959,6 +2991,11 @@ nextRef.current = function () {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   function levels() {
     try { return JSON.parse(document.getElementById('db').textContent).levels || []; }
@@ -2970,6 +3007,7 @@ nextRef.current = function () {
     try {
       var body = {
         student: r && r.student && r.student.name,
+        code: get(K_CODE) || undefined,
         level: r && r.level && (r.level.title || r.level.id),
         day: r && r.level && r.level.dayIndex,
         correct: r && r.overall && r.overall.correct,
@@ -3008,7 +3046,31 @@ nextRef.current = function () {
     } catch (e) {}
   }
 
-  // ── 코드 화면 ──
+  // 서버에 물어본다. 답이 이상하게 와도 아이에게는 알아들을 수 있는 말만 보여 준다.
+  async function ask(body) {
+    try {
+      var response = await fetch(API + '/api/voca/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var result = await response.json().catch(function () { return null; });
+      if (result && Array.isArray(result.choices) && result.choices.length) return result;
+      if (!response.ok && (!result || !result.error || !result.success)) {
+        // 학원 서버가 옛 버전이면 이 창구가 아예 없어 404가 온다.
+        if (response.status === 404 && (!result || !result.error || /^[\x00-\x7F]*$/.test(result.error))) {
+          return { success: false, error: '학원 서버가 아직 준비되지 않았습니다. 선생님께 알려 주세요' };
+        }
+        if (!result || typeof result.error !== 'string' || /^[\x00-\x7F]*$/.test(result.error)) {
+          return { success: false, error: '지금은 들어갈 수 없습니다 (' + response.status + '). 선생님께 알려 주세요' };
+        }
+      }
+      return result || { success: false, error: '들어가지 못했습니다' };
+    } catch (e) {
+      return { success: false, error: '인터넷 연결을 확인해 주세요' };
+    }
+  }
+
+  // ── 번호 화면 ──
   function showGate() {
     if (document.getElementById('whale-gate')) return;
 
@@ -3018,24 +3080,28 @@ nextRef.current = function () {
     wrap.id = 'whale-gate';
     wrap.innerHTML =
       '<div class="box">' +
-      '<div style="font-size:40px">🐋</div>' +
+      '<div style="font-size:40px;line-height:1">🐋</div>' +
       '<h2>웨일리 보카</h2>' +
-      '<p>선생님께 받은 <b>학습코드</b>를 넣어 주세요.<br>어느 기기에서 열어도 하던 데서 이어집니다.</p>' +
-      '<input id="wg-code" inputmode="latin" autocomplete="off" placeholder="예) GR2831" maxlength="12">' +
-      '<button id="wg-go" type="button">들어가기</button>' +
-      '<div class="msg" id="wg-msg"></div>' +
-      '<div id="wg-levels"></div>' +
+      '<div id="wg-body"></div>' +
+      '<div class="msg" id="wg-msg" role="status" aria-live="polite"></div>' +
+      '<button class="install" id="wg-install" type="button">📲 이 기기에 앱으로 설치하기</button>' +
       '</div>';
     document.body.appendChild(wrap);
 
-    var input = wrap.querySelector('#wg-code');
-    var button = wrap.querySelector('#wg-go');
+    var bodyEl = wrap.querySelector('#wg-body');
     var msg = wrap.querySelector('#wg-msg');
-    var levelBox = wrap.querySelector('#wg-levels');
-    input.focus();
+    wrap.querySelector('#wg-install').addEventListener('click', installApp);
+
+    var digits = '';
+    var busy = false;
+
+    function say(text, good) {
+      msg.style.color = good ? '#A9C8E8' : '#FF9BB0';
+      msg.textContent = text || '';
+    }
 
     function finish(code, name, levelId, progress) {
-      var studentId = 'code-' + code; // 코드가 곧 신분이라 기기가 바뀌어도 같은 칸을 쓴다
+      var studentId = 'code-' + code; // 번호가 곧 신분이라 기기가 바뀌어도 같은 칸을 쓴다
       try { localStorage.setItem(K_CODE, code); } catch (e) {}
       setJSON(K_PROFILE, { studentId: studentId, name: name, levelId: levelId });
       setJSON(K_STUDENTS, [{ studentId: studentId, name: name, levelId: levelId, lastSeen: today() }]);
@@ -3044,61 +3110,125 @@ nextRef.current = function () {
     }
 
     function askLevel(code, name) {
-      msg.style.color = '#A9C8E8';
-      msg.textContent = name + ' 님, 반가워요! 교재를 골라 주세요.';
-      input.style.display = 'none';
-      button.style.display = 'none';
-      levelBox.innerHTML = levels().map(function (lv) {
-        return '<button class="lv" data-lv="' + lv.id + '">' + lv.title +
+      say('');
+      bodyEl.innerHTML = '<p><b>' + esc(name) + '</b> 님, 반가워요!<br>공부할 교재를 골라 주세요.</p>' + levels().map(function (lv) {
+        return '<button class="pick" type="button" data-lv="' + esc(lv.id) + '">' + esc(lv.title) +
           '<small>' + (lv.days ? lv.days.length : 0) + '일차</small></button>';
       }).join('');
-      levelBox.addEventListener('click', function (e) {
-        var b = e.target.closest('.lv');
-        if (b) finish(code, name, b.dataset.lv, null);
-      });
+      bodyEl.onclick = function (e) {
+        var b = e.target.closest('[data-lv]');
+        if (b) finish(code, name, b.getAttribute('data-lv'), null);
+      };
     }
 
-    async function tryLogin() {
-      var code = (input.value || '').trim().toUpperCase();
-      if (!code) return;
-      button.disabled = true;
-      msg.style.color = '#A9C8E8';
-      msg.textContent = '확인하는 중…';
-
-      var result;
-      try {
-        var response = await fetch(API + '/api/voca/login', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: code })
-        });
-        result = await response.json().catch(function () { return null; });
-
-        // 학원 서버가 옛 버전이면 이 창구가 아예 없어 404가 온다.
-        // 그대로 두면 아이들에게 'Not found' 같은 알 수 없는 말이 보인다.
-        if (!response.ok && (!result || !result.error || !result.success)) {
-          if (response.status === 404) {
-            result = { success: false, error: '학원 서버가 아직 준비되지 않았습니다. 선생님께 알려 주세요' };
-          } else if (!result || typeof result.error !== 'string' || /^[\x00-\x7F]*$/.test(result.error)) {
-            result = { success: false, error: '지금은 들어갈 수 없습니다 (' + response.status + '). 선생님께 알려 주세요' };
-          }
-        }
-      } catch (e) {
-        result = { success: false, error: '인터넷 연결을 확인해 주세요' };
-      }
-      button.disabled = false;
-
-      if (!result || !result.success) {
-        msg.style.color = '#FF9BB0';
-        msg.textContent = (result && result.error) || '들어가지 못했습니다';
-        return;
-      }
+    // 로그인이 되면 서버가 알려 준 학생 고유 코드로 진도를 저장한다.
+    // 형제는 부모님 번호가 같으므로, 4자리만으로 저장하면 진도가 섞인다.
+    function accept(result) {
+      var code = String(result.code || result.studentCode || digits);
       if (result.levelId) finish(code, result.name, result.levelId, result.progress);
       else askLevel(code, result.name);
     }
 
-    button.addEventListener('click', tryLogin);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
+    // 같은 번호로 등록된 학생이 여럿이면(형제·자매) 이름을 고르게 한다.
+    function pickName(choices) {
+      say('');
+      bodyEl.innerHTML = '<p>이 번호로 등록된 학생이 여러 명이에요.<br><b>내 이름</b>을 눌러 주세요.</p>' + choices.map(function (c, i) {
+        return '<button class="pick" type="button" data-i="' + i + '">' + esc(c.name) +
+          (c.grade ? '<small>' + esc(c.grade) + '</small>' : '') + '</button>';
+      }).join('') + '<button class="link" type="button" data-back="1">번호 다시 누르기</button>';
+      bodyEl.onclick = async function (e) {
+        if (e.target.closest('[data-back]')) { drawPad(); return; }
+        var b = e.target.closest('[data-i]');
+        if (!b || busy) return;
+        var c = choices[+b.getAttribute('data-i')];
+        busy = true;
+        say('확인하는 중…', true);
+        var result = await ask({ code: digits, phone4: digits, name: c.name, studentId: c.id || c.studentId || undefined });
+        busy = false;
+        if (result && result.success) accept(result);
+        else say((result && result.error) || '들어가지 못했습니다');
+      };
+    }
+
+    async function submit() {
+      if (busy || digits.length !== 4) return;
+      busy = true;
+      setKeys(true);
+      say('확인하는 중…', true);
+      var result = await ask({ code: digits, phone4: digits });
+      busy = false;
+      setKeys(false);
+
+      if (result && Array.isArray(result.choices) && result.choices.length) { pickName(result.choices); return; }
+      if (!result || !result.success) {
+        say((result && result.error) || '들어가지 못했습니다');
+        var dots = bodyEl.querySelector('.dots');
+        if (dots) { dots.setAttribute('data-shake', '1'); setTimeout(function () { dots.removeAttribute('data-shake'); }, 400); }
+        digits = '';
+        paint();
+        return;
+      }
+      accept(result);
+    }
+
+    function setKeys(off) {
+      bodyEl.querySelectorAll('.key').forEach(function (k) { k.disabled = off; });
+    }
+
+    function paint() {
+      bodyEl.querySelectorAll('.dot').forEach(function (d, i) {
+        d.textContent = digits[i] || '';
+        d.setAttribute('data-on', i === digits.length ? '1' : '0');
+      });
+    }
+
+    function press(k) {
+      if (busy) return;
+      if (k === 'back') digits = digits.slice(0, -1);
+      else if (k === 'clear') digits = '';
+      else if (digits.length < 4) digits += k;
+      if (digits.length) say('');
+      paint();
+      if (digits.length === 4) submit();
+    }
+
+    function drawPad() {
+      digits = '';
+      say('');
+      bodyEl.innerHTML =
+        '<p><b>부모님 휴대폰 번호 뒤 4자리</b>를 눌러 주세요.<br>출석할 때 쓰는 번호와 같아요.</p>' +
+        '<div class="dots" aria-label="입력한 번호">' +
+        '<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>' +
+        '<div class="pad">' +
+        ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (n) {
+          return '<button class="key" type="button" data-k="' + n + '">' + n + '</button>';
+        }).join('') +
+        '<button class="key small" type="button" data-k="clear">다시</button>' +
+        '<button class="key" type="button" data-k="0">0</button>' +
+        '<button class="key small" type="button" data-k="back" aria-label="하나 지우기">⌫</button>' +
+        '</div>';
+      bodyEl.onclick = function (e) {
+        var b = e.target.closest('[data-k]');
+        if (b) press(b.getAttribute('data-k'));
+      };
+      paint();
+    }
+
+    // 컴퓨터 키보드로도 누를 수 있게 한다. 버튼을 누르는 동안 초점이 버튼 밖으로
+    // 빠질 수 있어서, 화면 전체에서 받는다.
+    gateKey = function (e) {
+      if (!wrap.isConnected || !bodyEl.querySelector('.pad')) return;
+      if (/^[0-9]$/.test(e.key)) { press(e.key); e.preventDefault(); }
+      else if (e.key === 'Backspace') { press('back'); e.preventDefault(); }
+      else if (e.key === 'Escape') { press('clear'); e.preventDefault(); }
+    };
+    drawPad();
   }
+
+  var gateKey = null;
+  document.addEventListener('keydown', function (e) {
+    if (gateKey && document.getElementById('whale-gate')) gateKey(e);
+  });
 
   function signOut(ask) {
     if (ask && !confirm('다른 학생으로 바꿀까요? 지금까지 한 것은 저장되어 있습니다.')) return;
@@ -3106,9 +3236,9 @@ nextRef.current = function () {
     showGate();
   }
 
-  // 앱이 원래 갖고 있던 사람 아이콘은 코드를 묻지 않고 학생 고르기로 보낸다.
+  // 앱이 원래 갖고 있던 사람 아이콘은 번호를 묻지 않고 학생 고르기로 보낸다.
   // 그대로 두면 아이가 다른 아이 계정으로 들어가거나 아무 이름이나 새로 만들 수 있다.
-  // 눌러도 코드 화면으로 오게 가로챈다. React가 보기 전에 잡아야 해서 캡처 단계에서 막는다.
+  // 눌러도 번호 화면으로 오게 가로챈다. React가 보기 전에 잡아야 해서 캡처 단계에서 막는다.
   document.addEventListener('click', function (e) {
     var el = e.target && e.target.closest && e.target.closest('[aria-label="학생 바꾸기"]');
     if (!el || el.id === 'whale-switch') return;
@@ -3117,7 +3247,7 @@ nextRef.current = function () {
     signOut(true);
   }, true);
 
-  // 어떤 길로든 학생 고르기나 새 학생 등록 화면이 떠 버리면 코드 화면으로 덮는다.
+  // 어떤 길로든 학생 고르기나 새 학생 등록 화면이 떠 버리면 번호 화면으로 덮는다.
   // 여기서는 새로고침하지 않는다 — 그 화면이 계속 뜨는 경우 무한 새로고침이 되기 때문이다.
   new MutationObserver(function () {
     if (document.getElementById('whale-gate')) return;
@@ -3129,17 +3259,116 @@ nextRef.current = function () {
     }
   }).observe(document.documentElement, { childList: true, subtree: true });
 
-  function switchButton() {
+  /* ── 휴대폰·태블릿에 앱으로 설치 ──
+     안드로이드 크롬·삼성 인터넷은 설치 창을 바로 띄울 수 있다.
+     아이폰·아이패드는 그런 창이 없어서 '홈 화면에 추가' 방법을 보여 준다.
+     카카오톡·네이버 앱 안에서 연 화면은 설치가 안 되므로 바깥 브라우저로 보낸다. */
+  var UA = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(UA);
+  var inKakao = /KAKAOTALK/i.test(UA);
+  var inApp = inKakao || /NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(UA);
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  var deferred = null;
+
+  function markInstallable() {
+    if (!standalone && (deferred || isIOS || inApp)) document.documentElement.setAttribute('data-can-install', '1');
+    else document.documentElement.removeAttribute('data-can-install');
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    markInstallable();
+  });
+  window.addEventListener('appinstalled', function () {
+    deferred = null;
+    standalone = true;
+    markInstallable();
+  });
+
+  function howTo(html, actions) {
+    var old = document.getElementById('whale-howto');
+    if (old) old.remove();
+    var w = document.createElement('div');
+    w.id = 'whale-howto';
+    w.innerHTML = '<div class="wh-sheet">' + html + (actions || '') +
+      '<button class="ghost" type="button" data-close="1">닫기</button></div>';
+    w.addEventListener('click', function (e) {
+      if (e.target === w || e.target.closest('[data-close]')) w.remove();
+    });
+    document.body.appendChild(w);
+    return w;
+  }
+
+  function installApp() {
+    var here = location.href.split('#')[0];
+    if (inApp) {
+      var w = howTo(
+        '<h3>브라우저에서 열어 주세요</h3>' +
+        '<p>지금은 ' + (inKakao ? '카카오톡' : '다른 앱') + ' 안에서 열려 있어서 앱으로 설치할 수 없어요.</p>' +
+        '<ol><li>아래 <b>브라우저로 열기</b>를 눌러 주세요.</li>' +
+        '<li>' + (isIOS ? '사파리' : '크롬') + '에서 열리면 <b>📲 앱으로 설치</b>를 다시 눌러 주세요.</li></ol>' +
+        '<p class="note">버튼이 안 되면 오른쪽 위 <b>⋮</b> 또는 <b>공유</b> 메뉴에서 “다른 브라우저로 열기”를 골라 주세요.</p>',
+        '<button type="button" data-open="1">브라우저로 열기</button>');
+      w.querySelector('[data-open]').addEventListener('click', function () {
+        if (inKakao) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
+        else if (isAndroid) location.href = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+        else window.open(here, '_blank');
+      });
+      return;
+    }
+    if (deferred) {
+      var p = deferred;
+      deferred = null;
+      p.prompt();
+      p.userChoice.finally(markInstallable);
+      return;
+    }
+    if (isIOS) {
+      var safari = /Safari/.test(UA) && !/CriOS|FxiOS|EdgiOS|Whale/.test(UA);
+      howTo(
+        '<h3>홈 화면에 웨일리 보카 놓기</h3>' +
+        (safari ? '' : '<p class="note">아이폰·아이패드는 <b>사파리</b>에서만 설치할 수 있어요. 이 주소를 사파리에서 열어 주세요.</p>') +
+        '<ol><li>화면 ' + (/iPad/.test(UA) || navigator.maxTouchPoints > 1 && !/iPhone/.test(UA) ? '위쪽' : '아래쪽') +
+        '의 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러 주세요.</li>' +
+        '<li>목록을 올려서 <b>홈 화면에 추가</b>를 눌러 주세요.</li>' +
+        '<li>오른쪽 위 <b>추가</b>를 누르면 홈 화면에 고래 아이콘이 생겨요.</li></ol>' +
+        '<p class="note">다음부터는 그 아이콘을 누르면 앱처럼 바로 열려요.</p>');
+      return;
+    }
+    howTo(
+      '<h3>앱으로 설치하기</h3>' +
+      '<ol><li>브라우저 오른쪽 위 <b>⋮</b> 메뉴를 눌러 주세요.</li>' +
+      '<li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 눌러 주세요.</li></ol>' +
+      '<p class="note">메뉴에 없으면 크롬이나 삼성 인터넷에서 이 주소를 열어 주세요.</p>');
+  }
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    });
+  }
+
+  function floatingButtons() {
     var b = document.createElement('button');
     b.id = 'whale-switch';
     b.type = 'button';
     b.textContent = '학생 바꾸기';
     b.addEventListener('click', function () { signOut(true); });
     document.body.appendChild(b);
+
+    var i = document.createElement('button');
+    i.id = 'whale-install';
+    i.type = 'button';
+    i.textContent = '📲 앱으로 설치';
+    i.addEventListener('click', installApp);
+    document.body.appendChild(i);
   }
 
   function start() {
-    switchButton();
+    floatingButtons();
+    markInstallable();
     if (!get(K_CODE)) showGate();
   }
 
