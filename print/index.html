@@ -120,6 +120,13 @@ const state = {
   open: null,
   picked: new Set(),
 };
+// 원생관리 학원자료실에서 ?lv=240&kind=plain 처럼 레벨·종류를 골라서 들어올 수 있습니다.
+try {
+  const qs = new URLSearchParams(location.search);
+  const qlv = qs.get('lv'), qk = qs.get('kind');
+  if (qlv && SITE.data[qlv]) { state.lv = qlv; store.set('lv', qlv); }
+  if (qk === 'pic' || qk === 'plain') { state.kind = qk; store.set('kind', qk); }
+} catch {}
 if (!SITE.data[state.lv]) state.lv = '240';
 
 const $ = (s) => document.querySelector(s);
