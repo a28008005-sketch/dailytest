@@ -613,6 +613,93 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 @media (prefers-reduced-motion: reduce){
   .shell::after,.monster-svg,.w-boost,.blank,.say,.node[data-state="now"]::after{animation:none !important}
 }
+
+/* ------------------------------------------------------- 문장 만들기 (Sentence Bank) */
+:root{
+  --r-W:#8E5CF7; --r-S:#2E86D8; --r-V:#EE3D68; --r-O:#1FA164; --r-C:#E89400; --r-M:#6B7A88; --r-J:#9AA5B1; --r-X:#9AA5B1;
+}
+:root[data-track="senior"]{ --r-M:#8FA3B4; --r-J:#7D8A96; --r-X:#7D8A96; }
+.sb-entry{
+  display:flex; align-items:center; gap:12px; text-align:left; width:100%; cursor:pointer;
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:12px 14px; color:var(--ink);
+}
+.sb-entry img{width:72px; aspect-ratio:1.45; object-fit:cover; border-radius:10px; flex:none; background:var(--surface-2)}
+.sb-entry b{display:block; font-size:15px}
+.sb-entry small{display:block; font-size:12px; color:var(--ink-3); margin-top:2px}
+.sb-entry .tag{margin-left:auto}
+.sb-prog{height:8px; border-radius:99px; background:var(--surface-3, var(--line)); margin-top:6px; overflow:hidden}
+.sb-prog-fill{height:100%; background:var(--kelp); border-radius:99px; transition:width .35s ease}
+.sb-pill{
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); border-radius:999px;
+  padding:8px 14px; font:600 14px/1 var(--f-ui); cursor:pointer;
+}
+.sb-pill[data-on="1"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.sb-units{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.sb-unit{
+  padding:0; border:2px solid var(--line); background:var(--surface); border-radius:var(--r-md); overflow:hidden;
+  text-align:left; cursor:pointer; color:var(--ink);
+}
+.sb-unit[data-on="1"]{border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent)}
+.sb-unit img{display:block; width:100%; aspect-ratio:1.45; object-fit:cover; background:var(--surface-2)}
+.sb-unit-meta{display:flex; justify-content:space-between; align-items:baseline; padding:8px 10px}
+.sb-unit-meta b{font-size:14px}
+.sb-unit-meta span{font-size:12px; color:var(--ink-3)}
+.sb-steps{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--ink-2)}
+.sb-steps b{display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--accent); color:var(--on-accent, #fff); font-size:12px; margin-right:6px}
+.sb-col{display:flex; flex-direction:column; gap:12px; flex:1}
+.sb-kicker{font:600 13px/1.3 var(--f-ui); color:var(--ink-2); text-align:center}
+
+.sb-scene{display:block; width:100%; padding:0; border:0; background:none; cursor:pointer; perspective:1400px}
+.sb-card{position:relative; width:100%; aspect-ratio:566/391; transform-style:preserve-3d; transition:transform .6s cubic-bezier(.3,.7,.3,1)}
+.sb-card[data-flip="1"]{transform:rotateY(180deg)}
+.sb-face{
+  position:absolute; inset:0; border-radius:16px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:#fff; box-shadow:var(--shadow); border:1px solid var(--line);
+}
+.sb-face img{width:100%; height:100%; object-fit:cover; display:block}
+.sb-back{transform:rotateY(180deg); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:6%; text-align:center; color:#111}
+.sb-q{color:#9C9C9C; font:700 clamp(15px,4.6vw,24px)/1.3 var(--f-ui)}
+.sb-a{font:800 clamp(17px,5.4vw,28px)/1.3 var(--f-ui); margin-top:.3em}
+.sb-no{position:absolute; left:4%; bottom:6%; width:11%; aspect-ratio:1; border-radius:50%; background:#A3A3A3; color:#fff; display:grid; place-items:center; font:700 clamp(10px,2.8vw,15px)/1 var(--f-num)}
+.sb-bubble{
+  display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+  padding:10px 12px; font:600 17px/1.35 var(--f-word);
+}
+.sb-bubble > span:nth-child(2){flex:1}
+.sb-who{font:600 10px/1 var(--f-num); letter-spacing:.08em; color:var(--ink-3); writing-mode:horizontal-tb}
+.sb-prompt{display:flex; gap:12px; align-items:center}
+.sb-prompt img{width:38%; max-width:170px; aspect-ratio:1.45; object-fit:cover; border-radius:12px; flex:none; border:1px solid var(--line)}
+.sb-ko{font:700 18px/1.45 var(--f-ui); color:var(--ink); word-break:keep-all}
+.sb-slot{min-height:64px}
+.sb-slot[data-state="ok"]{border-color:var(--kelp); border-style:solid}
+.sb-slot[data-state="no"]{border-color:var(--danger); border-style:solid}
+.sb-bank{justify-content:center}
+
+.sb-parse{display:flex; flex-wrap:wrap; gap:6px 4px; justify-content:center; padding:14px 6px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md)}
+.sb-chunk{
+  display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
+  border:2px solid var(--line-strong); background:var(--surface-2); color:var(--ink); border-radius:12px; padding:8px 10px 6px;
+  font:600 18px/1.2 var(--f-word); transition:background .25s, border-color .25s, transform .15s;
+}
+.sb-chunk:active{transform:scale(.97)}
+.sb-chunk[data-glue="1"]{margin-left:-2px}
+.sb-chunk-r{font:700 11px/1 var(--f-ui); color:var(--ink-3); letter-spacing:.02em}
+.sb-chunk[data-pick="no"]{border-color:var(--danger); animation:sbshake .35s}
+@keyframes sbshake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
+.sb-parse[data-revealed="1"] .sb-chunk{border-color:var(--rc); background:color-mix(in srgb, var(--rc) 14%, var(--surface))}
+.sb-parse[data-revealed="1"] .sb-chunk-r{color:var(--rc)}
+.sb-chunk[data-pick="ok"]{border-color:var(--rc); background:color-mix(in srgb, var(--rc) 22%, var(--surface))}
+.sb-chunk[data-r="W"], .sb-leg[data-r="W"]{--rc:var(--r-W)}
+.sb-chunk[data-r="S"], .sb-leg[data-r="S"]{--rc:var(--r-S)}
+.sb-chunk[data-r="V"], .sb-leg[data-r="V"]{--rc:var(--r-V)}
+.sb-chunk[data-r="O"], .sb-leg[data-r="O"]{--rc:var(--r-O)}
+.sb-chunk[data-r="C"], .sb-leg[data-r="C"]{--rc:var(--r-C)}
+.sb-chunk[data-r="M"], .sb-leg[data-r="M"]{--rc:var(--r-M)}
+.sb-chunk[data-r="J"], .sb-leg[data-r="J"]{--rc:var(--r-J)}
+.sb-chunk[data-r="X"], .sb-leg[data-r="X"]{--rc:var(--r-X)}
+.sb-legend{display:flex; flex-direction:column; gap:6px}
+.sb-leg{display:flex; gap:8px; align-items:baseline; font-size:13px; color:var(--ink-2)}
+.sb-leg b{color:var(--rc); min-width:44px}
 </style>
 
 <div id="root">
@@ -1916,13 +2003,346 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     return html`<div className="trail">${rows.slice().reverse()}</div>`;
   }
 
-  // 오늘 진도 단원의 Sentence Bank 말하기 카드(../cards/). 파닉스는 카드가 없다.
-  function cardUnit(dayId) { return /^lv(\d+)-V(\d)U(\d)D\d+$/.exec(dayId || ''); }
-  function cardHref(dayId) {
-    var m = cardUnit(dayId);
-    return m ? 'https://a28008005-sketch.github.io/dailytest/cards/?lv=' + m[1] + '&v=' + m[2] + '&u=' + m[3] : null;
+  /* =====================================================================
+     문장 만들기 (Sentence Bank)
+     교재 Practice book 의 Sentence Bank 카드로 한 단원씩 공부한다.
+     카드 보기(선생님 질문) → 단어 조각으로 문장 만들기 → 문장 성분 찾기.
+     카드 그림·음원·성분 데이터는 ../cards/ (Sentence Bank 말하기 카드)에서 가져온다.
+  ===================================================================== */
+  var SB_BASE = /github\.io$|^localhost$|^127\./.test(location.hostname)
+    ? new URL('../cards/', location.href).href
+    : 'https://a28008005-sketch.github.io/dailytest/cards/';
+  var SB_ROLE = {
+    W: { ko: '의문사', en: 'Wh' }, S: { ko: '주어', en: 'S' }, V: { ko: '동사', en: 'V' },
+    O: { ko: '목적어', en: 'O' }, C: { ko: '보어', en: 'C' }, M: { ko: '수식어', en: 'M' },
+    J: { ko: '접속사', en: 'and' }, X: { ko: '기타', en: '·' }
+  };
+  var SB_ROLE_TIP = {
+    W: '무엇·어디·누가처럼 묻는 말', S: '"~은/는/이/가" — 문장의 주인공', V: '"~하다/~이다" — 동작이나 상태',
+    O: '"~을/를, ~에게" — 동작을 받는 것', C: '주어나 목적어가 무엇인지·어떤지 채워 주는 말',
+    M: '언제·어디서·어떻게 — 꾸며 주는 말', J: '문장과 문장을 이어 주는 말', X: '대답(Yes/No), There, 감탄 등'
+  };
+  var sbLoading = null;
+  function sbLoad(cb) {
+    if (window.CARD_DATA) { cb(window.CARD_DATA); return; }
+    if (!sbLoading) {
+      sbLoading = new Promise(function (res, rej) {
+        var s = document.createElement('script');
+        s.src = SB_BASE + 'cards.js';
+        s.onload = function () { window.CARD_DATA ? res(window.CARD_DATA) : rej(new Error('no data')); };
+        s.onerror = function () { sbLoading = null; rej(new Error('load failed')); };
+        document.head.appendChild(s);
+      });
+    }
+    sbLoading.then(cb, function () { cb(null); });
   }
-  function cardLabel(dayId) { var m = cardUnit(dayId); return m ? 'Vol.' + m[2] + ' Unit ' + m[3] : ''; }
+  // 웨일리 보카 레벨·진도 → 카드 레벨·권·단원 (파닉스는 카드가 없다)
+  function sbUnitOf(lvId, dayId) {
+    var m = /^lv(\d+)$/.exec(lvId || ''), d = /-V(\d)U(\d)D/.exec(dayId || '');
+    return m ? { lv: m[1], vol: d ? +d[1] : 1, unit: d ? +d[2] : 1 } : null;
+  }
+
+  // 같은 <audio> 를 계속 쓴다. 아이패드는 손가락으로 누른 순간에 한 번 열어 둬야 이후 자동 재생이 된다.
+  var sbAudio = null;
+  function sbUnlock() {
+    if (!sbAudio) { sbAudio = new Audio(); sbAudio.preload = 'auto'; }
+    try { sbAudio.muted = true; var p = sbAudio.play(); if (p && p.catch) p.catch(function () {}); sbAudio.pause(); sbAudio.muted = false; } catch (e) {}
+  }
+  function sbSay(key, text, lang, rate, onEnd) {
+    var done = false;
+    function fin() { if (done) return; done = true; if (onEnd) onEnd(); }
+    if (!sbAudio) sbAudio = new Audio();
+    if (!key) {
+      if (lang === 'ko') { fin(); return; }
+      TTS.say(text, rate, fin); return;
+    }
+    try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    sbAudio.onended = fin;
+    sbAudio.onerror = function () { lang === 'ko' ? fin() : TTS.say(text, rate, fin); };
+    sbAudio.src = SB_BASE + 'audio/' + key + '.mp3';
+    sbAudio.playbackRate = rate < 0.9 ? 0.85 : 1;
+    var p = sbAudio.play();
+    if (p && p.catch) p.catch(function () { lang === 'ko' ? fin() : TTS.say(text, rate, fin); });
+  }
+  function sbStop() { try { sbAudio && sbAudio.pause(); } catch (e) {} try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {} }
+
+  // 단어 조각: 끝 문장부호는 떼고 비교한다.
+  function sbTokens(a) { return a.replace(/[.!?]+$/, '').split(/\s+/).filter(Boolean); }
+  function sbKey(t) { return t.toLowerCase().replace(/[^a-z0-9']/g, ''); }
+
+  function SentenceBuilder(props) {
+    var start = props.start;
+    var _d = useState(window.CARD_DATA || null), data = _d[0], setData = _d[1];
+    var _e = useState(false), failed = _e[0], setFailed = _e[1];
+    var _sel = useState({ vol: start.vol, unit: start.unit }), sel = _sel[0], setSel = _sel[1];
+    var _ph = useState('intro'), phase = _ph[0], setPhase = _ph[1];
+    var _q = useState([]), queue = _q[0], setQueue = _q[1];
+    var _qi = useState(0), qi = _qi[0], setQi = _qi[1];
+    var _st = useState('card'), step = _st[0], setStep = _st[1];
+    var _fl = useState(false), flipped = _fl[0], setFlipped = _fl[1];
+    var _pl = useState([]), placed = _pl[0], setPlaced = _pl[1];
+    var _res = useState(null), res = _res[0], setRes = _res[1];
+    var _pick = useState(null), pick = _pick[0], setPick = _pick[1];
+    var _rev = useState(false), revealed = _rev[0], setRevealed = _rev[1];
+    var _sc = useState({ built: 0, first: 0, parse: 0, coins: 0 }), score = _sc[0], setScore = _sc[1];
+    var missed = useRef({});
+
+    useEffect(function () {
+      if (data) return;
+      sbLoad(function (d) { if (d) setData(d); else setFailed(true); });
+    }, []);
+    useEffect(function () { return sbStop; }, []);
+
+    var lvData = data ? data.levels.find(function (l) { return l.id === start.lv; }) : null;
+    var unitCards = lvData ? lvData.cards.filter(function (c) { return c.vol === sel.vol && c.unit === sel.unit; }) : [];
+    var item = queue[qi];
+    var card = item ? item.card : null;
+
+    var tiles = useMemo(function () {
+      if (!card) return [];
+      var words = sbTokens(card.a);
+      var have = {}; words.forEach(function (w) { have[sbKey(w)] = 1; });
+      var pool = [];
+      unitCards.forEach(function (c) {
+        if (c === card) return;
+        sbTokens(c.a).forEach(function (w) {
+          var k = sbKey(w);
+          if (k.length > 1 && !have[k]) { have[k] = 1; pool.push(/^[A-Z]/.test(w) && !/^(I|I'm|I'll|I've)$/.test(w) ? w.toLowerCase() : w); }
+        });
+      });
+      var extra = shuffle(pool).slice(0, words.length > 9 ? 1 : words.length > 5 ? 2 : 3);
+      return shuffle(words.map(function (w, i) { return { t: w, id: 'w' + i }; })
+        .concat(extra.map(function (w, i) { return { t: w, id: 'x' + i }; })));
+    }, [card && card.no, qi, item && item.round]);
+
+    // 질문 역할: V 가 기본, 둘째 카드마다 주어(있으면)
+    var quizRole = useMemo(function () {
+      if (!card) return null;
+      var roles = card.p.map(function (c) { return c[1]; });
+      if (roles.indexOf('V') < 0) return null;
+      if (qi % 2 === 1 && roles.indexOf('S') >= 0) return 'S';
+      return 'V';
+    }, [card && card.no, qi]);
+
+    // 카드가 바뀌면 선생님 질문을 들려준다
+    useEffect(function () {
+      if (phase !== 'play' || !card || step !== 'card') return;
+      setFlipped(false);
+      var t = setTimeout(function () { sbSay(card.qa, card.q, card.qLang, props.rate); }, 450);
+      return function () { clearTimeout(t); };
+    }, [phase, qi, step]);
+
+    function begin() {
+      sbUnlock(); ac();
+      var q = unitCards.map(function (c) { return { card: c, round: 0 }; });
+      missed.current = {};
+      setQueue(q); setQi(0); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false);
+      setScore({ built: 0, first: 0, parse: 0, coins: 0 });
+      setPhase('play');
+    }
+    function toBuild() { sbStop(); setPlaced([]); setRes(null); setStep('build'); }
+    function check() {
+      var made = placed.map(function (id) { return tiles.find(function (x) { return x.id === id; }).t; });
+      var ok = made.map(sbKey).join(' ') === sbTokens(card.a).map(sbKey).join(' ');
+      setRes({ ok: ok });
+      if (ok) {
+        SFX.correct(); buzz(18);
+        var first = !missed.current[card.no];
+        setScore(function (s) { return Object.assign({}, s, { built: s.built + 1, first: s.first + (first ? 1 : 0), coins: s.coins + (first ? 10 : 4) }); });
+      } else {
+        SFX.wrong(); buzz([12, 60, 12]);
+        missed.current[card.no] = 1;
+      }
+      sbSay(card.aa, card.a, 'en', props.rate);
+    }
+    function afterBuild() {
+      sbStop();
+      if (res && res.ok) { setPick(null); setRevealed(!quizRole); setStep('parse'); return; }
+      // 틀린 카드는 맨 뒤에 한 번 더 (듀오링고처럼)
+      var q = queue.slice(); q.push({ card: card, round: item.round + 1 });
+      setQueue(q); nextCard(q);
+    }
+    function tapChunk(i) {
+      var c = card.p[i];
+      if (!revealed) {
+        var ok = c[1] === quizRole;
+        setPick({ i: i, ok: ok });
+        if (ok) {
+          SFX.correct();
+          setScore(function (s) { return Object.assign({}, s, { parse: s.parse + 1, coins: s.coins + 5 }); });
+          setTimeout(function () { setRevealed(true); }, 450);
+        } else { SFX.wrong(); buzz(12); setTimeout(function () { setRevealed(true); }, 900); }
+      }
+      TTS.say(c[0].replace(/[,.!?]+$/, ''), props.rate);
+    }
+    function nextCard(q) {
+      var list = q || queue;
+      sbStop();
+      if (qi + 1 >= list.length) { SFX.win(); setPhase('done'); props.onFinish(score.coins + 0, start.lv + '|' + sel.vol + '|' + sel.unit); return; }
+      setQi(qi + 1); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false);
+    }
+
+    /* ---------- 화면 ---------- */
+    var head = html`<div className="hud">
+      <button className="iconbtn" aria-label="나가기" onClick=${function () { sbStop(); props.onExit(); }}><${Icon} name="close" size=${16}/></button>
+      <div style=${{ flex: 1 }}>
+        <div className="eyebrow">SENTENCE BANK ${start.lv} · VOL.${sel.vol} UNIT ${sel.unit}</div>
+        ${phase === 'play' ? html`<div className="sb-prog"><div className="sb-prog-fill" style=${{ width: Math.round(100 * qi / Math.max(1, queue.length)) + '%' }}></div></div>` : html`<div style=${{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>문장 만들기</div>`}
+      </div>
+      ${phase === 'play' ? html`<div className="hud-stat"><${Icon} name="coin" size=${14}/>${score.coins}</div>` : null}
+    </div>`;
+
+    if (failed) {
+      return html`<div>${head}<div className="pad"><div className="card">
+        <div style=${{ fontWeight: 700, marginBottom: '6px' }}>카드 자료를 불러오지 못했어요</div>
+        <div className="h-sub">인터넷에 연결되어 있는지 확인한 뒤 다시 열어 주세요.</div>
+        <button className="btn btn-primary" style=${{ marginTop: '12px' }} onClick=${function () { setFailed(false); sbLoad(function (d) { if (d) setData(d); else setFailed(true); }); }}>다시 시도</button>
+      </div></div></div>`;
+    }
+    if (!data || !lvData) {
+      return html`<div>${head}<div className="pad" style=${{ alignItems: 'center', justifyContent: 'center' }}>
+        <${Whaley} mood="idle" wear=${props.wear}/><div className="h-sub">카드를 펼치는 중…</div></div></div>`;
+    }
+
+    if (phase === 'intro') {
+      var vols = [1, 2, 3, 4, 5, 6];
+      var done = props.done || {};
+      return html`<div>${head}<div className="pad">
+        <div>
+          <h1 className="h-title">문장 만들기</h1>
+          <div className="h-sub">교재 Sentence Bank 카드로 사진 보고 → 문장을 만들고 → 문장 성분까지 찾아봐요.</div>
+        </div>
+        <div className="row-wrap">
+          ${vols.map(function (v) {
+            return html`<button key=${'v' + v} className="sb-pill" data-on=${sel.vol === v ? '1' : '0'} onClick=${function () { setSel({ vol: v, unit: 1 }); }}>Vol.${v}</button>`;
+          })}
+        </div>
+        <div className="sb-units">
+          ${[1, 2, 3, 4].map(function (u) {
+            var cs = lvData.cards.filter(function (c) { return c.vol === sel.vol && c.unit === u; });
+            if (!cs.length) return null;
+            var isDone = done[start.lv + '|' + sel.vol + '|' + u];
+            return html`<button key=${'u' + u} className="sb-unit" data-on=${sel.unit === u ? '1' : '0'} onClick=${function () { setSel({ vol: sel.vol, unit: u }); }}>
+              <img src=${SB_BASE + 'img/' + start.lv + '/' + cs[0].no + '.webp'} alt="" loading="lazy"/>
+              <span className="sb-unit-meta"><b>Unit ${u}</b><span>${cs.length}문장${isDone ? ' · 완료' : ''}</span></span>
+            </button>`;
+          })}
+        </div>
+        <div className="card-flat sb-steps">
+          <div><b>1</b> 카드 보기 — 선생님 질문을 듣고 사진을 보며 대답해 봐요</div>
+          <div><b>2</b> 문장 만들기 — 단어 조각을 순서대로 눌러요</div>
+          <div><b>3</b> 문장 성분 — 주어·동사·목적어를 색으로 찾아요</div>
+        </div>
+        <div className="spacer"></div>
+        <button className="btn btn-primary" onClick=${begin}>Vol.${sel.vol} Unit ${sel.unit} 시작 · ${unitCards.length}문장</button>
+      </div></div>`;
+    }
+
+    if (phase === 'done') {
+      var total = unitCards.length;
+      return html`<div>${head}<div className="pad" style=${{ alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+        <${Bubbles} seed=${3}/>
+        <${Whaley} mood="hit" wear=${props.wear}/>
+        <h1 className="h-title" style=${{ fontSize: '30px' }}>${total}문장 완성!</h1>
+        <div className="row" style=${{ gap: '8px', width: '100%' }}>
+          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">한 번에 정답</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.first} / ${total}</div></div>
+          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">성분 찾기</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.parse}</div></div>
+          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">코인</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>+${score.coins}</div></div>
+        </div>
+        <div className="spacer"></div>
+        <button className="btn btn-primary" style=${{ width: '100%' }} onClick=${begin}>한 번 더</button>
+        <button className="btn btn-ghost" style=${{ width: '100%' }} onClick=${function () {
+          var nu = sel.unit < 4 ? { vol: sel.vol, unit: sel.unit + 1 } : { vol: Math.min(6, sel.vol + 1), unit: 1 };
+          setSel(nu); setPhase('intro');
+        }}>다음 단원 고르기</button>
+        <button className="btn btn-ghost" style=${{ width: '100%' }} onClick=${props.onExit}>홈으로</button>
+      </div></div>`;
+    }
+
+    if (!card) return null;
+    var img = SB_BASE + 'img/' + start.lv + '/' + card.no + '.webp';
+    var body;
+    if (step === 'card') {
+      body = html`<div className="sb-col">
+        <div className="sb-kicker">${item.round ? '다시 한 번! ' : ''}사진을 보고 대답해 보세요</div>
+        <button className="sb-scene" onClick=${function () {
+          var f = !flipped; setFlipped(f);
+          if (f) sbSay(card.aa, card.a, 'en', props.rate); else sbSay(card.qa, card.q, card.qLang, props.rate);
+        }} aria-label="카드 뒤집기">
+          <div className="sb-card" data-flip=${flipped ? '1' : '0'}>
+            <div className="sb-face"><img src=${img} alt=${card.ko}/></div>
+            <div className="sb-face sb-back">
+              <div className="sb-q">Q : ${card.q}</div>
+              <div className="sb-a">A : ${card.a}</div>
+              <span className="sb-no">${card.no}</span>
+            </div>
+          </div>
+        </button>
+        <div className="sb-bubble">
+          <span className="sb-who">TEACHER</span>
+          <span>${card.q}</span>
+          <button className="iconbtn" aria-label="질문 다시 듣기" onClick=${function () { sbSay(card.qa, card.q, card.qLang, props.rate); }}><${Icon} name="sound" size=${16}/></button>
+        </div>
+        <div className="h-sub" style=${{ textAlign: 'center' }}>카드를 누르면 뒤집혀서 정답이 보여요</div>
+        <div className="spacer"></div>
+        <button className="btn btn-primary" onClick=${toBuild}>문장 만들기 →</button>
+      </div>`;
+    } else if (step === 'build') {
+      var answerWords = sbTokens(card.a);
+      body = html`<div className="sb-col">
+        <div className="sb-kicker">영어 문장으로 만들어 보세요</div>
+        <div className="sb-prompt">
+          <img src=${img} alt=""/>
+          <div className="sb-ko">${card.ko}</div>
+        </div>
+        <div className="slot sb-slot" data-state=${res ? (res.ok ? 'ok' : 'no') : ''}>
+          ${placed.map(function (id) {
+            var t = tiles.find(function (x) { return x.id === id; });
+            return html`<button key=${id} className="chip chip-placed" disabled=${!!res}
+              onClick=${function () { setPlaced(placed.filter(function (x) { return x !== id; })); }}>${t.t}</button>`;
+          })}
+          ${!placed.length ? html`<span style=${{ color: 'var(--ink-3)', fontSize: '13px', padding: '8px' }}>단어를 눌러 여기에 놓아요</span>` : null}
+        </div>
+        <div className="row-wrap sb-bank">
+          ${tiles.map(function (t) {
+            return html`<button key=${t.id} className="chip" data-used=${placed.indexOf(t.id) >= 0 ? '1' : '0'} disabled=${!!res}
+              onClick=${function () { SFX.tick(); setPlaced(placed.concat([t.id])); }}>${t.t}</button>`;
+          })}
+        </div>
+        <div className="spacer"></div>
+        ${res ? html`<div className="feedback" data-ok=${res.ok ? '1' : '0'}>
+          <div className="fb-title">${res.ok ? (missed.current[card.no] ? '이번엔 맞았어요!' : '정답이에요!') : '아쉬워요'}</div>
+          <div className="fb-sub">${res.ok ? card.a : '정답: ' + card.a}</div>
+          ${res.ok ? null : html`<div className="fb-sub">이 카드는 마지막에 한 번 더 나와요</div>`}
+          <button className="btn btn-primary" onClick=${afterBuild}>${res.ok ? '문장 성분 보기 →' : '계속'}</button>
+        </div>` : html`<button className="btn btn-primary" disabled=${placed.length < answerWords.length} onClick=${check}>확인</button>`}
+      </div>`;
+    } else {
+      body = html`<div className="sb-col">
+        <div className="sb-kicker">${revealed ? '문장 성분' : (SB_ROLE[quizRole].ko + '(' + quizRole + ')를 찾아 눌러 보세요')}</div>
+        ${revealed ? null : html`<div className="h-sub" style=${{ textAlign: 'center' }}>${SB_ROLE_TIP[quizRole]}</div>`}
+        <div className="sb-parse" data-revealed=${revealed ? '1' : '0'}>
+          ${card.p.map(function (c, i) {
+            var state = pick && pick.i === i ? (pick.ok ? 'ok' : 'no') : '';
+            return html`<button key=${i} className="sb-chunk" data-r=${c[1]} data-glue=${c[2] ? '1' : '0'} data-pick=${state} onClick=${function () { tapChunk(i); }}>
+              <span className="sb-chunk-t">${c[0]}</span>
+              <span className="sb-chunk-r">${revealed ? SB_ROLE[c[1]].ko : '?'}</span>
+            </button>`;
+          })}
+        </div>
+        <div className="sb-ko" style=${{ textAlign: 'center' }}>${card.ko}</div>
+        ${revealed ? html`<div className="card-flat sb-legend">
+          ${Object.keys(SB_ROLE).filter(function (r) { return card.p.some(function (c) { return c[1] === r; }); }).map(function (r) {
+            return html`<div key=${r} className="sb-leg" data-r=${r}><b>${SB_ROLE[r].ko}</b><span>${SB_ROLE_TIP[r]}</span></div>`;
+          })}
+        </div>` : null}
+        <div className="h-sub" style=${{ textAlign: 'center' }}>덩어리를 누르면 소리로 들려줘요</div>
+        <div className="spacer"></div>
+        ${revealed ? html`<button className="btn btn-primary" onClick=${function () { nextCard(); }}>${qi + 1 >= queue.length ? '마치기' : '다음 카드 →'}</button>` : null}
+      </div>`;
+    }
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>${head}<div className="pad">${body}</div></div>`;
+  }
 
   function Home(props) {
     var p = props.profile, prog = props.progress, lv = byId[p.levelId] || LEVELS[0];
@@ -1932,6 +2352,9 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     var _vt = useState(0), setVt = _vt[1];
     useEffect(function () { TTS.whenReady(function () { setVt(function (x) { return x + 1; }); }); }, []);
     var pct = Math.min(1, dayIdx / Math.max(1, lv.days.length));
+    var sbStart = sbUnitOf(lv.id, day.id);
+    var sbPer = { '240': 10, '520': 12, '860': 14, '1240': 16, '1680': 18 };
+    if (sbStart && !sbPer[sbStart.lv]) sbStart = null;
 
     return html`<div className="pad">
       <div className="row">
@@ -1990,10 +2413,11 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>
-      ${cardHref(day.id) ? html`<a className="btn btn-ghost" href=${cardHref(day.id)}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 19h12a2 2 0 0 0 2-2V9"/></svg>
-        Sentence Bank 말하기 카드 · ${cardLabel(day.id)}
-      </a>` : null}
+      ${sbStart ? html`<button className="sb-entry" onClick=${function () { ac(); props.go('sbank'); }}>
+        <img src=${SB_BASE + 'img/' + sbStart.lv + '/' + String((sbStart.vol - 1) * 4 * sbPer[sbStart.lv] + (sbStart.unit - 1) * sbPer[sbStart.lv] + 1).padStart(3, '0') + '.webp'} alt=""/>
+        <span><b>문장 만들기</b><small>Sentence Bank · Vol.${sbStart.vol} Unit ${sbStart.unit} · 사진 보고 문장 만들고 성분 찾기</small></span>
+        ${(prog.sbDone || {})[sbStart.lv + '|' + sbStart.vol + '|' + sbStart.unit] ? html`<span className="tag" data-kind="ok">완료</span>` : null}
+      </button>` : null}
     </div>`;
   }
 
@@ -2944,6 +3368,18 @@ nextRef.current = function () {
           try { localStorage.removeItem(progKey(profile.studentId)); localStorage.removeItem(K_PROFILE); localStorage.removeItem(K_REPORTS); } catch (e) {}
           location.reload();
         }}/>`;
+    } else if (view === 'sbank') {
+      var sbs = sbUnitOf(lv.id, lv.days[dayIdx].id);
+      body = sbs ? html`<${SentenceBuilder} start=${sbs} rate=${settings.rate} wear=${progress.wear} done=${progress.sbDone}
+        onExit=${function () { setView('home'); }}
+        onFinish=${function (coins, key) {
+          setProgress(function (p) {
+            var np = Object.assign({}, p);
+            np.coins = (p.coins || 0) + coins;
+            np.sbDone = Object.assign({}, p.sbDone); np.sbDone[key] = 1;
+            return np;
+          });
+        }}/>` : null;
     } else if (view === 'history') {
       body = html`<${History} back=${function () { setView('home'); }}/>`;
     } else if (view === 'play' && session) {
