@@ -90,6 +90,7 @@ h1,h2,h3{margin:0; text-wrap:balance}
   cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn:active{transform:translateY(1px)}
+a.btn{text-decoration:none}
 .btn-primary{
   background:var(--accent); color:var(--on-accent); border-color:transparent;
   font-family:var(--f-display); font-size:19px; font-weight:400; padding:18px 20px;
@@ -1915,6 +1916,14 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     return html`<div className="trail">${rows.slice().reverse()}</div>`;
   }
 
+  // 오늘 진도 단원의 Sentence Bank 말하기 카드(../cards/). 파닉스는 카드가 없다.
+  function cardUnit(dayId) { return /^lv(\d+)-V(\d)U(\d)D\d+$/.exec(dayId || ''); }
+  function cardHref(dayId) {
+    var m = cardUnit(dayId);
+    return m ? 'https://a28008005-sketch.github.io/dailytest/cards/?lv=' + m[1] + '&v=' + m[2] + '&u=' + m[3] : null;
+  }
+  function cardLabel(dayId) { var m = cardUnit(dayId); return m ? 'Vol.' + m[2] + ' Unit ' + m[3] : ''; }
+
   function Home(props) {
     var p = props.profile, prog = props.progress, lv = byId[p.levelId] || LEVELS[0];
     var dayIdx = Math.min(prog.dayIdx || 0, lv.days.length - 1);
@@ -1981,6 +1990,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>
+      ${cardHref(day.id) ? html`<a className="btn btn-ghost" href=${cardHref(day.id)}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 19h12a2 2 0 0 0 2-2V9"/></svg>
+        Sentence Bank 말하기 카드 · ${cardLabel(day.id)}
+      </a>` : null}
     </div>`;
   }
 
