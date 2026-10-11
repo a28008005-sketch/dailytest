@@ -1,0 +1,11 @@
+{
+  "name": "sentence-card-tools",
+  "private": true,
+  "type": "module",
+  "description": "Sentence Bank 카드 PDF → 태블릿용 말하기 카드 앱",
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.65",
+    "compromise": "^14.14.4",
+    "pdfjs-dist": "4.10.38"
+  }
+}

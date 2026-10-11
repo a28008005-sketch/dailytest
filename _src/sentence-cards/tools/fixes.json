@@ -1,0 +1,31 @@
+{
+  "_note": "카드 PDF 뒷면의 인쇄 오류를 앱에서만 바로잡습니다. 원본 PDF 는 그대로 둡니다. 근거는 Sentence Bank 엑셀(daily test/Sentence Bank_*.xlsx)과 카드 앞면 그림. 축약형 차이(It's / It is)처럼 둘 다 맞는 것은 카드 그대로 둡니다.",
+  "cards": {
+    "520-020":  { "a": "They're my sisters.", "why": "sisiters 오타" },
+    "520-168":  { "q": "What does the police officer do?", "why": "policeofficer 띄어쓰기" },
+    "520-191":  { "q": "What are your sister's chores?", "why": "chorses 오타" },
+    "520-192":  { "q": "What are the robot's chores?", "why": "chorses 오타" },
+    "520-233":  { "q": "Does he have a stomachache?", "why": "tomachache 오타" },
+    "860-260":  { "q": "Can passengers smoke inside the airplane?", "why": "passesngers 오타" },
+    "1680-249": { "a": "We needed to buy pepper too because we ran out of it last Friday.", "why": "lastFriday 띄어쓰기" },
+    "520-256":  { "a": "Will Jun hit a baseball?", "why": "질문 한글이 '준', 엑셀도 Jun" },
+    "860-042":  { "q": "What does she do?", "a": "She is a gardener.", "why": "앞면은 '그녀는 정원사야' + 정원사 사진인데 뒷면이 다른 카드 문장" },
+    "860-050":  { "q": "너는 의사니?", "qLang": "ko", "a": "Are you a doctor?", "why": "뒷면이 문법 고르기 문제와 한글 답으로 뒤바뀌어 있음" },
+    "860-139":  { "a": "We eat a lot of seafood, too.", "why": "앞면 '해산물도', too 빠짐" },
+    "1240-323": { "a": "What a huge aquarium!", "why": "앞면 '수족관이구나!' 감탄문인데 마침표" },
+    "1680-076": { "a": "I have an oboe and practice it every day.", "why": "마침표 빠짐" },
+    "860-147":  { "a": "You don't watch scary movies.", "why": "질문이 watch, want 는 오타" },
+    "1240-064": { "a": "Was there any pepper?", "why": "질문 한글이 '후추', paper 는 오타" },
+    "1240-070": { "a": "I planned a party.", "why": "planed 오타" },
+    "1240-080": { "a": "We played games in her yard.", "why": "gamed 오타" },
+    "1240-090": { "a": "She read the email yesterday.", "why": "앞면 '메일' + 컴퓨터 사진, 엑셀도 email" },
+    "1240-185": { "a": "My cat was running away from a dog.", "why": "앞면 '개에게서' + 개 사진" },
+    "1240-333": { "a": "What a large mansion!", "why": "감탄문 어순 오류" },
+    "1240-361": { "a": "Open the window and clean the room.", "why": "windo 오타" },
+    "1240-367": { "a": "Wear your elbow pads, and you will not hurt your body.", "why": "앞면 '팔꿈치 보호대를 착용해' + 보호대 사진인데 뒷면이 다른 문장" },
+    "1680-012": { "a": "We watched a movie together.", "why": "theater 는 together 오타(질문도 together)" },
+    "1680-118": { "a": "Somebody stole my purse!", "why": "pulse 오타" },
+    "1680-142": { "a": "The cows start to prepare a lot of milk to make a big cake.", "why": "lof 오타" },
+    "1680-391": { "a": "She has stayed here since yesterday.", "why": "yseterday 오타" }
+  }
+}
