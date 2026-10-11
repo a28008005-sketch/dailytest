@@ -2953,7 +2953,9 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       var ratio = beat && !isSpeak ? Math.max(0, left / beat.seconds) : 0.6;
       var mult = streak >= 8 ? 2 : streak >= 5 ? 1.5 : streak >= 3 ? 1.25 : 1;
       var shielded = false;
-      if (!ok && (inv.shield || 0) > 0) {
+      // 말하기 건너뛰기는 실수가 아니다: 연속 기록·방어막을 건드리지 않는다
+      var skipped = !ok && meta && meta.skipped;
+      if (!ok && !skipped && (inv.shield || 0) > 0) {
         shielded = true;
         setInv(function (v) { var n = Object.assign({}, v); n.shield = (n.shield || 1) - 1; return n; });
       }
@@ -2970,7 +2972,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         }
         SFX.correct(); buzz(18);
         if (props.monsterHp) { SFX.hit(); setHp(function (h) { return Math.max(0, h - (12 + streak * 2) * (dbl ? 2 : 1)); }); }
-      } else {
+      } else if (!skipped) {
         setStreak(0); SFX.wrong(); buzz([12, 60, 12]);
       }
       setDbl(false);
@@ -3168,16 +3170,16 @@ nextRef.current = function () {
         <div className="prompt" style=${{ position: 'relative' }}>
           ${lastPts ? html`<div className="floatpts">+${lastPts}</div>` : null}
           <div className="pl-friend">
-            <${SbFriend} f=${pfriend} mood=${phase === 'fb' && res ? (res.ok ? 'happy' : 'sad') : 'idle'} size=${52}/>
-            <span className="pl-say" key=${'say' + bi + phase}>${phase === 'fb' && res ? (res.ok ? SB_PRAISE[bi % SB_PRAISE.length] : SB_CHEER[bi % SB_CHEER.length]) : (PL_SAY[beat.type] || '할 수 있어!')}</span>
+            <${SbFriend} f=${pfriend} mood=${phase === 'fb' && res ? (res.ok ? 'happy' : (res.meta.skipped ? 'idle' : 'sad')) : 'idle'} size=${52}/>
+            <span className="pl-say" key=${'say' + bi + phase}>${phase === 'fb' && res ? (res.ok ? SB_PRAISE[bi % SB_PRAISE.length] : (res.meta.skipped ? '다음에 같이 말해 보자!' : SB_CHEER[bi % SB_CHEER.length])) : (PL_SAY[beat.type] || '할 수 있어!')}</span>
           </div>
           ${promptBody}
         </div>
 
-        ${phase === 'fb' && res ? html`<div className="feedback" data-ok=${res.ok ? '1' : '0'}>
+        ${phase === 'fb' && res ? html`<div className="feedback" data-ok=${res.ok ? '1' : (res.meta.skipped ? '' : '0')}>
           <div className="sb-fb-top">
-            <${SbFriend} f=${pfriend} mood=${res.ok ? 'happy' : 'sad'} size=${46}/>
-            <div className="fb-title">${res.ok ? (streak >= 3 ? '🔥 ' + streak + '연속! 정확해요!' : '정확해요!') : (res.shielded ? '방어막이 막아줬어요' : '아쉬워요')}</div>
+            <${SbFriend} f=${pfriend} mood=${res.ok ? 'happy' : (res.meta.skipped ? 'idle' : 'sad')} size=${46}/>
+            <div className="fb-title">${res.ok ? (streak >= 3 ? '🔥 ' + streak + '연속! 정확해요!' : '정확해요!') : (res.meta.skipped ? (streak >= 2 ? '건너뛰었어요 · 🔥 ' + streak + '연속 유지' : '건너뛰었어요') : (res.shielded ? '방어막이 막아줬어요' : '아쉬워요'))}</div>
           </div>
           <div className="fb-sub">
             ${beat.type === 'speak_word' || beat.type === 'speak_sent'
