@@ -1,6 +1,6 @@
 # 고래영어 Sentence Bank 말하기 카드 (태블릿용)
 
-> 이 폴더는 보관용 사본입니다. 작업 원본은 `C:UsersWooJinDesktopsentece bank cardapp` 이고,
+> 이 폴더는 보관용 사본입니다. 작업 원본은 `C:/Users/WooJin/Desktop/sentece bank card/app/` 이고,
 > 빌드 결과(`site/`)는 이 저장소의 `cards/` 로 배포됩니다. 웨일리 보카의 "문장 만들기"는 `voca/index.html` 안에 있습니다.
 
 Practice book 뒤의 Sentence Bank 카드를 인쇄·코팅하지 않고 태블릿에서 바로 여는 앱입니다.
