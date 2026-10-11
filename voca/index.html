@@ -674,6 +674,68 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 .sb-slot[data-state="ok"]{border-color:var(--kelp); border-style:solid}
 .sb-slot[data-state="no"]{border-color:var(--danger); border-style:solid}
 .sb-bank{justify-content:center}
+/* 바다 친구들 */
+.sbf{overflow:visible; flex:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))}
+.sbf[data-mood="idle"]{animation:sbbob 2.4s ease-in-out infinite}
+.sbf[data-mood="happy"]{animation:sbjump .7s cubic-bezier(.3,1.6,.5,1) 2}
+.sbf[data-mood="sad"]{animation:sbsad .7s ease-in-out}
+.sbf-eyes{transform-box:fill-box; transform-origin:center; animation:sbblink 4.2s infinite}
+.sbf-legs{transform-box:fill-box; transform-origin:50% 0; animation:sbwiggle 1.4s ease-in-out infinite}
+.sbf-claws{transform-box:fill-box; transform-origin:50% 100%; animation:sbsnap 1.8s ease-in-out infinite}
+.sbf-spikes{transform-box:fill-box; transform-origin:center; animation:sbpuff 2.6s ease-in-out infinite}
+.sbf[data-who="star"][data-mood="happy"]{animation:sbspin .8s ease-out}
+.sbf-tear{animation:sbtear 1s ease-in infinite}
+@keyframes sbbob{50%{transform:translateY(-5px) rotate(-2deg)}}
+@keyframes sbjump{0%{transform:translateY(0) scale(1,1)} 25%{transform:translateY(2px) scale(1.12,.86)} 55%{transform:translateY(-22px) scale(.92,1.1) rotate(-6deg)} 100%{transform:translateY(0) scale(1,1)}}
+@keyframes sbsad{0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px) rotate(-5deg)} 40%{transform:translateX(5px) rotate(5deg)} 60%{transform:translateX(-3px)} 80%{transform:translateY(3px) scale(1,.95)}}
+@keyframes sbblink{0%,90%,100%{transform:scaleY(1)} 94%{transform:scaleY(.1)}}
+@keyframes sbwiggle{50%{transform:skewX(6deg) scaleY(1.05)}}
+@keyframes sbsnap{0%,70%,100%{transform:rotate(0)} 80%{transform:rotate(-8deg)} 90%{transform:rotate(6deg)}}
+@keyframes sbpuff{50%{transform:scale(1.08)}}
+@keyframes sbspin{0%{transform:rotate(0) scale(1)} 50%{transform:rotate(200deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)}}
+@keyframes sbtear{0%{transform:translateY(0); opacity:1} 100%{transform:translateY(8px); opacity:0}}
+.sb-ask{display:flex; align-items:flex-end; gap:10px}
+.sb-ask-who{display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:0; padding:0; cursor:pointer; color:var(--ink-2); font:700 12px/1 var(--f-ui)}
+.sb-speech{
+  position:relative; flex:1; display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--line-strong);
+  border-radius:20px; padding:10px 12px; margin-bottom:14px; font:600 17px/1.35 var(--f-word);
+}
+.sb-speech::before{content:""; position:absolute; left:-11px; bottom:14px; border:9px solid transparent; border-right-color:var(--line-strong); border-left:0}
+.sb-speech .sb-who{display:block; font:700 11px/1.2 var(--f-ui); letter-spacing:0; color:var(--accent); margin-bottom:3px}
+.sb-speech-q{flex:1}
+.sb-speech > .sb-who{position:absolute; top:-9px; left:14px; background:var(--surface); padding:0 6px; border-radius:6px}
+.sb-speech-sm{margin-bottom:0; font:700 15px/1.35 var(--f-ui)}
+.sb-parse-head{display:flex; align-items:center; gap:12px}
+.sb-fb-top{display:flex; align-items:center; gap:10px}
+.sb-fb .fb-title{font-size:22px}
+.sb-pts{position:absolute; right:22px; bottom:150px; font:800 26px/1 var(--f-num); color:var(--sun); text-shadow:0 2px 0 rgba(0,0,0,.25); pointer-events:none; animation:sbpts 1.1s ease-out forwards; z-index:6}
+@keyframes sbpts{0%{transform:translateY(10px) scale(.6); opacity:0} 25%{transform:translateY(0) scale(1.2); opacity:1} 100%{transform:translateY(-60px) scale(1); opacity:0}}
+.sb-confetti{position:absolute; left:50%; top:40%; width:0; height:0; pointer-events:none; z-index:6}
+.sb-confetti i{position:absolute; width:9px; height:14px; border-radius:3px; opacity:0; animation:sbconf 1.1s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes sbconf{0%{transform:rotate(var(--a)) translateY(0) rotate(0); opacity:1} 100%{transform:rotate(var(--a)) translateY(calc(-1 * var(--d))) rotate(540deg); opacity:0}}
+.sb-prog{position:relative; overflow:visible}
+.sb-rider{position:absolute; top:50%; transform:translate(-50%,-55%); font-size:20px; transition:left .45s cubic-bezier(.3,1.4,.5,1); filter:drop-shadow(0 2px 2px rgba(0,0,0,.3)); animation:sbbob 1.6s ease-in-out infinite}
+.sb-combo{font:800 15px/1 var(--f-num); color:#FF7A1A; background:color-mix(in srgb, #FF7A1A 16%, var(--surface)); border:2px solid #FF7A1A; border-radius:999px; padding:5px 10px; animation:sbpop .45s cubic-bezier(.3,1.8,.5,1)}
+.sb-coins{animation:sbpop .4s cubic-bezier(.3,1.8,.5,1)}
+@keyframes sbpop{0%{transform:scale(.6)} 60%{transform:scale(1.25)} 100%{transform:scale(1)}}
+.sb-toast{
+  position:absolute; left:50%; top:76px; transform:translateX(-50%); z-index:20; display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,#FF8A3D,#FF4F7B); color:#fff; border-radius:22px; padding:10px 18px 10px 10px;
+  box-shadow:0 12px 28px -10px rgba(255,79,123,.7); animation:sbtoast 1.9s ease forwards; white-space:nowrap;
+}
+.sb-toast b{display:block; font:800 20px/1.1 var(--f-ui)}
+.sb-toast span{font:600 13px/1.3 var(--f-ui)}
+@keyframes sbtoast{0%{transform:translate(-50%,-30px) scale(.7); opacity:0} 15%{transform:translate(-50%,0) scale(1.05); opacity:1} 25%{transform:translate(-50%,0) scale(1)} 85%{opacity:1} 100%{transform:translate(-50%,-20px); opacity:0}}
+.sb-stars{display:flex; gap:10px; justify-content:center; font-size:52px; line-height:1}
+.sb-stars span{color:var(--line-strong); animation:sbstar .6s cubic-bezier(.3,1.8,.5,1) both}
+.sb-stars span[data-on="1"]{color:#FFC93C; text-shadow:0 4px 0 #E8A915, 0 0 18px rgba(255,201,60,.6)}
+@keyframes sbstar{0%{transform:scale(0) rotate(-120deg)} 100%{transform:scale(1) rotate(0)}}
+.sb-parade{display:flex; align-items:flex-end; justify-content:center; gap:4px; width:100%}
+.sb-parade > div{animation:sbjump .8s cubic-bezier(.3,1.6,.5,1) infinite}
+.sb-parade-whale{animation-duration:1s !important}
+.sb-parade-whale svg{width:120px; height:auto}
+.sb-best{font:800 16px/1 var(--f-ui); color:#FF7A1A}
+@media (prefers-reduced-motion: reduce){.sbf, .sbf *, .sb-parade > div, .sb-rider, .sb-confetti i{animation:none !important}}
 .sb-line{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 6px; padding:16px 10px; background:var(--surface); border:2px solid var(--line); border-radius:var(--r-md); font:600 20px/1.3 var(--f-word)}
 .sb-line[data-state="ok"]{border-color:var(--kelp)}
 .sb-line[data-state="no"]{border-color:var(--danger)}
@@ -2150,6 +2212,97 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     };
   }
 
+  /* 바다 친구들 — 카드마다 돌아가며 질문하고, 맞히면 뛰어오르고 틀리면 시무룩해진다. */
+  var SB_FRIENDS = [
+    { id: 'octo', name: '옥토', color: '#FF8FB8', dark: '#E8689A' },
+    { id: 'crab', name: '집게', color: '#FF7A45', dark: '#E0582A' },
+    { id: 'puffer', name: '뽀글', color: '#FFC93C', dark: '#E8A915' },
+    { id: 'star', name: '별이', color: '#FFA94D', dark: '#F08A1E' }
+  ];
+  var SB_PRAISE = ['정답이에요!', '완벽해요!', '멋져요!', 'Great job!', '최고예요!', 'Perfect!', '천재인데요?', '바로 그거예요!'];
+  var SB_CHEER = ['괜찮아요, 다시 해 봐요!', '아깝다! 거의 다 왔어요', '한 번 더 하면 돼요!', '실수해도 괜찮아요'];
+  var SB_ASK = ['나한테 대답해 줄래?', '사진 잘 봐!', '영어로 말해 볼까?', '할 수 있어!'];
+  function sbPickOne(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+  function SbFace(props) {
+    var x = props.x || 50, y = props.y, my = props.my || (y + 9), m = props.mood;
+    return html`<g>
+      <g className="sbf-eyes">
+        <circle cx=${x - 9} cy=${y} r="6.2" fill="#fff"/><circle cx=${x + 9} cy=${y} r="6.2" fill="#fff"/>
+        <circle cx=${x - 8} cy=${y + (m === 'sad' ? 2 : 1)} r="3.6" fill="#2C2E35"/><circle cx=${x + 10} cy=${y + (m === 'sad' ? 2 : 1)} r="3.6" fill="#2C2E35"/>
+        <circle cx=${x - 6.8} cy=${y - 0.6} r="1.3" fill="#fff"/><circle cx=${x + 11.2} cy=${y - 0.6} r="1.3" fill="#fff"/>
+      </g>
+      <ellipse cx=${x - 17} cy=${my - 1} rx="4.4" ry="2.8" fill="#FF5C8A" opacity=".5"/>
+      <ellipse cx=${x + 17} cy=${my - 1} rx="4.4" ry="2.8" fill="#FF5C8A" opacity=".5"/>
+      ${m === 'happy'
+        ? html`<path d=${'M' + (x - 7) + ' ' + my + ' Q' + x + ' ' + (my + 12) + ' ' + (x + 7) + ' ' + my + ' Z'} fill="#2C2E35"/>`
+        : m === 'sad'
+          ? html`<path d=${'M' + (x - 5) + ' ' + (my + 4) + ' Q' + x + ' ' + (my - 1) + ' ' + (x + 5) + ' ' + (my + 4)} stroke="#2C2E35" strokeWidth="2.6" fill="none" strokeLinecap="round"/>`
+          : html`<path d=${'M' + (x - 5) + ' ' + my + ' Q' + x + ' ' + (my + 5) + ' ' + (x + 5) + ' ' + my} stroke="#2C2E35" strokeWidth="2.6" fill="none" strokeLinecap="round"/>`}
+      ${m === 'sad' ? html`<path className="sbf-tear" d=${'M' + (x + 15) + ' ' + (y + 4) + ' q3 6 0 8 q-3 -2 0 -8z'} fill="#7FD3FF"/>` : null}
+    </g>`;
+  }
+  function SbFriend(props) {
+    var f = props.f || SB_FRIENDS[0], c = f.color, d = f.dark, mood = props.mood || 'idle';
+    var art;
+    if (f.id === 'octo') {
+      art = html`<g>
+        <g className="sbf-legs" stroke=${d} strokeWidth="9" strokeLinecap="round" fill="none">
+          <path d="M26 60 q-8 16 2 28"/><path d="M40 66 q-4 16 4 26"/><path d="M60 66 q4 16 -4 26"/><path d="M74 60 q8 16 -2 28"/>
+        </g>
+        <ellipse cx="50" cy="44" rx="32" ry="30" fill=${c}/>
+        <ellipse cx="38" cy="26" rx="10" ry="6" fill="#fff" opacity=".35"/>
+        <${SbFace} y=${44} mood=${mood}/>
+      </g>`;
+    } else if (f.id === 'crab') {
+      art = html`<g>
+        <g className="sbf-claws">
+          <path d="M26 58 L16 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
+          <path d="M74 58 L84 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
+          <defs><mask id="sbclaw"><rect x="0" y="0" width="100" height="100" fill="#fff"/><path d="M15 30 L9 14 L21 14 Z M85 30 L79 14 L91 14 Z" fill="#000"/></mask></defs>
+          <g mask="url(#sbclaw)"><circle cx="15" cy="28" r="12" fill=${c}/><circle cx="85" cy="28" r="12" fill=${c}/></g>
+        </g>
+        <path d="M41 52 L40 34 M59 52 L60 34" stroke=${d} strokeWidth="4" strokeLinecap="round"/>
+        <g stroke=${d} strokeWidth="4" strokeLinecap="round"><path d="M24 74 l-10 8"/><path d="M28 80 l-8 10"/><path d="M76 74 l10 8"/><path d="M72 80 l8 10"/></g>
+        <ellipse cx="50" cy="66" rx="34" ry="20" fill=${c}/>
+        <ellipse cx="40" cy="58" rx="9" ry="4" fill="#fff" opacity=".3"/>
+        <${SbFace} y=${32} my=${70} mood=${mood}/>
+      </g>`;
+    } else if (f.id === 'puffer') {
+      var spikes = [];
+      for (var k = 0; k < 12; k++) {
+        var ang = (k / 12) * Math.PI * 2, x1 = 50 + Math.cos(ang) * 31, y1 = 52 + Math.sin(ang) * 31;
+        var x2 = 50 + Math.cos(ang) * 41, y2 = 52 + Math.sin(ang) * 41;
+        spikes.push(html`<path key=${k} d=${'M' + (x1 - Math.sin(ang) * 4) + ' ' + (y1 + Math.cos(ang) * 4) + ' L' + x2 + ' ' + y2 + ' L' + (x1 + Math.sin(ang) * 4) + ' ' + (y1 - Math.cos(ang) * 4) + 'Z'} fill=${d}/>`);
+      }
+      art = html`<g>
+        <g className="sbf-spikes">${spikes}</g>
+        <circle cx="50" cy="52" r="33" fill=${c}/>
+        <ellipse cx="50" cy="66" rx="20" ry="12" fill="#FFF3C4" opacity=".8"/>
+        <ellipse cx="38" cy="34" rx="10" ry="6" fill="#fff" opacity=".4"/>
+        <${SbFace} y=${48} mood=${mood}/>
+      </g>`;
+    } else {
+      art = html`<g>
+        <path d="M50 8 L61 38 L94 39 L68 59 L77 91 L50 72 L23 91 L32 59 L6 39 L39 38 Z" fill=${c} stroke=${c} strokeWidth="8" strokeLinejoin="round"/>
+        <circle cx="30" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="70" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="50" cy="22" r="2" fill="#fff" opacity=".7"/>
+        <${SbFace} y=${50} mood=${mood}/>
+      </g>`;
+    }
+    return html`<svg className="sbf" data-mood=${mood} data-who=${f.id} viewBox="0 0 100 100" width=${props.size || 84} height=${props.size || 84} role="img" aria-label=${f.name}>${art}</svg>`;
+  }
+
+  // 꽃가루: 맞혔을 때 잠깐 터진다
+  function SbConfetti(props) {
+    var cols = ['#FF5C8A', '#FFC93C', '#2FE3C8', '#4FA8FF', '#A06BFF', '#FF7A45'];
+    var bits = [];
+    for (var i = 0; i < 26; i++) {
+      var ang = (i / 26) * 360 + (i % 3) * 7, dist = 90 + (i * 37) % 80;
+      bits.push(html`<i key=${i} style=${{ background: cols[i % cols.length], '--a': ang + 'deg', '--d': dist + 'px', animationDelay: (i % 5) * 0.02 + 's' }}></i>`);
+    }
+    return html`<div className="sb-confetti" key=${props.id}>${bits}</div>`;
+  }
+
   function SentenceBuilder(props) {
     var start = props.start;
     var _d = useState(window.CARD_DATA || null), data = _d[0], setData = _d[1];
@@ -2166,6 +2319,12 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     var _rev = useState(false), revealed = _rev[0], setRevealed = _rev[1];
     var _sc = useState({ built: 0, first: 0, parse: 0, coins: 0 }), score = _sc[0], setScore = _sc[1];
     var _hint = useState(0), hint = _hint[0], setHint = _hint[1];
+    var _mood = useState('idle'), mood = _mood[0], setMood = _mood[1];
+    var _streak = useState(0), streak = _streak[0], setStreak = _streak[1];
+    var _best = useState(0), best = _best[0], setBest = _best[1];
+    var _fx = useState(null), fx = _fx[0], setFx = _fx[1];
+    var _toast = useState(null), toast = _toast[0], setToast = _toast[1];
+    var _shown = useState(0), shownCoins = _shown[0], setShownCoins = _shown[1];
     var missed = useRef({});
     var dayMode = !!props.day;
     var phaseDay = useRef(dayMode);
@@ -2212,7 +2371,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     // 카드가 바뀌면 선생님 질문을 들려준다
     useEffect(function () {
       if (phase !== 'play' || !card || step !== 'card') return;
-      setFlipped(false);
+      setFlipped(false); setMood('idle');
       var t = setTimeout(function () { sbSay(card.qa, card.q, card.qLang, props.rate); }, 450);
       return function () { clearTimeout(t); };
     }, [phase, qi, step]);
@@ -2229,23 +2388,43 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       missed.current = {};
       setQueue(q); setQi(0); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false);
       setScore({ built: 0, first: 0, parse: 0, coins: 0 }); setHint(0);
+      setStreak(0); setBest(0); setMood('idle'); setFx(null); setToast(null);
       setPhase('play');
     }
+    useEffect(function () {
+      if (phase !== 'done') return;
+      setShownCoins(0);
+      var target = score.coins, n = 0;
+      var t = setInterval(function () { n += Math.max(1, Math.ceil(target / 25)); if (n >= target) { n = target; clearInterval(t); } setShownCoins(n); if (n % 3 === 0) SFX.tick(); }, 45);
+      return function () { clearInterval(t); };
+    }, [phase]);
     // 단어 학습에 이어 들어오면 고르는 화면 없이 바로 시작
     useEffect(function () { if (dayMode && lvData && phase === 'intro') begin(true); }, [!!lvData]);
     function toBuild() { sbStop(); setPlaced([]); setRes(null); setHint(0); setStep('build'); }
     function check() {
       var made = placed.map(function (id) { return tiles.find(function (x) { return x.id === id; }).t; });
       var ok = made.map(sbKey).join(' ') === blank.answer.map(sbKey).join(' ');
-      setRes({ ok: ok });
       if (ok) {
         SFX.correct(); buzz(18);
         var first = !missed.current[card.no];
-        var c0 = first ? (hint ? 6 : 10) : 4;
+        var ns = first ? streak + 1 : streak;
+        var bonus = ns >= 3 ? 2 : 0;
+        var c0 = (first ? (hint ? 6 : 10) : 4) + bonus;
         setScore(function (s) { return Object.assign({}, s, { built: s.built + 1, first: s.first + (first ? 1 : 0), coins: s.coins + c0 }); });
+        setStreak(ns); setBest(Math.max(best, ns));
+        setMood('happy');
+        setFx({ id: Date.now(), pts: c0 });
+        if (ns === 3 || ns === 5 || ns === 8 || ns === 12) {
+          setTimeout(SFX.win, 300);
+          setToast({ id: Date.now(), n: ns, text: ns >= 8 ? '말도 안 돼! 천재 등장!' : ns >= 5 ? '불타는 중! 멈추지 마요!' : '연속 정답! 콤보 시작!' });
+          setTimeout(function () { setToast(null); }, 1900);
+        }
+        setRes({ ok: true, msg: ns >= 3 && first ? '🔥 ' + ns + '연속! ' + sbPickOne(SB_PRAISE) : (first ? sbPickOne(SB_PRAISE) : '이번엔 맞았어요!') });
       } else {
         SFX.wrong(); buzz([12, 60, 12]);
         missed.current[card.no] = 1;
+        setStreak(0); setMood('sad');
+        setRes({ ok: false, msg: sbPickOne(SB_CHEER) });
       }
       sbSay(card.aa, card.a, 'en', props.rate);
     }
@@ -2262,10 +2441,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         var ok = c[1] === quizRole;
         setPick({ i: i, ok: ok });
         if (ok) {
-          SFX.correct();
+          SFX.correct(); setMood('happy'); setFx({ id: Date.now(), pts: 5 });
           setScore(function (s) { return Object.assign({}, s, { parse: s.parse + 1, coins: s.coins + 5 }); });
           setTimeout(function () { setRevealed(true); }, 450);
-        } else { SFX.wrong(); buzz(12); setTimeout(function () { setRevealed(true); }, 900); }
+        } else { SFX.wrong(); buzz(12); setMood('sad'); setTimeout(function () { setRevealed(true); setMood('idle'); }, 900); }
       }
       TTS.say(c[0].replace(/[,.!?]+$/, ''), props.rate);
     }
@@ -2281,10 +2460,13 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       <button className="iconbtn" aria-label="나가기" onClick=${function () { sbStop(); props.onExit(); }}><${Icon} name="close" size=${16}/></button>
       <div style=${{ flex: 1 }}>
         <div className="eyebrow">SENTENCE BANK ${start.lv} · VOL.${sel.vol} UNIT ${sel.unit}${phaseDay.current && phase !== 'intro' ? ' · DAY ' + props.day : ''}</div>
-        ${phase === 'play' ? html`<div className="sb-prog"><div className="sb-prog-fill" style=${{ width: Math.round(100 * qi / Math.max(1, queue.length)) + '%' }}></div></div>` : html`<div style=${{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>문장 만들기</div>`}
+        ${phase === 'play' ? html`<div className="sb-prog"><div className="sb-prog-fill" style=${{ width: Math.round(100 * qi / Math.max(1, queue.length)) + '%' }}></div>
+          <span className="sb-rider" style=${{ left: Math.round(100 * qi / Math.max(1, queue.length)) + '%' }}>🐳</span></div>` : html`<div style=${{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>문장 만들기</div>`}
       </div>
-      ${phase === 'play' ? html`<div className="hud-stat"><${Icon} name="coin" size=${14}/>${score.coins}</div>` : null}
+      ${phase === 'play' && streak >= 2 ? html`<div className="sb-combo" key=${'c' + streak}>🔥 ${streak}</div>` : null}
+      ${phase === 'play' ? html`<div className="hud-stat sb-coins" key=${'k' + score.coins}><${Icon} name="coin" size=${14}/>${score.coins}</div>` : null}
     </div>`;
+    var friend = SB_FRIENDS[qi % SB_FRIENDS.length];
 
     if (failed) {
       return html`<div>${head}<div className="pad"><div className="card">
@@ -2336,13 +2518,26 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       var total = unitCards.length;
       return html`<div>${head}<div className="pad" style=${{ alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
         <${Bubbles} seed=${3}/>
-        <${Whaley} mood="hit" wear=${props.wear}/>
+        <${SbConfetti} id="end"/>
+        <div className="sb-stars">
+          ${[0, 1, 2].map(function (k) {
+            var n = queue.filter(function (x) { return !x.round; }).length || 1;
+            var stars = score.first / n >= 0.9 ? 3 : score.first / n >= 0.6 ? 2 : 1;
+            return html`<span key=${k} data-on=${k < stars ? '1' : '0'} style=${{ animationDelay: (0.25 + k * 0.3) + 's' }}>★</span>`;
+          })}
+        </div>
+        <div className="sb-parade">
+          ${SB_FRIENDS.slice(0, 2).map(function (f, k) { return html`<div key=${f.id} style=${{ animationDelay: k * 0.15 + 's' }}><${SbFriend} f=${f} mood="happy" size=${56}/></div>`; })}
+          <div className="sb-parade-whale"><${Whaley} mood="hit" wear=${props.wear}/></div>
+          ${SB_FRIENDS.slice(2).map(function (f, k) { return html`<div key=${f.id} style=${{ animationDelay: (k + 2) * 0.15 + 's' }}><${SbFriend} f=${f} mood="happy" size=${56}/></div>`; })}
+        </div>
         <h1 className="h-title" style=${{ fontSize: '30px' }}>${queue.filter(function (x) { return !x.round; }).length}문장 완성!</h1>
         <div className="row" style=${{ gap: '8px', width: '100%' }}>
           <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">한 번에 정답</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.first} / ${queue.filter(function (x) { return !x.round; }).length}</div></div>
           <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">성분 찾기</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.parse}</div></div>
-          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">코인</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>+${score.coins}</div></div>
+          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">코인</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>+${shownCoins}</div></div>
         </div>
+        ${best >= 3 ? html`<div className="sb-best">🔥 최고 ${best}연속 정답!</div>` : null}
         <div className="spacer"></div>
         <button className="btn btn-primary" style=${{ width: '100%' }} onClick=${function () { begin(phaseDay.current); }}>한 번 더</button>
         ${phaseDay.current ? html`<button className="btn btn-ghost" style=${{ width: '100%' }} onClick=${function () { phaseDay.current = false; setPhase('intro'); }}>이 단원 카드 전체 보기</button>` : null}
@@ -2373,10 +2568,16 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
             </div>
           </div>
         </button>
-        <div className="sb-bubble">
-          <span className="sb-who">TEACHER</span>
-          <span>${card.q}</span>
-          <button className="iconbtn" aria-label="질문 다시 듣기" onClick=${function () { sbSay(card.qa, card.q, card.qLang, props.rate); }}><${Icon} name="sound" size=${16}/></button>
+        <div className="sb-ask">
+          <button className="sb-ask-who" onClick=${function () { setMood('happy'); SFX.tick(); setTimeout(function () { setMood('idle'); }, 800); }} aria-label=${friend.name}>
+            <${SbFriend} f=${friend} mood=${mood} size=${78}/>
+            <span>${friend.name}</span>
+          </button>
+          <div className="sb-speech">
+            <span className="sb-who">${SB_ASK[qi % SB_ASK.length]}</span>
+            <span className="sb-speech-q">${card.q}</span>
+            <button className="iconbtn" aria-label="질문 다시 듣기" onClick=${function () { sbSay(card.qa, card.q, card.qLang, props.rate); }}><${Icon} name="sound" size=${16}/></button>
+          </div>
         </div>
         <div className="h-sub" style=${{ textAlign: 'center' }}>카드를 누르면 뒤집혀서 정답이 보여요</div>
         <div className="spacer"></div>
@@ -2415,8 +2616,13 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
           <button className="btn btn-ghost" onClick=${function () { setHint(1); sbSay(card.aa, card.a, 'en', props.rate); }}><${Icon} name="sound" size=${15}/> 문장 듣기</button>
         </div>`}
         <div className="spacer"></div>
-        ${res ? html`<div className="feedback" data-ok=${res.ok ? '1' : '0'}>
-          <div className="fb-title">${res.ok ? (missed.current[card.no] ? '이번엔 맞았어요!' : '정답이에요!') : '아쉬워요'}</div>
+        ${res && res.ok && fx ? html`<${SbConfetti} id=${fx.id}/>` : null}
+        ${res && fx && res.ok ? html`<div className="sb-pts" key=${'p' + fx.id}>+${fx.pts}</div>` : null}
+        ${res ? html`<div className="feedback sb-fb" data-ok=${res.ok ? '1' : '0'}>
+          <div className="sb-fb-top">
+            <${SbFriend} f=${friend} mood=${res.ok ? 'happy' : 'sad'} size=${58}/>
+            <div className="fb-title">${res.msg}</div>
+          </div>
           <div className="fb-sub">${res.ok ? card.a : '정답: ' + card.a}</div>
           ${res.ok ? null : html`<div className="fb-sub">이 카드는 마지막에 한 번 더 나와요</div>`}
           <button className="btn btn-primary" onClick=${afterBuild}>${res.ok ? '문장 성분 보기 →' : '계속'}</button>
@@ -2424,7 +2630,11 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       </div>`;
     } else {
       body = html`<div className="sb-col">
-        <div className="sb-kicker">${revealed ? '문장 성분' : (SB_ROLE[quizRole].ko + '(' + quizRole + ')를 찾아 눌러 보세요')}</div>
+        <div className="sb-parse-head">
+          <${SbFriend} f=${friend} mood=${mood} size=${54}/>
+          <div className="sb-speech sb-speech-sm">${revealed ? (pick && pick.ok ? '맞아! 색깔로 나눠 볼게' : '문장을 색깔로 나눠 볼게') : (SB_ROLE[quizRole].ko + '(' + quizRole + ')는 어디 있을까?')}</div>
+        </div>
+        ${fx && pick && pick.ok ? html`<${SbConfetti} id=${fx.id}/>` : null}
         ${revealed ? null : html`<div className="h-sub" style=${{ textAlign: 'center' }}>${SB_ROLE_TIP[quizRole]}</div>`}
         <div className="sb-parse" data-revealed=${revealed ? '1' : '0'}>
           ${card.p.map(function (c, i) {
@@ -2446,7 +2656,12 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         ${revealed ? html`<button className="btn btn-primary" onClick=${function () { nextCard(); }}>${qi + 1 >= queue.length ? '마치기' : '다음 카드 →'}</button>` : null}
       </div>`;
     }
-    return html`<div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>${head}<div className="pad">${body}</div></div>`;
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', position: 'relative' }}>${head}<div className="pad" style=${{ position: 'relative' }}>${body}</div>
+      ${toast ? html`<div className="sb-toast" key=${toast.id}>
+        <${SbFriend} f=${SB_FRIENDS[toast.n % SB_FRIENDS.length]} mood="happy" size=${64}/>
+        <div><b>🔥 ${toast.n}연속!</b><span>${toast.text}</span></div>
+      </div>` : null}
+    </div>`;
   }
 
   function Home(props) {
