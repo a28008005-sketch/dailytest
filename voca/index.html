@@ -694,6 +694,12 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 @keyframes sbpuff{50%{transform:scale(1.08)}}
 @keyframes sbspin{0%{transform:rotate(0) scale(1)} 50%{transform:rotate(200deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)}}
 @keyframes sbtear{0%{transform:translateY(0); opacity:1} 100%{transform:translateY(8px); opacity:0}}
+.pl-friend{display:flex; align-items:center; gap:8px; align-self:flex-start; margin:-4px 0 2px -4px}
+.pl-say{
+  position:relative; background:var(--surface-2); border:2px solid var(--line-strong); border-radius:14px; padding:5px 10px;
+  font:700 13px/1.2 var(--f-ui); color:var(--ink); animation:sbpop .35s cubic-bezier(.3,1.8,.5,1);
+}
+.pl-say::before{content:""; position:absolute; left:-9px; top:50%; margin-top:-7px; border:7px solid transparent; border-right-color:var(--line-strong); border-left:0}
 .sb-ask{display:flex; align-items:flex-end; gap:10px}
 .sb-ask-who{display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:0; padding:0; cursor:pointer; color:var(--ink-2); font:700 12px/1 var(--f-ui)}
 .sb-speech{
@@ -2891,6 +2897,13 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   }
 
   /* --------------------------------------------------------------- play */
+  // 단어 학습 문제마다 바다 친구가 하는 말
+  var PL_SAY = {
+    listen_word: '잘 들어 봐!', listen_sent: '귀를 쫑긋!', mean_word: '이 단어 뜻이 뭘까?', def_word: '설명을 읽어 봐!',
+    pos_word: '어떤 품사일까?', blank_sent: '빈칸을 채워 줘!', order_sent: '순서대로 놓아 볼까?',
+    speak_word: '크게 말해 봐!', speak_sent: '자신 있게 읽어 봐!'
+  };
+
   function Play(props) {
     var beats = props.beats, track = props.track, stageNo = props.stageNo;
     var _i = useState(0), bi = _i[0], setBi = _i[1];
@@ -2906,6 +2919,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     var _pts = useState(null), lastPts = _pts[0], setLastPts = _pts[1];
     var _placed = useState([]), placed = _placed[0], setPlaced = _placed[1];
     var _playing = useState(false), playing = _playing[0], setPlaying = _playing[1];
+    var _ptoast = useState(null), ptoast = _ptoast[0], setPtoast = _ptoast[1];
     var toRef = useRef(0), tally = useRef({ total: 0, correct: 0 });
     useEffect(function () { return function () { clearTimeout(toRef.current); }; }, []);
 
@@ -2949,6 +2963,11 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         setScore(function (s) { return s + pts; });
         setStreak(function (s) { return s + 1; });
         setLastPts(pts);
+        if ([3, 5, 8, 12, 16, 20].indexOf(streak + 1) >= 0) {
+          var n1 = streak + 1;
+          setPtoast({ id: Date.now(), n: n1, text: n1 >= 12 ? '전설의 항해사 등장!' : n1 >= 8 ? '말도 안 돼! 천재 등장!' : n1 >= 5 ? '불타는 중! 멈추지 마요!' : '연속 정답! 콤보 시작!' });
+          setTimeout(function () { setPtoast(null); }, 1900);
+        }
         SFX.correct(); buzz(18);
         if (props.monsterHp) { SFX.hit(); setHp(function (h) { return Math.max(0, h - (12 + streak * 2) * (dbl ? 2 : 1)); }); }
       } else {
@@ -3104,8 +3123,13 @@ nextRef.current = function () {
 
     var totalItems = props.itemCount;
     var doneItems = props.beatItemIndex ? props.beatItemIndex[bi] : bi;
+    var pfriend = SB_FRIENDS[doneItems % SB_FRIENDS.length];
 
-    return html`<div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', position: 'relative' }}>
+      ${ptoast ? html`<div className="sb-toast" key=${ptoast.id}>
+        <${SbFriend} f=${SB_FRIENDS[ptoast.n % SB_FRIENDS.length]} mood="happy" size=${64}/>
+        <div><b>🔥 ${ptoast.n}연속!</b><span>${ptoast.text}</span></div>
+      </div>` : null}
       <div className="hud">
         <button className="iconbtn" aria-label="나가기" onClick=${props.onQuit}><${Icon} name="close" size=${16}/></button>
         <div style=${{ flex: 1 }}>
@@ -3143,11 +3167,18 @@ nextRef.current = function () {
 
         <div className="prompt" style=${{ position: 'relative' }}>
           ${lastPts ? html`<div className="floatpts">+${lastPts}</div>` : null}
+          <div className="pl-friend">
+            <${SbFriend} f=${pfriend} mood=${phase === 'fb' && res ? (res.ok ? 'happy' : 'sad') : 'idle'} size=${52}/>
+            <span className="pl-say" key=${'say' + bi + phase}>${phase === 'fb' && res ? (res.ok ? SB_PRAISE[bi % SB_PRAISE.length] : SB_CHEER[bi % SB_CHEER.length]) : (PL_SAY[beat.type] || '할 수 있어!')}</span>
+          </div>
           ${promptBody}
         </div>
 
         ${phase === 'fb' && res ? html`<div className="feedback" data-ok=${res.ok ? '1' : '0'}>
-          <div className="fb-title">${res.ok ? '정확해요!' : (res.shielded ? '방어막이 막아줬어요' : '아쉬워요')}</div>
+          <div className="sb-fb-top">
+            <${SbFriend} f=${pfriend} mood=${res.ok ? 'happy' : 'sad'} size=${46}/>
+            <div className="fb-title">${res.ok ? (streak >= 3 ? '🔥 ' + streak + '연속! 정확해요!' : '정확해요!') : (res.shielded ? '방어막이 막아줬어요' : '아쉬워요')}</div>
+          </div>
           <div className="fb-sub">
             ${beat.type === 'speak_word' || beat.type === 'speak_sent'
               ? (res.meta.skipped ? '발음 확인을 건너뛰었어요'
