@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#003C70">
+<title>고래영어 말하기 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #003C70; --cyan: #0FC3F4; --cyan-d: #00ADE5; --yellow: #FFEE62; --flame: #FF5826; --ink: #2C2E35;
+  --bg: #EEF6FB; --panel: #fff; --muted: #6B7785; --line: #DCE6EE;
+  --lv: #0FC3F4; --lv-ink: #fff;
+  --card-w: min(92vw, calc((100dvh - 210px) * 1.4476));
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+}
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
+.hidden { display: none !important; }
+
+/* ───────── 홈 ───────── */
+#home { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.top img { height: 40px; }
+.top h1 { font-size: 22px; font-weight: 900; color: var(--navy); margin: 0; letter-spacing: -0.02em; }
+.top .sub { color: var(--muted); font-size: 14px; flex-basis: 100%; margin-top: -6px; }
+.label { font-size: 13px; font-weight: 700; color: var(--muted); margin: 24px 0 10px; letter-spacing: 0.04em; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip {
+  min-width: 84px; padding: 12px 18px; border-radius: 16px; background: var(--panel);
+  font-weight: 900; font-size: 20px; border: 3px solid transparent; box-shadow: 0 1px 0 var(--line);
+  transition: transform .15s;
+}
+.chip:active { transform: scale(.96); }
+.chip.on { border-color: var(--c, var(--navy)); background: var(--c, var(--navy)); color: var(--ci, #fff); }
+.chip .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--c); margin-right: 8px; vertical-align: 2px; }
+.chip.on .dot { background: var(--ci); }
+.chip.vol { min-width: 70px; font-size: 18px; }
+.units { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.unit {
+  background: var(--panel); border-radius: 20px; overflow: hidden; text-align: left;
+  box-shadow: 0 2px 0 var(--line); transition: transform .15s;
+}
+.unit:active { transform: scale(.98); }
+.unit .th { aspect-ratio: 1.4476; background: #dde7ef center/cover no-repeat; }
+.unit .meta { padding: 12px 14px 14px; display: flex; align-items: baseline; justify-content: space-between; }
+.unit b { font-size: 19px; font-weight: 900; color: var(--navy); }
+.unit span { color: var(--muted); font-size: 14px; font-weight: 700; }
+.unit.all .th { display: grid; place-items: center; background: var(--lv); color: var(--lv-ink); font-size: 26px; font-weight: 900; }
+
+/* ───────── 모드 선택 시트 ───────── */
+#sheet { position: fixed; inset: 0; background: rgba(0, 30, 60, .45); display: grid; place-items: center; padding: 16px; z-index: 20; }
+.sheet {
+  background: var(--panel); border-radius: 28px; width: min(760px, 100%); max-height: 100%; overflow: auto;
+  padding: 24px; animation: pop .25s ease-out;
+}
+@keyframes pop { from { transform: translateY(20px) scale(.97); opacity: 0; } }
+.sheet h2 { margin: 0 0 4px; font-size: 22px; font-weight: 900; color: var(--navy); }
+.sheet .range { color: var(--muted); font-weight: 700; margin-bottom: 16px; }
+.strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; }
+.strip img { height: 64px; border-radius: 8px; flex: none; }
+.modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (max-width: 560px) { .modes { grid-template-columns: 1fr; } }
+.mode {
+  text-align: left; padding: 16px 18px; border-radius: 20px; background: var(--bg); border: 3px solid transparent;
+  display: flex; gap: 14px; align-items: center; transition: transform .15s;
+}
+.mode:active { transform: scale(.98); }
+.mode .ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; flex: none; background: var(--navy); }
+.mode .ic svg { width: 30px; height: 30px; }
+.mode b { display: block; font-size: 18px; font-weight: 900; color: var(--navy); }
+.mode small { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.45; margin-top: 2px; }
+.opts { display: flex; flex-wrap: wrap; gap: 16px 28px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.opt { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--muted); }
+.seg { display: inline-flex; background: var(--bg); border-radius: 12px; padding: 3px; }
+.seg button { padding: 7px 12px; border-radius: 9px; font-weight: 700; font-size: 14px; color: var(--muted); }
+.seg button.on { background: var(--navy); color: #fff; }
+.namebox { display: flex; gap: 8px; align-items: center; }
+.namebox input {
+  font: inherit; font-weight: 700; font-size: 15px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--line);
+  width: 150px; color: var(--ink); background: #fff;
+}
+.sheet .close { float: right; width: 40px; height: 40px; border-radius: 50%; background: var(--bg); font-size: 20px; font-weight: 700; color: var(--muted); }
+
+/* ───────── 재생 화면 ───────── */
+#play { position: fixed; inset: 0; display: flex; flex-direction: column; background: radial-gradient(120% 90% at 50% 0%, #fff 0%, var(--bg) 60%); overflow: hidden; }
+#play.video { background: radial-gradient(120% 90% at 50% 0%, #0d5a96 0%, var(--navy) 65%); }
+.bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); z-index: 5; transition: opacity .3s; }
+.bar .grow { flex: 1; }
+.ibtn { width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,.9); display: grid; place-items: center; box-shadow: 0 1px 0 var(--line); }
+.ibtn svg { width: 24px; height: 24px; stroke: var(--navy); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ibtn.solid svg { fill: var(--navy); stroke: none; }
+.prog { font-weight: 900; color: var(--navy); font-size: 17px; min-width: 70px; text-align: center; }
+#play.video .prog { color: #fff; }
+.dots { flex: 1; display: flex; gap: 4px; max-width: 420px; margin: 0 auto; }
+.dots i { flex: 1; height: 6px; border-radius: 3px; background: rgba(0,60,112,.15); transition: background .3s; }
+.dots i.done { background: var(--lv); }
+.dots i.cur { background: var(--navy); }
+#play.video .dots i { background: rgba(255,255,255,.2); }
+#play.video .dots i.done { background: var(--cyan); }
+#play.video .dots i.cur { background: #fff; }
+#play.chrome-off .bar, #play.chrome-off .ctrl { opacity: 0; pointer-events: none; }
+
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 0 16px; min-height: 0; }
+.scene { width: var(--card-w); aspect-ratio: 566 / 391; perspective: 1600px; position: relative; }
+.card { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,.7,.3,1); }
+.card.flip { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; border-radius: calc(var(--card-w) * .03); overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 0 0 calc(var(--card-w) * .014) var(--lv), 0 18px 40px rgba(0, 40, 80, .22); background: #fff; }
+.face img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.back { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4% 7%; text-align: center; }
+.back .q { color: #A3A3A3; font-weight: 900; font-size: calc(var(--card-w) * .052); line-height: 1.25; }
+.back .a { color: #111; font-weight: 900; font-size: calc(var(--card-w) * .062); line-height: 1.25; margin-top: .3em; }
+.back .a .w { display: inline-block; opacity: .22; transition: opacity .2s, transform .2s; }
+.back .a .w.lit { opacity: 1; }
+.back .a .w.say { color: var(--flame); transform: translateY(-4%) scale(1.06); }
+.back .no { position: absolute; left: 4.5%; bottom: 7%; width: 10%; aspect-ratio: 1; border-radius: 50%; background: #A3A3A3; color: #fff;
+  display: grid; place-items: center; font-weight: 900; font-size: calc(var(--card-w) * .028); }
+.back .foot { position: absolute; right: 5%; bottom: 6%; display: flex; align-items: center; gap: .8em; font-size: calc(var(--card-w) * .018); color: #666; }
+.back .foot img { height: calc(var(--card-w) * .04); width: auto; }
+
+.card.enter { animation: enter .55s cubic-bezier(.2,.8,.2,1.1); }
+@keyframes enter { from { transform: translateX(60%) rotate(6deg) scale(.85); opacity: 0; } }
+.card.leave { animation: leave .35s ease-in forwards; }
+@keyframes leave { to { transform: translateX(-70%) rotate(-6deg) scale(.85); opacity: 0; } }
+.card.leave.flip { animation-name: leaveb; }
+@keyframes leaveb { from { transform: rotateY(180deg); } to { transform: translateX(-70%) rotateY(180deg) rotate(6deg) scale(.85); opacity: 0; } }
+
+/* 말풍선·카운트다운 줄 */
+.cue { height: 92px; width: var(--card-w); display: flex; align-items: center; justify-content: center; gap: 14px; }
+.who { width: 64px; height: 64px; flex: none; }
+.bubble {
+  background: #fff; border-radius: 22px; padding: 12px 22px; font-weight: 900; font-size: clamp(18px, 2.6vw, 28px); color: var(--navy);
+  box-shadow: 0 6px 18px rgba(0,40,80,.12); position: relative; max-width: 80%; line-height: 1.3; animation: pop .3s ease-out;
+}
+.bubble::before { content: ''; position: absolute; left: -10px; top: 50%; margin-top: -10px; border: 10px solid transparent; border-right-color: #fff; border-left: 0; }
+.bubble .tag { display: block; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .06em; margin-bottom: 2px; }
+.turn { display: flex; align-items: center; gap: 14px; animation: pop .3s ease-out; }
+.turn .ring { width: 72px; height: 72px; position: relative; }
+.turn .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.turn .ring circle { fill: none; stroke-width: 9; }
+.turn .ring .bg { stroke: rgba(0,60,112,.12); }
+.turn .ring .fg { stroke: var(--flame); stroke-linecap: round; stroke-dasharray: 201; }
+.turn .ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 28px; font-weight: 900; color: var(--flame); }
+.turn .big { font-size: clamp(24px, 3.4vw, 38px); font-weight: 900; color: var(--flame); }
+.turn .mic { width: 44px; height: 44px; border-radius: 50%; background: var(--flame); display: grid; place-items: center; animation: pulse 1s infinite; }
+.turn .mic svg { width: 24px; height: 24px; fill: #fff; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 14px rgba(255,88,38,0); } 0% { box-shadow: 0 0 0 0 rgba(255,88,38,.5); } }
+#play.video .bubble { background: #fff; }
+#play.video .turn .big { color: var(--yellow); }
+#play.video .turn .ring .bg { stroke: rgba(255,255,255,.2); }
+
+.ctrl { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 8px 14px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); transition: opacity .3s; }
+.pill { height: 56px; padding: 0 22px; border-radius: 18px; background: #fff; font-weight: 900; font-size: 17px; color: var(--navy); display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 0 var(--line); }
+.pill svg { width: 22px; height: 22px; stroke: var(--navy); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pill.main { background: var(--navy); color: #fff; }
+.pill.main svg { stroke: #fff; }
+.pill:active, .ibtn:active { transform: scale(.95); }
+
+/* 촬영 모드 인트로/엔딩 */
+.title-card { position: absolute; inset: 0; display: grid; place-items: center; z-index: 8; background: var(--navy); color: #fff; text-align: center; animation: fadein .4s; }
+@keyframes fadein { from { opacity: 0; } }
+.title-card .inner { animation: rise .7s cubic-bezier(.2,.8,.2,1); }
+@keyframes rise { from { transform: translateY(30px); opacity: 0; } }
+.title-card .logo { background: #fff; border-radius: 18px; padding: 10px 18px; display: inline-block; margin-bottom: 26px; }
+.title-card .logo img { height: 44px; display: block; }
+.title-card h3 { font-size: clamp(30px, 5vw, 56px); font-weight: 900; margin: 0; letter-spacing: -0.02em; }
+.title-card p { font-size: clamp(18px, 2.4vw, 26px); font-weight: 700; color: var(--cyan); margin: 12px 0 0; }
+.title-card .who { width: 120px; height: 120px; margin: 0 auto 10px; animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-10px); } }
+.stars { font-size: 44px; letter-spacing: 6px; color: var(--yellow); margin-top: 8px; }
+.stars span { display: inline-block; animation: star .5s backwards; }
+@keyframes star { from { transform: scale(0) rotate(-90deg); } }
+.title-card .pill.main { background: var(--flame); }
+.end-btns { display: flex; gap: 10px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+
+#cam { position: absolute; right: 18px; bottom: 90px; width: clamp(120px, 17vw, 200px); aspect-ratio: 1; border-radius: 50%; object-fit: cover; transform: scaleX(-1);
+  border: 5px solid #fff; box-shadow: 0 8px 24px rgba(0,0,0,.3); z-index: 6; background: #000; }
+#cam.cut-left { left: 18px; right: auto; }
+.hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: rgba(0,0,0,.55); color: #fff; padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; z-index: 7; pointer-events: none; animation: fadeout 4s forwards; }
+@keyframes fadeout { 80% { opacity: 1; } to { opacity: 0; } }
+
+@media (orientation: portrait) {
+  :root { --card-w: min(94vw, calc((100dvh - 260px) * 1.4476)); }
+}
+@media (prefers-reduced-motion: reduce) { .card, .card.enter, .card.leave { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- 웨일리 (말하는 사람 아이콘) -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="whaley" viewBox="0 0 100 100">
+    <path d="M80 30c6-10 16-10 16-10s-2 10-9 15c7 3 9 12 9 12s-10-1-15-6" fill="#00ADE5" stroke="#2C2E35" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="46" cy="56" rx="38" ry="32" fill="#0FC3F4" stroke="#2C2E35" stroke-width="3.5"/>
+    <path d="M18 66c10 14 46 18 62 2" fill="#fff" stroke="#2C2E35" stroke-width="3"/>
+    <path d="M30 70l1 8M42 72v9M54 72v8" stroke="#2C2E35" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="34" cy="48" r="4.2" fill="#2C2E35"/><circle cx="58" cy="48" r="4.2" fill="#2C2E35"/>
+    <ellipse cx="24" cy="58" rx="6" ry="4" fill="#FFEE62"/><ellipse cx="68" cy="58" rx="6" ry="4" fill="#FFEE62"/>
+    <path d="M38 58q8 9 16 0z" fill="#2C2E35"/>
+    <path d="M46 24v-10M46 14c-5-6-10-4-12-2M46 14c5-6 10-4 12-2" stroke="#0FC3F4" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </symbol>
+  <symbol id="kid" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="#FFEE62" stroke="#2C2E35" stroke-width="3.5"/>
+    <circle cx="36" cy="46" r="4.5" fill="#2C2E35"/><circle cx="64" cy="46" r="4.5" fill="#2C2E35"/>
+    <path d="M34 62q16 16 32 0" fill="#FF5826" stroke="#2C2E35" stroke-width="3" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<main id="home">
+  <div class="top">
+    <img src="logo.png" alt="고래영어">
+    <h1>Sentence Bank 말하기 카드</h1>
+    <div class="sub">레벨 → 권 → 단원을 고르면 그 단원의 카드로 수업을 시작합니다.</div>
+  </div>
+  <div class="label">LEVEL</div>
+  <div class="chips" id="levels"></div>
+  <div class="label">VOLUME</div>
+  <div class="chips" id="vols"></div>
+  <div class="label">UNIT</div>
+  <div class="units" id="units"></div>
+</main>
+
+<div id="sheet" class="hidden">
+  <div class="sheet">
+    <button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
+    <h2 id="sheetTitle"></h2>
+    <div class="range" id="sheetRange"></div>
+    <div class="strip" id="strip"></div>
+    <div class="modes">
+      <button class="mode" data-mode="qa">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5M12 16h.01"/></svg></span>
+        <span><b>질문 · 대답</b><small>선생님 목소리로 질문 → 학생이 사진 보고 대답 → 정답 카드가 뒤집혀요</small></span>
+      </button>
+      <button class="mode" data-mode="repeat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></span>
+        <span><b>듣고 따라 말하기</b><small>문장을 두 번 들려주고, 그때마다 따라 말할 시간을 줘요</small></span>
+      </button>
+      <button class="mode" data-mode="manual">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 19h12a2 2 0 0 0 2-2V9"/></svg></span>
+        <span><b>카드 넘기기</b><small>코팅 카드처럼 직접 넘겨요. 카드를 누르면 뒤집히고 🔊 로 소리를 들어요</small></span>
+      </button>
+      <button class="mode" data-mode="video">
+        <span class="ic" style="background:var(--flame)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3z"/></svg></span>
+        <span><b>영상 촬영</b><small>제목 화면 → 질문·대답 → 칭찬 엔딩. 가정용 리포트·홍보 영상용</small></span>
+      </button>
+    </div>
+    <div class="opts">
+      <div class="opt">생각 시간 <span class="seg" data-opt="wait"><button data-v="3">3초</button><button data-v="5">5초</button><button data-v="8">8초</button></span></div>
+      <div class="opt">목소리 <span class="seg" data-opt="rate"><button data-v="1">보통</button><button data-v="0.8">천천히</button></span></div>
+      <div class="opt">순서 <span class="seg" data-opt="shuffle"><button data-v="0">차례대로</button><button data-v="1">섞기</button></span></div>
+      <div class="opt">학생 얼굴(촬영) <span class="seg" data-opt="cam"><button data-v="0">끄기</button><button data-v="1">켜기</button></span></div>
+      <div class="opt namebox">학생 이름 <input id="kidName" maxlength="12" placeholder="촬영 화면에 표시"></div>
+    </div>
+  </div>
+</div>
+
+<section id="play" class="hidden">
+  <div class="bar">
+    <button class="ibtn" data-act="exit" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="dots" id="dots"></div>
+    <div class="prog" id="prog"></div>
+    <button class="ibtn" data-act="full" aria-label="전체 화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="stage">
+    <div class="scene" id="scene"></div>
+    <div class="cue" id="cue"></div>
+  </div>
+  <div class="ctrl" id="ctrl"></div>
+  <video id="cam" class="hidden" autoplay muted playsinline></video>
+</section>
+
+<script src="cards.js"></script>
+<script>
+'use strict';
+const DATA = window.CARD_DATA;
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ── 저장되는 선택값 (없어도 동작) ─────────────────────
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('sbc.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('sbc.' + k, JSON.stringify(v)); } catch {} },
+};
+const opts = { wait: store.get('wait', '5'), rate: store.get('rate', '1'), shuffle: store.get('shuffle', '0'), cam: store.get('cam', '0') };
+let sel = store.get('sel', { lv: '240', vol: 1 });
+if (!DATA.levels.some((l) => l.id === sel.lv)) sel = { lv: DATA.levels[0].id, vol: 1 };
+
+const lvOf = (id) => DATA.levels.find((l) => l.id === id) || DATA.levels[0];
+const inkOn = (hex) => {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? '#2C2E35' : '#fff';
+};
+const imgSrc = (lv, no) => `img/${lv}/${no}.webp`;
+
+// ── 홈 ─────────────────────────────────────────────
+function renderHome() {
+  const lv = lvOf(sel.lv);
+  document.documentElement.style.setProperty('--lv', lv.color);
+  document.documentElement.style.setProperty('--lv-ink', inkOn(lv.color));
+  const L = $('#levels'); L.innerHTML = '';
+  for (const l of DATA.levels) {
+    const b = el('button', 'chip' + (l.id === lv.id ? ' on' : ''), `<span class="dot"></span>${l.id}`);
+    b.style.setProperty('--c', l.color); b.style.setProperty('--ci', inkOn(l.color));
+    b.onclick = () => { sel = { lv: l.id, vol: 1 }; store.set('sel', sel); renderHome(); };
+    L.append(b);
+  }
+  const V = $('#vols'); V.innerHTML = '';
+  for (let v = 1; v <= 6; v++) {
+    const b = el('button', 'chip vol' + (v === sel.vol ? ' on' : ''), 'Vol.' + v);
+    b.style.setProperty('--c', 'var(--navy)');
+    b.onclick = () => { sel.vol = v; store.set('sel', sel); renderHome(); };
+    V.append(b);
+  }
+  const U = $('#units'); U.innerHTML = '';
+  for (let u = 1; u <= 4; u++) {
+    const cards = lv.cards.filter((c) => c.vol === sel.vol && c.unit === u);
+    if (!cards.length) continue;
+    const b = el('button', 'unit', `<div class="th" style="background-image:url('${imgSrc(lv.id, cards[0].no)}')"></div>
+      <div class="meta"><b>Unit ${u}</b><span>${cards[0].no} – ${cards[cards.length - 1].no} · ${cards.length}장</span></div>`);
+    b.onclick = () => openSheet(lv, cards, `Vol.${sel.vol} Unit ${u}`);
+    U.append(b);
+  }
+  const all = lv.cards.filter((c) => c.vol === sel.vol);
+  const b = el('button', 'unit all', `<div class="th">Vol.${sel.vol} 전체</div>
+    <div class="meta"><b>복습</b><span>${all[0].no} – ${all[all.length - 1].no} · ${all.length}장</span></div>`);
+  b.onclick = () => openSheet(lv, all, `Vol.${sel.vol} 전체`);
+  U.append(b);
+}
+
+// ── 모드 시트 ───────────────────────────────────────
+let pending = null;
+function openSheet(lv, cards, title) {
+  pending = { lv, cards, title };
+  $('#sheetTitle').textContent = `Sentence Bank ${lv.id} · ${title}`;
+  $('#sheetRange').textContent = `카드 ${cards[0].no} – ${cards[cards.length - 1].no} (${cards.length}장)`;
+  const S = $('#strip'); S.innerHTML = '';
+  for (const c of cards) { const i = el('img'); i.loading = 'lazy'; i.src = imgSrc(lv.id, c.no); i.alt = c.no; S.append(i); }
+  document.querySelectorAll('.seg').forEach((seg) => {
+    const k = seg.dataset.opt;
+    seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === opts[k]));
+  });
+  $('#kidName').value = store.get('kid', '');
+  $('#sheet').classList.remove('hidden');
+}
+document.querySelectorAll('.seg').forEach((seg) => {
+  seg.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    opts[seg.dataset.opt] = b.dataset.v; store.set(seg.dataset.opt, b.dataset.v);
+    seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  });
+});
+$('#kidName').addEventListener('input', (e) => store.set('kid', e.target.value.trim()));
+$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') $('#sheet').classList.add('hidden'); });
+document.querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => {
+  unlockAudio();
+  $('#sheet').classList.add('hidden');
+  start(pending.lv, pending.cards, pending.title, b.dataset.mode);
+}));
+
+// ── 소리 ───────────────────────────────────────────
+// 아이패드는 처음 한 번 손가락으로 누른 뒤에만 소리를 냅니다. 같은 <audio> 를 계속 씁니다.
+const player = new Audio();
+player.preload = 'auto';
+let unlocked = false;
+function unlockAudio() {
+  if (unlocked) return; unlocked = true;
+  // 누른 그 순간에 한 번 (소리 없이) 재생해 두면 이후 자동 재생이 허용됩니다.
+  const c = pending && pending.cards.find((x) => x.aa);
+  if (c) {
+    const src = `audio/${c.aa}.mp3`;
+    player.muted = true; player.src = src;
+    const done = () => { if (player.src.endsWith(src) && player.muted) player.pause(); player.muted = false; };
+    player.play().then(done, done);
+  }
+  try { speechSynthesis.getVoices(); } catch {}
+}
+let voices = [];
+try { voices = speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { voices = speechSynthesis.getVoices(); }; } catch {}
+
+function speakTTS(text, lang, rate) {
+  return new Promise((res) => {
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang === 'ko' ? 'ko-KR' : 'en-US';
+      const v = voices.find((x) => x.lang && x.lang.toLowerCase().startsWith(lang));
+      if (v) u.voice = v;
+      u.rate = rate * 0.95;
+      u.onend = u.onerror = () => res();
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+      setTimeout(res, 2500 + text.length * 120);
+    } catch { res(); }
+  });
+}
+// onStart(durationSec) 은 소리가 실제로 나기 시작할 때 불립니다(단어 불 켜기용).
+function say(key, text, lang, onStart) {
+  const rate = parseFloat(opts.rate);
+  if (!key) { onStart && onStart(Math.max(1.2, text.split(' ').length * 0.42) / rate); return speakTTS(text, lang, rate); }
+  return new Promise((res) => {
+    let done = false;
+    const fin = () => { if (done) return; done = true; player.onended = player.onerror = player.onplaying = null; res(); };
+    player.onplaying = () => {
+      const d = isFinite(player.duration) ? player.duration : 2;
+      onStart && onStart(d / rate);
+      setTimeout(fin, (d / rate) * 1000 + 1500);
+    };
+    player.onended = fin;
+    player.onerror = () => { fin(); };
+    player.src = `audio/${key}.mp3`;
+    player.playbackRate = rate;
+    try { player.preservesPitch = true; } catch {}
+    player.play().catch(() => { speakTTS(text, lang, rate).then(fin); });
+    setTimeout(fin, 15000);
+  });
+}
+function hush() { try { player.pause(); } catch {} try { speechSynthesis.cancel(); } catch {} }
+
+// ── 재생 ───────────────────────────────────────────
+let S = null;       // 지금 세션
+let run = 0;        // 끼어들기(다음/이전/나가기) 때마다 올라가는 번호
+let wakeLock = null;
+const alive = (r) => r === run && S;
+
+async function start(lv, cards, title, mode) {
+  let list = cards.slice();
+  if (opts.shuffle === '1') for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  S = { lv, list, title, mode, i: 0, paused: false, kid: store.get('kid', '') };
+  $('#home').classList.add('hidden');
+  const P = $('#play');
+  P.classList.remove('hidden');
+  P.classList.toggle('video', mode === 'video');
+  P.classList.remove('chrome-off');
+  const D = $('#dots'); D.innerHTML = ''; list.forEach(() => D.append(el('i')));
+  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
+  if (mode === 'video' && opts.cam === '1') startCam();
+  if (mode === 'video') {
+    P.classList.add('chrome-off');
+    const r = ++run;
+    await titleCard(r);
+    if (!alive(r)) return;
+  }
+  show(0);
+}
+
+function exitPlay() {
+  run++; hush(); S = null;
+  stopCam();
+  try { wakeLock && wakeLock.release(); } catch {} wakeLock = null;
+  try { document.fullscreenElement && document.exitFullscreen(); } catch {}
+  $('#play').classList.add('hidden');
+  $('#home').classList.remove('hidden');
+  document.querySelectorAll('.title-card').forEach((x) => x.remove());
+  renderHome();
+}
+
+function buildCard(c) {
+  const card = el('div', 'card enter');
+  const words = c.a.split(' ').map((w) => `<span class="w">${esc(w)}</span>`).join(' ');
+  card.innerHTML = `
+    <div class="face front"><img src="${imgSrc(S.lv.id, c.no)}" alt=""></div>
+    <div class="face back">
+      <div class="q">Q : ${esc(c.q)}</div>
+      <div class="a">A : ${words}</div>
+      <div class="no">${c.no}</div>
+      <div class="foot">Sentence Bank ${S.lv.id}<img src="logo.png" alt=""></div>
+    </div>`;
+  card.addEventListener('animationend', () => card.classList.remove('enter'), { once: true });
+  card.addEventListener('click', () => {
+    if (!S) return;
+    if (S.mode === 'manual') { card.classList.toggle('flip'); if (card.classList.contains('flip')) sayA(); }
+    else if (S.mode === 'video') $('#play').classList.toggle('chrome-off');
+  });
+  return card;
+}
+
+function preload(i) {
+  const c = S && S.list[i]; if (!c) return;
+  const im = new Image(); im.src = imgSrc(S.lv.id, c.no);
+  if (c.qa) fetch(`audio/${c.qa}.mp3`).catch(() => {});
+  if (c.aa) fetch(`audio/${c.aa}.mp3`).catch(() => {});
+}
+
+function setCue(html) { $('#cue').innerHTML = html; }
+const bubble = (tag, text, who = 'whaley') =>
+  `<svg class="who"><use href="#${who}"/></svg><div class="bubble"><span class="tag">${tag}</span>${esc(text)}</div>`;
+
+function lightWords(card, dur) {
+  const ws = card.querySelectorAll('.back .a .w');
+  const step = (dur * 1000) / Math.max(1, ws.length);
+  ws.forEach((w, k) => {
+    setTimeout(() => { ws.forEach((x) => x.classList.remove('say')); w.classList.add('lit', 'say'); }, k * step);
+  });
+  setTimeout(() => ws.forEach((x) => { x.classList.add('lit'); x.classList.remove('say'); }), ws.length * step + 200);
+}
+function sayA() {
+  const card = $('#scene .card'); const c = S.list[S.i];
+  return say(c.aa, c.a, 'en', (d) => card && lightWords(card, d))
+    .then(() => card && card.querySelectorAll('.w').forEach((w) => { w.classList.add('lit'); w.classList.remove('say'); }));
+}
+function sayQ() { const c = S.list[S.i]; return say(c.qa, c.q, c.qLang); }
+
+async function countdown(r, secs, label) {
+  const C = 201;
+  setCue(`<div class="turn"><div class="mic"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg></div>
+    <div class="big">${label}</div>
+    <div class="ring"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="32"/><circle class="fg" cx="40" cy="40" r="32"/></svg><b>${secs}</b></div></div>`);
+  const fg = $('#cue .fg'), num = $('#cue .ring b');
+  const t0 = performance.now(), total = secs * 1000;
+  while (alive(r)) {
+    if (S.paused) { await sleep(100); continue; }
+    const t = performance.now() - t0;
+    if (t >= total) break;
+    fg.style.strokeDashoffset = (C * t) / total;
+    num.textContent = Math.ceil((total - t) / 1000);
+    await sleep(50);
+  }
+}
+async function waitPause(r) { while (alive(r) && S.paused) await sleep(100); }
+
+async function show(i, back = false) {
+  const r = ++run; hush();
+  S.i = i;
+  const c = S.list[i];
+  const scene = $('#scene');
+  const old = scene.querySelector('.card');
+  if (old) { old.classList.add('leave'); await sleep(back ? 0 : 280); old.remove(); }
+  if (!alive(r)) return;
+  const card = buildCard(c);
+  scene.append(card);
+  $('#prog').textContent = `${i + 1} / ${S.list.length}`;
+  document.querySelectorAll('#dots i').forEach((d, k) => { d.className = k < i ? 'done' : k === i ? 'cur' : ''; });
+  renderCtrl();
+  setCue('');
+  preload(i + 1);
+  if (S.mode === 'manual') { setCue(bubble('카드를 누르면 뒤집혀요', c.qLang === 'ko' ? '영어로 말해 볼까요?' : c.q)); return; }
+
+  await sleep(650);
+  const wait = parseInt(opts.wait, 10);
+  if (S.mode === 'qa' || S.mode === 'video') {
+    if (!alive(r)) return; await waitPause(r);
+    setCue(bubble('TEACHER', c.q));
+    await sayQ(); if (!alive(r)) return;
+    await countdown(r, wait, 'Your turn!'); if (!alive(r)) return;
+    card.classList.add('flip');
+    setCue(bubble('ANSWER', c.a, 'kid'));
+    await sleep(500);
+    await sayA(); if (!alive(r)) return;
+    await sleep(900);
+  } else if (S.mode === 'repeat') {
+    for (let k = 0; k < 2; k++) {
+      if (!alive(r)) return; await waitPause(r);
+      if (k === 0) { card.classList.add('flip'); await sleep(700); }
+      setCue(bubble(k === 0 ? 'LISTEN' : 'ONE MORE TIME', c.a));
+      card.querySelectorAll('.w').forEach((w) => w.classList.remove('lit'));
+      await sayA(); if (!alive(r)) return;
+      await countdown(r, Math.max(3, Math.min(wait, 3 + Math.ceil(c.a.split(' ').length / 3))), 'Repeat!');
+      if (!alive(r)) return;
+    }
+  }
+  await waitPause(r); if (!alive(r)) return;
+  if (i + 1 < S.list.length) show(i + 1);
+  else finish(r);
+}
+
+function renderCtrl() {
+  const C = $('#ctrl'); C.innerHTML = '';
+  const icon = { prev: '<path d="M15 18 9 12l6-6"/>', next: '<path d="m9 18 6-6-6-6"/>', sound: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',
+    pause: '<path d="M8 5v14M16 5v14"/>', play: '<path d="M7 4v16l13-8z"/>', flip: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>' };
+  const btn = (cls, ic, label, fn) => { const b = el('button', 'pill ' + cls, `<svg viewBox="0 0 24 24">${icon[ic]}</svg>${label}`); b.onclick = fn; C.append(b); return b; };
+  btn('', 'prev', '', () => S.i > 0 && show(S.i - 1, true));
+  if (S.mode === 'manual') {
+    btn('', 'sound', '질문', () => sayQ());
+    btn('main', 'flip', '뒤집기', () => { const cd = $('#scene .card'); cd.classList.toggle('flip'); if (cd.classList.contains('flip')) sayA(); });
+    btn('', 'sound', '정답', () => { $('#scene .card').classList.add('flip'); sayA(); });
+  } else {
+    const b = btn('main', S.paused ? 'play' : 'pause', S.paused ? '계속' : '멈춤', () => {
+      S.paused = !S.paused; if (S.paused) hush(); renderCtrl();
+    });
+    btn('', 'sound', '다시 듣기', () => { const cd = $('#scene .card'); cd.classList.contains('flip') ? sayA() : sayQ(); });
+  }
+  btn('', 'next', '', () => { if (S.i + 1 < S.list.length) show(S.i + 1); else finish(++run); });
+}
+
+async function titleCard(r) {
+  const kid = S.kid;
+  const t = el('div', 'title-card', `<div class="inner">
+    <div class="logo"><img src="logo.png" alt="고래영어"></div>
+    <h3>${kid ? esc(kid) + '의 ' : ''}Speaking Time!</h3>
+    <p>Sentence Bank ${S.lv.id} · ${esc(S.title)}</p></div>`);
+  $('#play').append(t);
+  await sleep(3200);
+  t.style.transition = 'opacity .5s'; t.style.opacity = 0;
+  await sleep(500); t.remove();
+}
+
+async function finish(r) {
+  hush();
+  const kid = S.kid;
+  const vid = S.mode === 'video';
+  document.querySelectorAll('#dots i').forEach((d) => (d.className = 'done'));
+  const t = el('div', 'title-card', `<div class="inner">
+    <svg class="who"><use href="#whaley"/></svg>
+    <h3>${vid && kid ? 'Great job, ' + esc(kid) + '!' : 'Great job!'}</h3>
+    <div class="stars">${[0, 1, 2].map((k) => `<span style="animation-delay:${0.3 + k * 0.25}s">★</span>`).join('')}</div>
+    <p>${S.list.length}개의 문장을 말했어요</p>
+    ${vid ? '<div class="logo" style="margin:22px 0 0"><img src="logo.png" alt="고래영어"></div>' : ''}
+    <div class="end-btns"${vid ? ' style="opacity:0;transition:opacity .4s"' : ''}>
+      <button class="pill main" data-end="again">다시 하기</button>
+      <button class="pill" data-end="home">단원 고르기</button>
+    </div></div>`);
+  $('#play').append(t);
+  if (vid) setTimeout(() => { const b = t.querySelector('.end-btns'); if (b) b.style.opacity = 1; }, 4000);
+  t.querySelector('[data-end=again]').onclick = () => { t.remove(); const s = S; start(s.lv, s.list, s.title, s.mode); };
+  t.querySelector('[data-end=home]').onclick = exitPlay;
+}
+
+// ── 카메라(촬영 모드에서 학생 얼굴 동그라미) ───────────
+let camStream = null;
+async function startCam() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    const v = $('#cam'); v.srcObject = camStream; v.classList.remove('hidden');
+  } catch {
+    const h = el('div', 'hint', '카메라를 열 수 없어요 — 브라우저의 카메라 권한을 확인해 주세요'); $('#play').append(h); setTimeout(() => h.remove(), 4200);
+  }
+}
+function stopCam() { if (camStream) camStream.getTracks().forEach((t) => t.stop()); camStream = null; $('#cam').classList.add('hidden'); }
+
+// ── 공통 버튼·키보드·스와이프 ───────────────────────────
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act;
+  if (act === 'closeSheet') $('#sheet').classList.add('hidden');
+  if (act === 'exit') exitPlay();
+  if (act === 'full') {
+    const d = document.documentElement;
+    try { document.fullscreenElement ? document.exitFullscreen() : (d.requestFullscreen || d.webkitRequestFullscreen).call(d); } catch {}
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (!S || $('#play').classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight') { S.i + 1 < S.list.length ? show(S.i + 1) : finish(++run); }
+  if (e.key === 'ArrowLeft' && S.i > 0) show(S.i - 1, true);
+  if (e.key === ' ') { e.preventDefault(); if (S.mode === 'manual') $('#scene .card')?.click(); else { S.paused = !S.paused; if (S.paused) hush(); renderCtrl(); } }
+  if (e.key === 'Escape' && !document.fullscreenElement) exitPlay();
+});
+let sx = null;
+$('#scene').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+$('#scene').addEventListener('touchend', (e) => {
+  if (sx == null || !S) return;
+  const dx = e.changedTouches[0].clientX - sx; sx = null;
+  if (Math.abs(dx) < 60) return;
+  if (dx < 0) { S.i + 1 < S.list.length ? show(S.i + 1) : finish(++run); } else if (S.i > 0) show(S.i - 1, true);
+}, { passive: true });
+
+renderHome();
+</script>
+</body>
+</html>
