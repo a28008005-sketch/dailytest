@@ -674,6 +674,28 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 .sb-slot[data-state="ok"]{border-color:var(--kelp); border-style:solid}
 .sb-slot[data-state="no"]{border-color:var(--danger); border-style:solid}
 .sb-bank{justify-content:center}
+.sb-line{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 6px; padding:16px 10px; background:var(--surface); border:2px solid var(--line); border-radius:var(--r-md); font:600 20px/1.3 var(--f-word)}
+.sb-line[data-state="ok"]{border-color:var(--kelp)}
+.sb-line[data-state="no"]{border-color:var(--danger)}
+.sb-word{color:var(--ink)}
+.sb-gap{
+  min-width:64px; padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--ink);
+  border:2px dashed color-mix(in srgb, var(--rc) 70%, transparent); background:color-mix(in srgb, var(--rc) 10%, var(--surface));
+  font:600 20px/1.3 var(--f-word);
+}
+.sb-gap[data-next="1"]{border-style:solid; box-shadow:0 0 0 3px color-mix(in srgb, var(--rc) 25%, transparent)}
+.sb-gap[data-filled="1"]{border-style:solid; background:color-mix(in srgb, var(--rc) 22%, var(--surface))}
+.sb-gap-t{letter-spacing:.06em}
+.sb-gap-label{text-align:center; font-size:13px; color:var(--rc); font-weight:700}
+.sb-gap[data-r="W"], .sb-gap-label[data-r="W"]{--rc:var(--r-W)}
+.sb-gap[data-r="S"], .sb-gap-label[data-r="S"]{--rc:var(--r-S)}
+.sb-gap[data-r="V"], .sb-gap-label[data-r="V"]{--rc:var(--r-V)}
+.sb-gap[data-r="O"], .sb-gap-label[data-r="O"]{--rc:var(--r-O)}
+.sb-gap[data-r="C"], .sb-gap-label[data-r="C"]{--rc:var(--r-C)}
+.sb-gap[data-r="M"], .sb-gap-label[data-r="M"]{--rc:var(--r-M)}
+.sb-next{border:2px solid var(--accent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent)}
+.sb-next small:first-child{color:var(--accent); font-weight:700; margin:0 0 2px}
+.sb-go{margin-left:auto; font-size:26px; color:var(--accent)}
 
 .sb-parse{display:flex; flex-wrap:wrap; gap:6px 4px; justify-content:center; padding:14px 6px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md)}
 .sb-chunk{
@@ -2038,8 +2060,8 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   }
   // 웨일리 보카 레벨·진도 → 카드 레벨·권·단원 (파닉스는 카드가 없다)
   function sbUnitOf(lvId, dayId) {
-    var m = /^lv(\d+)$/.exec(lvId || ''), d = /-V(\d)U(\d)D/.exec(dayId || '');
-    return m ? { lv: m[1], vol: d ? +d[1] : 1, unit: d ? +d[2] : 1 } : null;
+    var m = /^lv(\d+)$/.exec(lvId || ''), d = /-V(\d)U(\d)D(\d+)/.exec(dayId || '');
+    return m ? { lv: m[1], vol: d ? +d[1] : 1, unit: d ? +d[2] : 1, day: d ? +d[3] : null } : null;
   }
 
   // 같은 <audio> 를 계속 쓴다. 아이패드는 손가락으로 누른 순간에 한 번 열어 둬야 이후 자동 재생이 된다.
@@ -2070,6 +2092,64 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   function sbTokens(a) { return a.replace(/[.!?]+$/, '').split(/\s+/).filter(Boolean); }
   function sbKey(t) { return t.toLowerCase().replace(/[^a-z0-9']/g, ''); }
 
+  // 문장 전체를 맞추는 대신, 문장 성분 한 덩어리만 빈칸으로 비운다.
+  // 동사와 목적어·보어를 번갈아 비우고(주어는 너무 쉬워서 다른 게 없을 때만), 빈칸은 저학년 2칸·고학년 3칸까지.
+  // 관사·소유격(a, the, my …)은 빈칸에서 빼고 보여 준다.
+  var SB_DET = /^(a|an|the|my|your|his|her|its|our|their|this|that|these|those|some|any)$/i;
+  function sbBlank(card, idx, junior) {
+    var max = junior ? 2 : 3;
+    var a = card.a.replace(/[.!?]+$/, '');
+    // 덩어리마다 글자 위치
+    var pos = 0, ranges = [];
+    card.p.forEach(function (c, k) {
+      if (k > 0 && !c[2]) pos += 1;
+      ranges.push({ s: pos, e: pos + c[0].length, r: c[1] });
+      pos += c[0].length;
+    });
+    var toks = [], re = /\S+/g, m;
+    while ((m = re.exec(a))) {
+      var ts = m.index, te = m.index + m[0].length, ci = -1;
+      ranges.forEach(function (r, k) { if (ts >= r.s && ts < r.e) ci = k; });
+      var whole = ci >= 0 && te <= ranges[ci].e;
+      toks.push({ t: m[0].replace(/,$/, ''), comma: /,$/.test(m[0]), ci: whole ? ci : -1 });
+    }
+    function inChunk(k) {
+      var out = []; toks.forEach(function (t, i) { if (t.ci === k && /[A-Za-z0-9]/.test(t.t)) out.push(i); });
+      while (out.length > 1 && SB_DET.test(toks[out[0]].t)) out.shift();
+      return out;
+    }
+    var order = (idx % 2 ? ['O', 'C', 'V'] : ['V', 'O', 'C']).concat(['M', 'W', 'S']);
+    var pick = null;
+    for (var o = 0; o < order.length && !pick; o++) {
+      // 동사는 뒤에서부터 (What do you want? → want). 의문문 앞 조동사보다 본동사를 연습한다.
+      for (var kk = 0; kk < ranges.length; kk++) {
+        var k = order[o] === 'V' ? ranges.length - 1 - kk : kk;
+        if (ranges[k].r !== order[o]) continue;
+        var ids = inChunk(k);
+        if (ids.length && ids.length <= max) { pick = { ids: ids, r: order[o] }; break; }
+      }
+    }
+    if (!pick) {
+      // 짧은 덩어리가 없으면 동사(없으면 가장 긴 덩어리)의 끝 낱말 몇 개
+      var best = -1, bestLen = 0;
+      for (var k2 = 0; k2 < ranges.length; k2++) {
+        var n = inChunk(k2).length;
+        if (ranges[k2].r === 'V' && n) { best = k2; break; }
+        if (n > bestLen) { best = k2; bestLen = n; }
+      }
+      if (best < 0) return null;
+      var all = inChunk(best);
+      pick = { ids: all.slice(-max), r: ranges[best].r };
+    }
+    var set = {}; pick.ids.forEach(function (i) { set[i] = 1; });
+    return {
+      role: pick.r,
+      toks: toks.map(function (t, i) { return { t: t.t, comma: t.comma, blank: !!set[i] }; }),
+      answer: pick.ids.map(function (i) { return toks[i].t; }),
+      end: (card.a.match(/[.!?]+$/) || [''])[0]
+    };
+  }
+
   function SentenceBuilder(props) {
     var start = props.start;
     var _d = useState(window.CARD_DATA || null), data = _d[0], setData = _d[1];
@@ -2085,7 +2165,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     var _pick = useState(null), pick = _pick[0], setPick = _pick[1];
     var _rev = useState(false), revealed = _rev[0], setRevealed = _rev[1];
     var _sc = useState({ built: 0, first: 0, parse: 0, coins: 0 }), score = _sc[0], setScore = _sc[1];
+    var _hint = useState(0), hint = _hint[0], setHint = _hint[1];
     var missed = useRef({});
+    var dayMode = !!props.day;
+    var phaseDay = useRef(dayMode);
 
     useEffect(function () {
       if (data) return;
@@ -2098,10 +2181,12 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     var item = queue[qi];
     var card = item ? item.card : null;
 
+    var blank = useMemo(function () { return card ? sbBlank(card, qi, props.junior) : null; }, [card && card.no, qi]);
+
     var tiles = useMemo(function () {
-      if (!card) return [];
-      var words = sbTokens(card.a);
-      var have = {}; words.forEach(function (w) { have[sbKey(w)] = 1; });
+      if (!card || !blank) return [];
+      var words = blank.answer;
+      var have = {}; sbTokens(card.a).forEach(function (w) { have[sbKey(w)] = 1; });
       var pool = [];
       unitCards.forEach(function (c) {
         if (c === card) return;
@@ -2110,19 +2195,19 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
           if (k.length > 1 && !have[k]) { have[k] = 1; pool.push(/^[A-Z]/.test(w) && !/^(I|I'm|I'll|I've)$/.test(w) ? w.toLowerCase() : w); }
         });
       });
-      var extra = shuffle(pool).slice(0, words.length > 9 ? 1 : words.length > 5 ? 2 : 3);
+      var extra = shuffle(pool).slice(0, 2);
       return shuffle(words.map(function (w, i) { return { t: w, id: 'w' + i }; })
         .concat(extra.map(function (w, i) { return { t: w, id: 'x' + i }; })));
-    }, [card && card.no, qi, item && item.round]);
+    }, [card && card.no, qi, item && item.round, blank]);
 
     // 질문 역할: V 가 기본, 둘째 카드마다 주어(있으면)
     var quizRole = useMemo(function () {
       if (!card) return null;
       var roles = card.p.map(function (c) { return c[1]; });
       if (roles.indexOf('V') < 0) return null;
-      if (qi % 2 === 1 && roles.indexOf('S') >= 0) return 'S';
+      if (blank && blank.role === 'V') return roles.indexOf('S') >= 0 ? 'S' : 'V';
       return 'V';
-    }, [card && card.no, qi]);
+    }, [card && card.no, qi, blank]);
 
     // 카드가 바뀌면 선생님 질문을 들려준다
     useEffect(function () {
@@ -2132,23 +2217,32 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       return function () { clearTimeout(t); };
     }, [phase, qi, step]);
 
-    function begin() {
+    function dayCards() {
+      var cs = unitCards.filter(function (c) { return c.d === props.day; });
+      return cs.length ? cs : shuffle(unitCards).slice(0, 4);
+    }
+    function begin(useDay) {
       sbUnlock(); ac();
-      var q = unitCards.map(function (c) { return { card: c, round: 0 }; });
+      var list = useDay ? dayCards() : unitCards;
+      phaseDay.current = !!useDay;
+      var q = list.map(function (c) { return { card: c, round: 0 }; });
       missed.current = {};
       setQueue(q); setQi(0); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false);
-      setScore({ built: 0, first: 0, parse: 0, coins: 0 });
+      setScore({ built: 0, first: 0, parse: 0, coins: 0 }); setHint(0);
       setPhase('play');
     }
-    function toBuild() { sbStop(); setPlaced([]); setRes(null); setStep('build'); }
+    // 단어 학습에 이어 들어오면 고르는 화면 없이 바로 시작
+    useEffect(function () { if (dayMode && lvData && phase === 'intro') begin(true); }, [!!lvData]);
+    function toBuild() { sbStop(); setPlaced([]); setRes(null); setHint(0); setStep('build'); }
     function check() {
       var made = placed.map(function (id) { return tiles.find(function (x) { return x.id === id; }).t; });
-      var ok = made.map(sbKey).join(' ') === sbTokens(card.a).map(sbKey).join(' ');
+      var ok = made.map(sbKey).join(' ') === blank.answer.map(sbKey).join(' ');
       setRes({ ok: ok });
       if (ok) {
         SFX.correct(); buzz(18);
         var first = !missed.current[card.no];
-        setScore(function (s) { return Object.assign({}, s, { built: s.built + 1, first: s.first + (first ? 1 : 0), coins: s.coins + (first ? 10 : 4) }); });
+        var c0 = first ? (hint ? 6 : 10) : 4;
+        setScore(function (s) { return Object.assign({}, s, { built: s.built + 1, first: s.first + (first ? 1 : 0), coins: s.coins + c0 }); });
       } else {
         SFX.wrong(); buzz([12, 60, 12]);
         missed.current[card.no] = 1;
@@ -2178,15 +2272,15 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
     function nextCard(q) {
       var list = q || queue;
       sbStop();
-      if (qi + 1 >= list.length) { SFX.win(); setPhase('done'); props.onFinish(score.coins + 0, start.lv + '|' + sel.vol + '|' + sel.unit); return; }
-      setQi(qi + 1); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false);
+      if (qi + 1 >= list.length) { SFX.win(); setPhase('done'); props.onFinish(score.coins + 0, start.lv + '|' + sel.vol + '|' + sel.unit + (phaseDay.current ? '|D' + props.day : '')); return; }
+      setQi(qi + 1); setStep('card'); setPlaced([]); setRes(null); setPick(null); setRevealed(false); setHint(0);
     }
 
     /* ---------- 화면 ---------- */
     var head = html`<div className="hud">
       <button className="iconbtn" aria-label="나가기" onClick=${function () { sbStop(); props.onExit(); }}><${Icon} name="close" size=${16}/></button>
       <div style=${{ flex: 1 }}>
-        <div className="eyebrow">SENTENCE BANK ${start.lv} · VOL.${sel.vol} UNIT ${sel.unit}</div>
+        <div className="eyebrow">SENTENCE BANK ${start.lv} · VOL.${sel.vol} UNIT ${sel.unit}${phaseDay.current && phase !== 'intro' ? ' · DAY ' + props.day : ''}</div>
         ${phase === 'play' ? html`<div className="sb-prog"><div className="sb-prog-fill" style=${{ width: Math.round(100 * qi / Math.max(1, queue.length)) + '%' }}></div></div>` : html`<div style=${{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>문장 만들기</div>`}
       </div>
       ${phase === 'play' ? html`<div className="hud-stat"><${Icon} name="coin" size=${14}/>${score.coins}</div>` : null}
@@ -2230,11 +2324,11 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         </div>
         <div className="card-flat sb-steps">
           <div><b>1</b> 카드 보기 — 선생님 질문을 듣고 사진을 보며 대답해 봐요</div>
-          <div><b>2</b> 문장 만들기 — 단어 조각을 순서대로 눌러요</div>
+          <div><b>2</b> 빈칸 채우기 — 비어 있는 곳에 알맞은 단어를 넣어요</div>
           <div><b>3</b> 문장 성분 — 주어·동사·목적어를 색으로 찾아요</div>
         </div>
         <div className="spacer"></div>
-        <button className="btn btn-primary" onClick=${begin}>Vol.${sel.vol} Unit ${sel.unit} 시작 · ${unitCards.length}문장</button>
+        <button className="btn btn-primary" onClick=${function () { begin(false); }}>Vol.${sel.vol} Unit ${sel.unit} 시작 · ${unitCards.length}문장</button>
       </div></div>`;
     }
 
@@ -2243,14 +2337,15 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       return html`<div>${head}<div className="pad" style=${{ alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
         <${Bubbles} seed=${3}/>
         <${Whaley} mood="hit" wear=${props.wear}/>
-        <h1 className="h-title" style=${{ fontSize: '30px' }}>${total}문장 완성!</h1>
+        <h1 className="h-title" style=${{ fontSize: '30px' }}>${queue.filter(function (x) { return !x.round; }).length}문장 완성!</h1>
         <div className="row" style=${{ gap: '8px', width: '100%' }}>
-          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">한 번에 정답</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.first} / ${total}</div></div>
+          <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">한 번에 정답</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.first} / ${queue.filter(function (x) { return !x.round; }).length}</div></div>
           <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">성분 찾기</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>${score.parse}</div></div>
           <div className="card-flat" style=${{ flex: 1 }}><div className="eyebrow">코인</div><div className="num" style=${{ fontSize: '22px', fontWeight: 600 }}>+${score.coins}</div></div>
         </div>
         <div className="spacer"></div>
-        <button className="btn btn-primary" style=${{ width: '100%' }} onClick=${begin}>한 번 더</button>
+        <button className="btn btn-primary" style=${{ width: '100%' }} onClick=${function () { begin(phaseDay.current); }}>한 번 더</button>
+        ${phaseDay.current ? html`<button className="btn btn-ghost" style=${{ width: '100%' }} onClick=${function () { phaseDay.current = false; setPhase('intro'); }}>이 단원 카드 전체 보기</button>` : null}
         <button className="btn btn-ghost" style=${{ width: '100%' }} onClick=${function () {
           var nu = sel.unit < 4 ? { vol: sel.vol, unit: sel.unit + 1 } : { vol: Math.min(6, sel.vol + 1), unit: 1 };
           setSel(nu); setPhase('intro');
@@ -2285,37 +2380,47 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
         </div>
         <div className="h-sub" style=${{ textAlign: 'center' }}>카드를 누르면 뒤집혀서 정답이 보여요</div>
         <div className="spacer"></div>
-        <button className="btn btn-primary" onClick=${toBuild}>문장 만들기 →</button>
+        <button className="btn btn-primary" onClick=${toBuild}>빈칸 채우기 →</button>
       </div>`;
     } else if (step === 'build') {
-      var answerWords = sbTokens(card.a);
+      var nextEmpty = placed.length;
+      var bi = -1;
       body = html`<div className="sb-col">
-        <div className="sb-kicker">영어 문장으로 만들어 보세요</div>
+        <div className="sb-kicker">빈칸에 들어갈 ${SB_ROLE[blank.role].ko}를 골라 보세요</div>
         <div className="sb-prompt">
           <img src=${img} alt=""/>
           <div className="sb-ko">${card.ko}</div>
         </div>
-        <div className="slot sb-slot" data-state=${res ? (res.ok ? 'ok' : 'no') : ''}>
-          ${placed.map(function (id) {
-            var t = tiles.find(function (x) { return x.id === id; });
-            return html`<button key=${id} className="chip chip-placed" disabled=${!!res}
-              onClick=${function () { setPlaced(placed.filter(function (x) { return x !== id; })); }}>${t.t}</button>`;
-          })}
-          ${!placed.length ? html`<span style=${{ color: 'var(--ink-3)', fontSize: '13px', padding: '8px' }}>단어를 눌러 여기에 놓아요</span>` : null}
+        <div className="sb-line" data-state=${res ? (res.ok ? 'ok' : 'no') : ''}>
+          ${blank.toks.map(function (t, i) {
+            if (!t.blank) return html`<span key=${i} className="sb-word">${t.t}${t.comma ? ',' : ''}</span>`;
+            bi += 1;
+            var k = bi, id = placed[k], tile = id ? tiles.find(function (x) { return x.id === id; }) : null;
+            var want = blank.answer[k];
+            return html`<button key=${i} className="sb-gap" data-r=${blank.role} data-filled=${tile ? '1' : '0'} data-next=${!tile && k === nextEmpty ? '1' : '0'} disabled=${!!res}
+              onClick=${function () { if (tile) setPlaced(placed.slice(0, k).concat(placed.slice(k + 1))); }}>
+              <span className="sb-gap-t">${tile ? tile.t : (hint ? want.charAt(0) + want.slice(1).replace(/[A-Za-z]/g, '·') : '\u00A0')}</span>
+            </button>${t.comma ? ',' : ''}`;
+          })}<span className="sb-word">${blank.end}</span>
         </div>
+        <div className="sb-gap-label" data-r=${blank.role}>빈칸 = ${SB_ROLE[blank.role].ko} · ${SB_ROLE_TIP[blank.role]}</div>
         <div className="row-wrap sb-bank">
           ${tiles.map(function (t) {
-            return html`<button key=${t.id} className="chip" data-used=${placed.indexOf(t.id) >= 0 ? '1' : '0'} disabled=${!!res}
+            return html`<button key=${t.id} className="chip" data-used=${placed.indexOf(t.id) >= 0 ? '1' : '0'} disabled=${!!res || placed.length >= blank.answer.length}
               onClick=${function () { SFX.tick(); setPlaced(placed.concat([t.id])); }}>${t.t}</button>`;
           })}
         </div>
+        ${res ? null : html`<div className="row" style=${{ justifyContent: 'center', gap: '8px' }}>
+          <button className="btn btn-ghost" onClick=${function () { setHint(1); }} disabled=${!!hint}>💡 첫 글자 힌트</button>
+          <button className="btn btn-ghost" onClick=${function () { setHint(1); sbSay(card.aa, card.a, 'en', props.rate); }}><${Icon} name="sound" size=${15}/> 문장 듣기</button>
+        </div>`}
         <div className="spacer"></div>
         ${res ? html`<div className="feedback" data-ok=${res.ok ? '1' : '0'}>
           <div className="fb-title">${res.ok ? (missed.current[card.no] ? '이번엔 맞았어요!' : '정답이에요!') : '아쉬워요'}</div>
           <div className="fb-sub">${res.ok ? card.a : '정답: ' + card.a}</div>
           ${res.ok ? null : html`<div className="fb-sub">이 카드는 마지막에 한 번 더 나와요</div>`}
           <button className="btn btn-primary" onClick=${afterBuild}>${res.ok ? '문장 성분 보기 →' : '계속'}</button>
-        </div>` : html`<button className="btn btn-primary" disabled=${placed.length < answerWords.length} onClick=${check}>확인</button>`}
+        </div>` : html`<button className="btn btn-primary" disabled=${placed.length < blank.answer.length} onClick=${check}>확인</button>`}
       </div>`;
     } else {
       body = html`<div className="sb-col">
@@ -2413,7 +2518,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>
-      ${sbStart ? html`<button className="sb-entry" onClick=${function () { ac(); props.go('sbank'); }}>
+      ${sbStart ? html`<button className="sb-entry" onClick=${function () { ac(); sbUnlock(); props.go('sbank'); }}>
         <img src=${SB_BASE + 'img/' + sbStart.lv + '/' + String((sbStart.vol - 1) * 4 * sbPer[sbStart.lv] + (sbStart.unit - 1) * sbPer[sbStart.lv] + 1).padStart(3, '0') + '.webp'} alt=""/>
         <span><b>문장 만들기</b><small>Sentence Bank · Vol.${sbStart.vol} Unit ${sbStart.unit} · 사진 보고 문장 만들고 성분 찾기</small></span>
         ${(prog.sbDone || {})[sbStart.lv + '|' + sbStart.vol + '|' + sbStart.unit] ? html`<span className="tag" data-kind="ok">완료</span>` : null}
@@ -2918,6 +3023,11 @@ nextRef.current = function () {
         <div><div className="k">총점</div><div className="v">${r.overall.score.toLocaleString()}</div></div>
         <div><div className="k">학습 시간</div><div className="v">${Math.round(r.overall.durationSec / 60)}분</div></div>
       </div>
+      ${props.sbNext ? html`<button className="sb-entry sb-next" onClick=${props.onSentence}>
+        <img src=${SB_BASE + 'img/' + props.sbNext.lv + '/' + String((props.sbNext.vol - 1) * 4 * ({ '240': 10, '520': 12, '860': 14, '1240': 16, '1680': 18 })[props.sbNext.lv] + (props.sbNext.unit - 1) * ({ '240': 10, '520': 12, '860': 14, '1240': 16, '1680': 18 })[props.sbNext.lv] + 1).padStart(3, '0') + '.webp'} alt=""/>
+        <span><small>이어서 하기</small><b>오늘의 문장 카드 · Day ${props.sbNext.day}${props.sbNext.day === 5 ? ' 복습' : ''}</b><small>사진 보고 빈칸 채우기 · 문장 성분 찾기</small></span>
+        <span className="sb-go">›</span>
+      </button>` : null}
 
       <div className="card">
         <div className="eyebrow" style=${{ marginBottom: '10px' }}>단계별 결과</div>
@@ -3070,6 +3180,8 @@ nextRef.current = function () {
     // Set when a student taps [바로 학습 시작] on the sign-in card: the session is
     // built one render later, once their own level and progress are in state.
     var _qs = useState(false), pendingStart = _qs[0], setPendingStart = _qs[1];
+    // 단어 학습을 마친 날 → 그날의 Sentence Bank 카드
+    var _sbd = useState(null), sbDay = _sbd[0], setSbDay = _sbd[1];
 
     soundOn = settings.sound; hapticOn = settings.haptic;
 
@@ -3369,9 +3481,10 @@ nextRef.current = function () {
           location.reload();
         }}/>`;
     } else if (view === 'sbank') {
-      var sbs = sbUnitOf(lv.id, lv.days[dayIdx].id);
-      body = sbs ? html`<${SentenceBuilder} start=${sbs} rate=${settings.rate} wear=${progress.wear} done=${progress.sbDone}
-        onExit=${function () { setView('home'); }}
+      var sbs = sbDay || sbUnitOf(lv.id, lv.days[dayIdx].id);
+      body = sbs ? html`<${SentenceBuilder} key=${sbDay ? 'day' : 'unit'} start=${sbs} day=${sbDay ? sbDay.day : null} junior=${lv.track === 'junior'}
+        rate=${settings.rate} wear=${progress.wear} done=${progress.sbDone}
+        onExit=${function () { setSbDay(null); setView('home'); }}
         onFinish=${function (coins, key) {
           setProgress(function (p) {
             var np = Object.assign({}, p);
@@ -3403,7 +3516,10 @@ nextRef.current = function () {
         onNext=${function () { if (isLast) finish(session); else nextStage(); }}
         onShop=${function () { setView('shop'); }}/>`;
     } else if (view === 'report' && report) {
+      var sbAfter = sbUnitOf(lv.id, (lv.days[(report.level.dayIndex || 1) - 1] || {}).id);
       body = html`<${ReportView} report=${report} endpoint=${settings.endpoint}
+        sbNext=${sbAfter && sbAfter.day ? sbAfter : null}
+        onSentence=${function () { sbUnlock(); ac(); setSbDay(sbAfter); setSession(null); setReport(null); setView('sbank'); }}
         onHome=${function () { setSession(null); setReport(null); setView('home'); }}/>`;
     } else {
       body = html`<${Home} profile=${profile} progress=${progress} go=${setView} onStart=${startSession} onSignOut=${signOut}/>`;
