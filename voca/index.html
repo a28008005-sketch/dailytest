@@ -2026,8 +2026,19 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   var STONES = [
     { n: 1, icon: '🎧', title: '오늘의 진도', sub: '새 단어와 문장' },
     { n: 2, icon: '🔁', title: '랜덤 복습', sub: '배운 것 중 10개' },
-    { n: 3, icon: '🎯', title: '오답 클리어', sub: '틀린 것만 100%' }
+    { n: 3, icon: '🎯', title: '오답 클리어', sub: '오늘 정답률 80%면 끝' }
   ];
+
+  // 오답 클리어를 다 맞혀야만 끝나면 어려운 한두 문제에 묶여 하루를 못 끝내는 아이가 생긴다.
+  // 오늘 푼 문제(STEP 1·2) 중 지금 맞힌 상태인 비율이 이만큼이면 끝낼 수 있게 한다.
+  var PASS_PCT = 80;
+  // 80%가 안 돼도 오답 클리어를 이만큼 돌면 오늘은 여기까지 한다. (남은 오답은 리포트에 남는다)
+  var MAX_CLEAR_ROUNDS = 3;
+  function dayClearPct(s) {
+    var base = s.stats.filter(function (x) { return x.stage <= 2; }).reduce(function (a, x) { return a + x.total; }, 0);
+    if (!base) return 0;
+    return Math.max(0, Math.min(100, Math.round(100 * (base - s.wrongs.length) / base)));
+  }
   var OFFSET = [0, 46, 0, -46];
 
   function Trail(props) {
@@ -3230,8 +3241,18 @@ nextRef.current = function () {
           })}
         </div>
       </div>` : null}
+      ${props.clearPct != null ? html`<div className="card" style=${{ marginTop: '4px', textAlign: 'center' }}>
+        <div className="eyebrow" style=${{ marginBottom: '4px' }}>오늘 정답률</div>
+        <div style=${{ fontSize: '28px', fontWeight: 800 }}>${props.clearPct}%</div>
+        <div style=${{ fontSize: '13px', opacity: 0.8 }}>${props.canFinish
+          ? '목표 ' + PASS_PCT + '%를 넘었어요! 여기서 끝내도 돼요.'
+          : props.wrongLeft
+            ? (props.isLast ? '오늘은 여기까지! 남은 오답은 리포트에 남겨 둘게요.' : PASS_PCT + '%가 되면 끝낼 수 있어요. 조금만 더!')
+            : '모두 맞혔어요!'}</div>
+      </div>` : null}
       <div className="spacer"></div>
       <button className="btn btn-primary" onClick=${props.onNext}>${props.nextLabel}</button>
+      ${props.onMore ? html`<button className="btn btn-ghost" onClick=${props.onMore}>🎯 남은 오답 ${props.wrongLeft}개 더 도전하기</button>` : null}
       <button className="btn btn-ghost" onClick=${props.onShop}><${Icon} name="bag" size=${15}/> 상점 들르기</button>
     </div>`;
   }
@@ -3474,6 +3495,37 @@ nextRef.current = function () {
       startSession();
     }, [profile, pendingStart]);
 
+    // ── 공부하는 동안 선생님 화면에 진행 상황을 보낸다 ──
+    // 단계가 시작·끝날 때, 그리고 5문제마다 한 번. 같은 날 같은 일차는 한 줄로 덮어써서
+    // '학습 중' → '완료'(또는 '중간에 멈춤')로 바뀌어 보인다.
+    function liveReport(s, status) {
+      var day = lv.days[dayIdx];
+      var t = 0, c = 0, inStats = false;
+      s.stats.forEach(function (x) {
+        t += x.total; c += x.correct;
+        if (x.stage === s.stage && (x.round || 1) === s.round) inStats = true;
+      });
+      if (!inStats) { t += s.stageTotal; c += s.stageCorrect; }
+      var stepName = s.stage === 1 ? '오늘의 진도' : s.stage === 2 ? '랜덤 복습' : '오답 클리어 ' + s.round + '회차';
+      return {
+        date: todayStr(),
+        student: { id: profile.studentId, name: profile.name },
+        level: { id: lv.id, title: lv.title, day: day.label, dayIndex: dayIdx + 1 },
+        overall: { total: t, correct: c, durationSec: Math.round((Date.now() - s.startedAt) / 1000) },
+        status: status,
+        step: 'STEP ' + s.stage + ' ' + stepName + (inStats ? ' 끝' : ''),
+        clearPct: s.stats.some(function (x) { return x.stage === 2; }) ? dayClearPct(s) : undefined,
+        wrongList: s.wrongs
+      };
+    }
+    var liveKey = session ? [session.stage, session.round, session.stageTotal, view].join('|') : '';
+    useEffect(function () {
+      if (!session || !window.whaleSendReport) return;
+      if (view !== 'play' && view !== 'stageend') return;
+      if (view === 'play' && session.stageTotal % 5 !== 0) return;
+      window.whaleSendReport(liveReport(session, 'in-progress'));
+    }, [liveKey]);
+
     function signIn(p, autoStart) {
       rememberStudent(p);
       setStudents(listStudents());
@@ -3592,6 +3644,7 @@ nextRef.current = function () {
         var coins = Math.round(payload.score / 100);
         var stat = {
           stage: s.stage,
+          round: s.round,
           name: s.stage === 1 ? '오늘의 진도' : s.stage === 2 ? '랜덤 복습' : '오답 클리어 ' + s.round + '회차',
           total: payload.total, correct: payload.correct,
           accuracyPct: payload.total ? Math.round(100 * payload.correct / payload.total) : 0,
@@ -3623,7 +3676,7 @@ nextRef.current = function () {
         setView('play');
       } else if (s.stage === 2 || s.stage === 3) {
         var remaining = s.wrongs;
-        if (remaining.length && s.round <= 5) {
+        if (remaining.length && (s.stage === 2 || s.round < MAX_CLEAR_ROUNDS)) {
           var b3 = buildStage(3, remaining);
           if (b3.beats.length) {
             setSession(Object.assign({}, s, { stage: 3, round: s.stage === 3 ? s.round + 1 : 1, built: b3, beatOk: [], stageCorrect: 0, stageTotal: 0 }));
@@ -3651,6 +3704,8 @@ nextRef.current = function () {
           score: s.totalScore,
           durationSec: Math.round((Date.now() - s.startedAt) / 1000)
         },
+        status: 'done',
+        clearPct: dayClearPct(s),
         speaking: s.speaking,
         wrongList: s.wrongs.map(function (w) { return { id: w.item.id, en: w.item.en, ko: w.item.ko || w.item.tko || '', type: w.type, attempts: w.attempts }; })
       };
@@ -3754,14 +3809,19 @@ nextRef.current = function () {
         monsterHp=${lv.track === 'junior' ? Math.max(60, b.beats.length * 12) : 0}
         baseDepth=${lv.depth || 0}
         onBeat=${onBeat} onEnd=${endStage}
-        onQuit=${function () { setSession(null); setView('home'); }}/>`;
+        onQuit=${function () { if (window.whaleSendReport) window.whaleSendReport(liveReport(session, 'stopped')); setSession(null); setView('home'); }}/>`;
     } else if (view === 'stageend' && session) {
       var st = session.lastStat || { total: 0, correct: 0 };
-      var isLast = session.stage >= 2 && !session.wrongs.length;
+      // 오답이 없거나, 오답 클리어를 정해진 회차까지 했으면 끝.
+      var isLast = session.stage >= 2 && (!session.wrongs.length || (session.stage === 3 && session.round >= MAX_CLEAR_ROUNDS));
+      var clearPct = session.stage >= 2 ? dayClearPct(session) : null;
+      var canFinish = !isLast && session.stage >= 2 && clearPct >= PASS_PCT;
       body = html`<${StageEnd} stageNo=${session.stage} stat=${st}
         title=${session.stage === 1 ? '오늘의 진도 끝!' : session.stage === 2 ? '복습 인출 끝!' : '오답 클리어 라운드 끝!'}
-        nextLabel=${isLast ? '리포트 보기' : (session.stage === 1 ? 'STEP 2 · 랜덤 복습 시작' : 'STEP 3 · 오답 클리어 시작')}
-        onNext=${function () { if (isLast) finish(session); else nextStage(); }}
+        clearPct=${clearPct} canFinish=${canFinish} isLast=${isLast} wrongLeft=${session.wrongs.length}
+        nextLabel=${isLast || canFinish ? '오늘 학습 완료 · 리포트 보기' : (session.stage === 1 ? 'STEP 2 · 랜덤 복습 시작' : 'STEP 3 · 오답 클리어 시작')}
+        onNext=${function () { if (isLast || canFinish) finish(session); else nextStage(); }}
+        onMore=${canFinish ? function () { nextStage(); } : null}
         onShop=${function () { setView('shop'); }}/>`;
     } else if (view === 'report' && report) {
       var sbAfter = sbUnitOf(lv.id, (lv.days[(report.level.dayIndex || 1) - 1] || {}).id);
@@ -3891,9 +3951,15 @@ nextRef.current = function () {
         // 원생관리 '단어 학습' 화면에 학습 시간과 어느 날 공부인지도 보이도록 함께 보낸다.
         durationSec: r && r.overall && r.overall.durationSec,
         dayLabel: r && r.level && r.level.day,
+        // 진행 상태: in-progress(학습 중) · stopped(중간에 멈춤) · done(완료)
+        status: (r && r.status) || 'done',
+        step: r && r.step,
+        clearPct: r && r.clearPct,
+        wrongLeft: r && r.wrongList ? r.wrongList.length : undefined,
         date: r && r.date
       };
       if (!body.student || !body.day) return;
+      if (body.status !== 'done' && !(body.total >= 0)) return;
       fetch(API + '/api/voca/report', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body), keepalive: true

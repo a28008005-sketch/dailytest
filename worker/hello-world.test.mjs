@@ -109,13 +109,19 @@ const cloudRows = [
   { id: 's-a2', data: { name: '이서아' } },   // 동명이인
 ];
 const cloudCalls = [];
+const cloudVocab = {};
 let cloudFail = false;
 const notionFetch = globalThis.fetch;
 globalThis.fetch = async (url, init = {}) => {
   if (url.startsWith('https://olzyfwiurfgaxctdemxa.supabase.co/rest/v1/records')) {
     cloudCalls.push([init.method || 'GET', url, init.headers, init.body ? JSON.parse(init.body) : null]);
     if (cloudFail) return { ok: false, status: 500, json: async () => ({}), text: async () => 'boom' };
-    if (!init.method) return { ok: true, json: async () => cloudRows, text: async () => '' };
+    if (!init.method) {
+      const vid = (url.match(/kind=eq\.vocab&id=eq\.([^&]+)/) || [])[1];
+      const rows = vid ? (cloudVocab[decodeURIComponent(vid)] ? [{ data: cloudVocab[decodeURIComponent(vid)] }] : []) : cloudRows;
+      return { ok: true, json: async () => rows, text: async () => '' };
+    }
+    JSON.parse(init.body).forEach(row => { cloudVocab[row.id] = row.data; });
     return { ok: true, status: 201, json: async () => ({}), text: async () => '' };
   }
   if (url.includes('/databases/934da1ef')) {
@@ -140,7 +146,8 @@ assert.equal(put[0], 'POST'); assert.match(put[2].Prefer, /merge-duplicates/);
 const row = put[3][0];
 assert.equal(row.kind, 'vocab'); assert.equal(row.deleted, false);
 assert.equal(row.id, 'voc-whaley-s-ha-Phonics1-3'); assert.equal(row.data.id, row.id);
-assert.equal(row.data.studentId, 's-ha'); assert.equal(row.data.setName, 'Phonics 1 Day 3');
+assert.equal(row.data.studentId, 's-ha'); assert.equal(row.data.setName, 'Phonics 1 Day 3 · 완료');
+assert.equal(row.data.status, 'done');
 assert.equal(row.data.correct, 18); assert.equal(row.data.total, 20); assert.equal(row.data.durationSec, 312);
 assert.match(row.data.date, /^\d{4}-\d{2}-\d{2}$/); assert.equal(row.data.source, 'whaley-voca');
 
@@ -151,7 +158,7 @@ assert.equal(r.cloud, 'ok');
 [get, put] = cloudCalls.splice(0);
 assert.equal(get[2].Authorization, 'Bearer eyJhbGciOi.test');
 assert.equal(put[3][0].id, 'voc-whaley-s-ha-Phonics1-3');
-assert.equal(put[3][0].data.durationSec, undefined); assert.equal(put[3][0].data.setName, 'Phonics 1 3일차');
+assert.equal(put[3][0].data.durationSec, undefined); assert.equal(put[3][0].data.setName, 'Phonics 1 3일차 · 완료');
 
 // 동명이인이면 엉뚱한 학생에게 넣지 않는다
 r = await call('/api/voca/report', { ...report, student: '이서아' });
@@ -170,6 +177,28 @@ cloudFail = false; cloudCalls.length = 0;
 // 잘못된 값은 어디에도 넣지 않는다
 r = await call('/api/voca/report', { ...report, correct: 30 });
 assert.equal(r.success, false); assert.equal(r.cloud, 'invalid'); assert.equal(cloudCalls.length, 0);
+
+// 11) 공부하는 동안의 진행 보고: 노션에는 안 넣고 원생관리 줄만 '학습 중'으로 바꾼다
+const notionWrites = writes.length;
+delete cloudVocab['voc-whaley-s-ha-Phonics1-4'];
+const live = { ...report, day: 4, dayLabel: 'Day 4', correct: 5, total: 7, status: 'in-progress', step: 'STEP 1 오늘의 진도', wrongLeft: 2 };
+r = await call('/api/voca/report', live);
+assert.equal(r.success, true); assert.equal(r.cloud, 'ok'); assert.equal(writes.length, notionWrites);
+let v = cloudVocab['voc-whaley-s-ha-Phonics1-4'];
+assert.equal(v.status, 'in-progress'); assert.equal(v.setName, 'Phonics 1 Day 4 · 학습 중 · STEP 1 오늘의 진도');
+assert.equal(v.correct, 5); assert.equal(v.wrongLeft, 2);
+// 중간에 나가면 '중간에 멈춤'
+r = await call('/api/voca/report', { ...live, status: 'stopped' });
+assert.equal(cloudVocab['voc-whaley-s-ha-Phonics1-4'].setName, 'Phonics 1 Day 4 · 중간에 멈춤 · STEP 1 오늘의 진도');
+// 끝내면 같은 줄이 '완료'로 바뀌고 노션에도 들어간다 (80%로 끝내서 오답이 남은 경우)
+r = await call('/api/voca/report', { ...live, correct: 40, total: 48, status: 'done', clearPct: 85, wrongLeft: 3 });
+assert.equal(r.success, true); assert.ok(writes.length > notionWrites);
+v = cloudVocab['voc-whaley-s-ha-Phonics1-4'];
+assert.equal(v.status, 'done'); assert.equal(v.clearPct, 85); assert.equal(v.setName, 'Phonics 1 Day 4 · 완료 · 오늘 정답률 85% (남은 오답 3개)');
+// 늦게 도착한 '학습 중' 보고는 오늘 끝난 기록을 덮지 않는다
+r = await call('/api/voca/report', live);
+assert.equal(r.cloud, 'already-done'); assert.equal(cloudVocab['voc-whaley-s-ha-Phonics1-4'].status, 'done');
+cloudCalls.length = 0;
 
 // 상태 확인 창구가 키 연결 여부를 알려준다
 r = await (await worker.fetch(new Request('https://w.test/api/health'), env)).json();
