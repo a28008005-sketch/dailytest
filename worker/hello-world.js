@@ -314,9 +314,81 @@ async function markAttendance(env, student, status) {
   }
 }
 
+// ── 원생관리(학원 클라우드)로도 성적 보내기 ──
+// 원생관리 홈페이지는 학원 클라우드(Supabase)의 records 표를 선생님 기기들이 나눠 쓴다.
+// 여기에 kind 'vocab' 한 줄을 넣으면 '단어 학습' 화면에 자동으로 쌓인다.
+// 그 표는 로그인한 선생님만 쓸 수 있게 잠겨 있어서, 워커 비밀값의 서버 키로 넣는다.
+// 키는 브라우저로 절대 나가지 않는다.
+const STAFF_CLOUD_URL = 'https://olzyfwiurfgaxctdemxa.supabase.co';
+
+function staffCloudHeaders(key) {
+  // 새 형식 키(sb_secret_…)는 apikey 머리말만 받고, 예전 service_role 키(JWT)는 둘 다 받는다.
+  const h = { apikey: key, 'Content-Type': 'application/json' };
+  if (!key.startsWith('sb_')) h.Authorization = 'Bearer ' + key;
+  return h;
+}
+
+async function pushVocaToStaffCloud(env, r) {
+  const key = env.SUPABASE_SERVICE_KEY;
+  if (!key) return 'not-configured';
+  const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+
+  // 원생관리 명부에서 같은 이름의 학생을 찾는다. (두 명부는 이름으로 이어진다)
+  const res = await fetch(base + '?kind=eq.student&deleted=eq.false&select=id,data', { headers: staffCloudHeaders(key) });
+  if (!res.ok) throw new Error('학원 클라우드 응답 ' + res.status);
+  const rows = await res.json();
+  const matches = rows.filter(row => String((row.data || {}).name || '').trim() === r.student);
+  if (matches.length === 0) return 'no-student';
+  if (matches.length > 1) return 'same-name';
+  const studentId = matches[0].id;
+
+  // 같은 학생이 같은 레벨·일차를 다시 풀면 새 줄이 아니라 덮어쓴다.
+  const sessionId = 'whaley-' + studentId + '-' + r.level.replace(/[^A-Za-z0-9가-힣]+/g, '') + '-' + r.day;
+  const id = 'voc-' + sessionId;
+  const data = {
+    id,
+    studentId,
+    date: r.date,
+    setName: (r.level + ' ' + (r.dayLabel || r.day + '일차')).trim(),
+    total: r.total,
+    correct: r.correct,
+    durationSec: r.durationSec,
+    sessionId,
+    source: 'whaley-voca',
+    updatedAt: new Date().toISOString(),
+  };
+  const put = await fetch(base, {
+    method: 'POST',
+    headers: Object.assign(staffCloudHeaders(key), { Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify([{ kind: 'vocab', id, data, deleted: false }]),
+  });
+  if (!put.ok) throw new Error('학원 클라우드 저장 실패 ' + put.status + ': ' + (await put.text()).slice(0, 200));
+  return 'ok';
+}
+
 // 보카 앱이 하루치를 끝내면 이 창구로 성적을 보낸다.
 // 학생 앱은 공개 주소라 비밀번호를 줄 수 없으므로, 등록된 학생 이름인지로 거른다.
+// 노션(이 대시보드)과 원생관리 클라우드에 각각 넣는다. 한쪽이 실패해도 다른 쪽은 넣는다.
 async function reportVoca(env, payload) {
+  const notion = await reportVocaToNotion(env, payload);
+  let cloud;
+  try {
+    const durationSec = Number(payload.durationSec);
+    cloud = notion.checked
+      ? await pushVocaToStaffCloud(env, Object.assign({}, notion.checked, {
+          durationSec: Number.isFinite(durationSec) && durationSec >= 0 && durationSec < 86400 ? Math.round(durationSec) : undefined,
+          dayLabel: String(payload.dayLabel || '').slice(0, 40),
+        }))
+      : 'invalid';
+  } catch (error) {
+    cloud = 'error: ' + error.message;
+  }
+  delete notion.checked;
+  return Object.assign(notion, { cloud });
+}
+
+async function reportVocaToNotion(env, payload) {
+  let checked = null;
   try {
     const student = String(payload.student || '').trim();
     const level = String(payload.level || '').trim().slice(0, 60);
@@ -328,9 +400,10 @@ async function reportVoca(env, payload) {
     if (!Number.isFinite(day) || day < 1 || day > 1000) return { success: false, error: '일차가 올바르지 않습니다' };
     if (!Number.isFinite(total) || total < 0 || total > 500) return { success: false, error: '문항수가 올바르지 않습니다' };
     if (!Number.isFinite(correct) || correct < 0 || correct > total) return { success: false, error: '정답수가 올바르지 않습니다' };
+    checked = { student, level, day, correct, total, date: seoulToday() };
 
     const known = await notionQuery(env, DATABASES.students, { property: '이름', title: { equals: student } });
-    if (known.results.length === 0) return { success: false, error: '등록되지 않은 학생입니다' };
+    if (known.results.length === 0) return { success: false, error: '등록되지 않은 학생입니다', checked };
 
     // 같은 학생이 같은 일차를 다시 풀면 줄을 늘리지 않고 덮어쓴다.
     const key = student + '|' + level + '|' + day;
@@ -354,9 +427,9 @@ async function reportVoca(env, payload) {
       });
     }
 
-    return { success: true };
+    return { success: true, checked };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, checked };
   }
 }
 
@@ -1366,6 +1439,7 @@ async function handleRequest(request, env) {
         status: 'ok',
         hasNotionKey: Boolean(env.NOTION_API_KEY),
         hasPassword: Boolean(env.DASHBOARD_PASSWORD),
+        hasStaffCloud: Boolean(env.SUPABASE_SERVICE_KEY),
         today: seoulToday(),
       });
     }
