@@ -343,16 +343,30 @@ async function pushVocaToStaffCloud(env, r) {
   const studentId = matches[0].id;
 
   // 같은 학생이 같은 레벨·일차를 다시 풀면 새 줄이 아니라 덮어쓴다.
+  // 공부하는 동안 오는 진행 보고도 같은 줄이라 '학습 중' → '완료'로 바뀌어 보인다.
   const sessionId = 'whaley-' + studentId + '-' + r.level.replace(/[^A-Za-z0-9가-힣]+/g, '') + '-' + r.day;
   const id = 'voc-' + sessionId;
+
+  // 늦게 도착한 '학습 중' 보고가 오늘 이미 끝난 기록을 덮지 않게 한다.
+  if (r.status !== 'done') {
+    const got = await fetch(base + '?kind=eq.vocab&id=eq.' + encodeURIComponent(id) + '&select=data', { headers: staffCloudHeaders(key) });
+    if (!got.ok) throw new Error('학원 클라우드 응답 ' + got.status);
+    const prev = ((await got.json())[0] || {}).data;
+    if (prev && prev.date === r.date && (prev.status || 'done') === 'done') return 'already-done';
+  }
+
   const data = {
     id,
     studentId,
     date: r.date,
-    setName: (r.level + ' ' + (r.dayLabel || r.day + '일차')).trim(),
+    setName: (r.level + ' ' + (r.dayLabel || r.day + '일차')).trim() + ' · ' + statusText(r),
     total: r.total,
     correct: r.correct,
     durationSec: r.durationSec,
+    status: r.status,
+    step: r.step || undefined,
+    clearPct: r.clearPct,
+    wrongLeft: r.wrongLeft,
     sessionId,
     source: 'whaley-voca',
     updatedAt: new Date().toISOString(),
@@ -366,44 +380,71 @@ async function pushVocaToStaffCloud(env, r) {
   return 'ok';
 }
 
+const VOCA_STATUS = { 'in-progress': '학습 중', stopped: '중간에 멈춤', done: '완료' };
+
+function statusText(r) {
+  if (r.status === 'done') {
+    return '완료' + (r.clearPct != null ? ' · 오늘 정답률 ' + r.clearPct + '%' : '') +
+      (r.wrongLeft ? ' (남은 오답 ' + r.wrongLeft + '개)' : '');
+  }
+  return VOCA_STATUS[r.status] + (r.step ? ' · ' + r.step : '');
+}
+
+function smallInt(v, max) {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 && n <= max ? Math.round(n) : undefined;
+}
+
+// 앱이 보낸 성적을 검사한다. 맞으면 정리된 값을, 아니면 { error }를 돌려준다.
+function checkVoca(payload) {
+  const student = String(payload.student || '').trim();
+  const level = String(payload.level || '').trim().slice(0, 60);
+  const day = Number(payload.day);
+  const correct = Number(payload.correct);
+  const total = Number(payload.total);
+
+  if (!student || student.length > 50) return { error: '학생 이름이 올바르지 않습니다' };
+  if (!Number.isFinite(day) || day < 1 || day > 1000) return { error: '일차가 올바르지 않습니다' };
+  if (!Number.isFinite(total) || total < 0 || total > 500) return { error: '문항수가 올바르지 않습니다' };
+  if (!Number.isFinite(correct) || correct < 0 || correct > total) return { error: '정답수가 올바르지 않습니다' };
+  return {
+    student, level, day, correct, total, date: seoulToday(),
+    status: VOCA_STATUS[payload.status] ? payload.status : 'done',
+    durationSec: smallInt(payload.durationSec, 86399),
+    dayLabel: String(payload.dayLabel || '').slice(0, 40),
+    step: String(payload.step || '').slice(0, 40),
+    clearPct: smallInt(payload.clearPct, 100),
+    wrongLeft: smallInt(payload.wrongLeft, 500),
+  };
+}
+
 // 보카 앱이 하루치를 끝내면 이 창구로 성적을 보낸다.
 // 학생 앱은 공개 주소라 비밀번호를 줄 수 없으므로, 등록된 학생 이름인지로 거른다.
 // 노션(이 대시보드)과 원생관리 클라우드에 각각 넣는다. 한쪽이 실패해도 다른 쪽은 넣는다.
 async function reportVoca(env, payload) {
-  const notion = await reportVocaToNotion(env, payload);
+  const checked = checkVoca(payload);
+  if (checked.error) return { success: false, error: checked.error, cloud: 'invalid' };
+
+  // 공부하는 동안 오는 진행 보고는 원생관리 화면에만 보낸다.
+  // 노션(수행률·성취률)에는 하루치를 끝낸 성적만 넣는다.
+  const notion = checked.status === 'done'
+    ? await reportVocaToNotion(env, checked)
+    : { success: true, status: checked.status };
   let cloud;
   try {
-    const durationSec = Number(payload.durationSec);
-    cloud = notion.checked
-      ? await pushVocaToStaffCloud(env, Object.assign({}, notion.checked, {
-          durationSec: Number.isFinite(durationSec) && durationSec >= 0 && durationSec < 86400 ? Math.round(durationSec) : undefined,
-          dayLabel: String(payload.dayLabel || '').slice(0, 40),
-        }))
-      : 'invalid';
+    cloud = await pushVocaToStaffCloud(env, checked);
   } catch (error) {
     cloud = 'error: ' + error.message;
   }
-  delete notion.checked;
   return Object.assign(notion, { cloud });
 }
 
-async function reportVocaToNotion(env, payload) {
-  let checked = null;
+async function reportVocaToNotion(env, checked) {
   try {
-    const student = String(payload.student || '').trim();
-    const level = String(payload.level || '').trim().slice(0, 60);
-    const day = Number(payload.day);
-    const correct = Number(payload.correct);
-    const total = Number(payload.total);
-
-    if (!student || student.length > 50) return { success: false, error: '학생 이름이 올바르지 않습니다' };
-    if (!Number.isFinite(day) || day < 1 || day > 1000) return { success: false, error: '일차가 올바르지 않습니다' };
-    if (!Number.isFinite(total) || total < 0 || total > 500) return { success: false, error: '문항수가 올바르지 않습니다' };
-    if (!Number.isFinite(correct) || correct < 0 || correct > total) return { success: false, error: '정답수가 올바르지 않습니다' };
-    checked = { student, level, day, correct, total, date: seoulToday() };
+    const { student, level, day, correct, total } = checked;
 
     const known = await notionQuery(env, DATABASES.students, { property: '이름', title: { equals: student } });
-    if (known.results.length === 0) return { success: false, error: '등록되지 않은 학생입니다', checked };
+    if (known.results.length === 0) return { success: false, error: '등록되지 않은 학생입니다' };
 
     // 같은 학생이 같은 일차를 다시 풀면 줄을 늘리지 않고 덮어쓴다.
     const key = student + '|' + level + '|' + day;
@@ -427,9 +468,9 @@ async function reportVocaToNotion(env, payload) {
       });
     }
 
-    return { success: true, checked };
+    return { success: true };
   } catch (error) {
-    return { success: false, error: error.message, checked };
+    return { success: false, error: error.message };
   }
 }
 
