@@ -3505,6 +3505,7 @@ nextRef.current = function () {
       });
     }, [profile && profile.studentId]);
     useEffect(function () { document.documentElement.setAttribute('data-track', track); }, [track]);
+    useEffect(function () { document.documentElement.setAttribute('data-view', profile ? view : 'home'); }, [view, profile]);
 
     useEffect(function () {
       if (!profile) return;
@@ -3643,6 +3644,8 @@ nextRef.current = function () {
     })();
 
     function startSession() {
+      // 문장 카드(STEP 3)는 미리 받아 둔다. 휴대폰에서 STEP 3를 열 때 기다리지 않게.
+      if (sbToday) sbLoad(function () {});
       var built = buildStage(1);
       setSession({
         stage: 1, round: 1, startedAt: Date.now(),
@@ -3722,6 +3725,9 @@ nextRef.current = function () {
 
     // STEP 3 문장 만들기 — 사진 카드(빈칸 채우기 → 성분 찾기), 카드가 없으면 오늘 문장 배열
     function startSentence(s, noCards) {
+      // 아이폰은 아이가 화면을 누른 그 순간에 소리를 한 번 열어 둬야 카드 질문 소리가 나온다.
+      // (이 함수는 [STEP 3 시작] 버튼을 누를 때 바로 불린다.)
+      sbUnlock();
       var base = Object.assign({}, s, { stage: 3, round: 1, beatOk: [], stageScore: 0, stageCorrect: 0, stageTotal: 0 });
       if (!noCards) { setSession(Object.assign(base, { built: null })); setView('sentence'); return; }
       var b3 = buildStage(3);
@@ -3976,6 +3982,8 @@ nextRef.current = function () {
 #whale-install{right:12px;display:none;color:#FFE55C;border-color:#C79A00}
 :root[data-can-install="1"] #whale-install{display:block}
 :root[data-locked="1"] #whale-switch,:root[data-locked="1"] #whale-install{display:none}
+/* 공부 화면에서는 아래쪽 [확인]·[다음] 버튼을 가리므로 홈·학생 고르기 화면에서만 띄운다. */
+:root[data-view]:not([data-view="home"]) #whale-switch,:root[data-view]:not([data-view="home"]) #whale-install{display:none}
 
 /* 카카오톡 안 등 소리·마이크가 안 되는 화면 알림 */
 #whale-inapp{position:fixed;left:8px;right:8px;top:8px;z-index:10001;display:flex;gap:8px;align-items:center;
