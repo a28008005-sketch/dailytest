@@ -3888,6 +3888,9 @@ nextRef.current = function () {
         day: r && r.level && r.level.dayIndex,
         correct: r && r.overall && r.overall.correct,
         total: r && r.overall && r.overall.total,
+        // 원생관리 '단어 학습' 화면에 학습 시간과 어느 날 공부인지도 보이도록 함께 보낸다.
+        durationSec: r && r.overall && r.overall.durationSec,
+        dayLabel: r && r.level && r.level.day,
         date: r && r.date
       };
       if (!body.student || !body.day) return;

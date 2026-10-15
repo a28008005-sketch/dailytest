@@ -101,3 +101,78 @@ r = await (await worker.fetch(new Request('https://w.test/api/students'), env)).
 assert.equal(r.data.find(s => s.name === '이서아').phone4, '4321');
 
 console.log('워커 보카 로그인: 모두 통과');
+
+// 10) 성적 보고가 원생관리 클라우드(Supabase)에도 들어간다
+const cloudRows = [
+  { id: 's-ha', data: { name: '김하윤 ' } },
+  { id: 's-a', data: { name: '이서아' } },
+  { id: 's-a2', data: { name: '이서아' } },   // 동명이인
+];
+const cloudCalls = [];
+let cloudFail = false;
+const notionFetch = globalThis.fetch;
+globalThis.fetch = async (url, init = {}) => {
+  if (url.startsWith('https://olzyfwiurfgaxctdemxa.supabase.co/rest/v1/records')) {
+    cloudCalls.push([init.method || 'GET', url, init.headers, init.body ? JSON.parse(init.body) : null]);
+    if (cloudFail) return { ok: false, status: 500, json: async () => ({}), text: async () => 'boom' };
+    if (!init.method) return { ok: true, json: async () => cloudRows, text: async () => '' };
+    return { ok: true, status: 201, json: async () => ({}), text: async () => '' };
+  }
+  if (url.includes('/databases/934da1ef')) {
+    return { ok: true, json: async () => ({ results: [], has_more: false }), text: async () => '' };
+  }
+  return notionFetch(url, init);
+};
+const report = { student: '김하윤', level: 'Phonics 1', day: 3, correct: 18, total: 20, durationSec: 312.4, dayLabel: 'Day 3' };
+
+// 키가 없으면 노션만 넣고 클라우드는 건너뛴다
+r = await call('/api/voca/report', report);
+assert.equal(r.success, true); assert.equal(r.cloud, 'not-configured'); assert.equal(cloudCalls.length, 0);
+assert.equal(r.checked, undefined);
+
+// 새 형식 키: apikey 머리말만, 이름 앞뒤 공백은 무시하고 찾는다
+env.SUPABASE_SERVICE_KEY = 'sb_secret_test';
+r = await call('/api/voca/report', report);
+assert.equal(r.success, true); assert.equal(r.cloud, 'ok');
+let [get, put] = cloudCalls.splice(0);
+assert.equal(get[2].apikey, 'sb_secret_test'); assert.equal(get[2].Authorization, undefined);
+assert.equal(put[0], 'POST'); assert.match(put[2].Prefer, /merge-duplicates/);
+const row = put[3][0];
+assert.equal(row.kind, 'vocab'); assert.equal(row.deleted, false);
+assert.equal(row.id, 'voc-whaley-s-ha-Phonics1-3'); assert.equal(row.data.id, row.id);
+assert.equal(row.data.studentId, 's-ha'); assert.equal(row.data.setName, 'Phonics 1 Day 3');
+assert.equal(row.data.correct, 18); assert.equal(row.data.total, 20); assert.equal(row.data.durationSec, 312);
+assert.match(row.data.date, /^\d{4}-\d{2}-\d{2}$/); assert.equal(row.data.source, 'whaley-voca');
+
+// 예전 service_role 키(JWT)는 Bearer 머리말도 붙는다. 같은 일차는 같은 id로 덮어쓴다
+env.SUPABASE_SERVICE_KEY = 'eyJhbGciOi.test';
+r = await call('/api/voca/report', { ...report, durationSec: 'x', dayLabel: '' });
+assert.equal(r.cloud, 'ok');
+[get, put] = cloudCalls.splice(0);
+assert.equal(get[2].Authorization, 'Bearer eyJhbGciOi.test');
+assert.equal(put[3][0].id, 'voc-whaley-s-ha-Phonics1-3');
+assert.equal(put[3][0].data.durationSec, undefined); assert.equal(put[3][0].data.setName, 'Phonics 1 3일차');
+
+// 동명이인이면 엉뚱한 학생에게 넣지 않는다
+r = await call('/api/voca/report', { ...report, student: '이서아' });
+assert.equal(r.cloud, 'same-name'); assert.equal(cloudCalls.splice(0).length, 1);
+
+// 원생관리에 없는 이름은 건너뛴다 (노션은 그대로 들어간다)
+r = await call('/api/voca/report', { ...report, student: '김하준' });
+assert.equal(r.success, true); assert.equal(r.cloud, 'no-student'); assert.equal(cloudCalls.splice(0).length, 1);
+
+// 클라우드가 고장 나도 노션 저장은 성공으로 남는다
+cloudFail = true;
+r = await call('/api/voca/report', report);
+assert.equal(r.success, true); assert.match(r.cloud, /^error: 학원 클라우드 응답 500/);
+cloudFail = false; cloudCalls.length = 0;
+
+// 잘못된 값은 어디에도 넣지 않는다
+r = await call('/api/voca/report', { ...report, correct: 30 });
+assert.equal(r.success, false); assert.equal(r.cloud, 'invalid'); assert.equal(cloudCalls.length, 0);
+
+// 상태 확인 창구가 키 연결 여부를 알려준다
+r = await (await worker.fetch(new Request('https://w.test/api/health'), env)).json();
+assert.equal(r.hasStaffCloud, true);
+
+console.log('보카 성적 → 원생관리 클라우드: 모두 통과');
