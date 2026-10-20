@@ -918,7 +918,8 @@ select.chip { padding-right: 8px; max-width: 210px; }
   });
 
   // ── 속도 ────────────────────────────────────────
-  var SPEEDS = [[0.75, "천천히"], [0.9, "보통 속도"], [1, "빠르게"]];
+  // 보통 속도는 원래 빠르기(1배)로 둡니다. 0.9배로 늘리면 목소리가 처져 들립니다.
+  var SPEEDS = [[0.8, "천천히"], [1, "보통 속도"], [1.15, "빠르게"]];
   var speedIx = 1;
   try {
     var sv = parseInt(localStorage.getItem("whale-listen-speed"), 10);
