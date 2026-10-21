@@ -1,0 +1,7 @@
+How much are they?|set:289
+What does he want for lunch?|set:318
+I have dinner at 6.|set:388
+Is the yellow skirt uglier than the blue skirt?|set:592
+Who's kicking a ball?|set:498
+I'm not kicking a ball.|set:498
+Who's not hitting a ball?|set:683

@@ -29,6 +29,15 @@ def src(spec):
     if k=='set': return Image.open(f'{W}/img/{order[int(v)]}.png').convert('RGB')
     if k=='fe': return fe(v)
     if k=='clock': h,m=v.split(':'); return clock(int(h),int(m))
+    if k=='num':
+        from PIL import ImageFont
+        im=Image.new('RGB',(960,720),'white'); d=ImageDraw.Draw(im)
+        F=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',420 if len(v)<3 else 320)
+        cols=[(46,134,222),(240,120,40),(60,170,90)]
+        w=sum(d.textlength(c,font=F) for c in v); x=(960-w)/2
+        for i,c in enumerate(v):
+            d.text((x,360),c,font=F,fill=cols[i%3],anchor='lm',stroke_width=10,stroke_fill=(30,40,60)); x+=d.textlength(c,font=F)
+        return im.resize((320,240),Image.LANCZOS)
     if k=='arrow':
         parts=v.split(':'); im=Image.open(f'{W}/img/{order[int(parts[0])]}.png').convert('RGB').resize((960,720),Image.LANCZOS)
         d=ImageDraw.Draw(im)
@@ -46,7 +55,7 @@ for line in open(W+'/map.txt',encoding='utf8'):
     if not line.strip() or line.startswith('#'): continue
     if line.startswith('miss:') or line.startswith('en:'):
         body=line.split(':',1)[1]
-        for kind in ('set:','fe:','clock:','arrow:'):
+        for kind in ('set:','fe:','clock:','arrow:','num:'):
             i=body.rfind(' '+kind)
             if i>0: (miss if line.startswith('miss:') else ov)[body[:i]]=body[i+1:]; break
     else:

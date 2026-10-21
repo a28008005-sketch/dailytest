@@ -1,0 +1,76 @@
+6 fe:Jeans
+27 fe:Jeans
+21 fe:Womans clothes
+24 fe:Ring
+32 fe:Ring
+87 set:92
+89 set:92
+96 set:101
+98 set:103
+149 set:124
+201 fe:Crayon
+209 fe:Paintbrush
+202 fe:Purse
+207 fe:Key
+213 fe:Onion
+214 fe:Baguette bread
+225 fe:Baguette bread
+215 fe:Egg
+224 fe:Paintbrush
+235 set:229
+237 fe:Toothbrush
+259 fe:Toothbrush
+239 fe:Page facing up
+247 fe:Carrot
+262 fe:Carrot
+248 fe:Bell pepper
+249 fe:Potato
+250 fe:Leafy green
+263 fe:Leafy green
+251 fe:Mushroom
+266 fe:Mushroom
+254 fe:Cut of meat
+264 fe:Cut of meat
+257 fe:Wrapped gift
+265 fe:Wrapped gift
+272 num:20
+273 num:17
+285 num:60
+286 num:70
+287 num:100
+290 fe:Backpack
+292 fe:Teddy bear
+295 num:20
+299 num:70
+300 num:100
+313 fe:Open book
+316 fe:Open book
+329 fe:Open book
+315 fe:Christmas tree
+319 fe:Shortcake
+355 fe:Lemon
+358 fe:Lemon
+322 fe:Nine oclock
+365 fe:Tomato
+360 set:353
+413 set:410
+394 clock:8:30
+433 set:436
+467 set:436
+448 set:456
+584 set:585
+605 set:585
+598 set:597
+638 set:640
+636 set:639
+680 set:673
+723 fe:Fork and knife
+779 set:772
+865 set:854
+870 set:864
+893 set:864
+932 fe:Girl
+933 fe:Raising hands
+954 clock:3:0
+1031 set:1029
+1044 set:1029
