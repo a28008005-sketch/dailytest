@@ -1,0 +1,82 @@
+# 그룹번호(#) 또는 miss:단어  ->  set:#N(같은 시트지 안 좋은 사진) | fe:이모지이름 | clock:H:M
+3 fe:Pencil
+7 fe:Pencil
+29 fe:Pencil
+34 fe:Pencil
+11 set:644
+31 set:644
+19 fe:Crayon
+23 fe:Crayon
+22 set:927
+43 fe:Keycap 6
+79 fe:Keycap 6
+44 fe:Keycap 3
+45 fe:Keycap 7
+85 fe:Keycap 7
+48 fe:Keycap 5
+46 fe:Keycap 10
+86 fe:Keycap 10
+72 fe:Lollipop
+76 fe:Lollipop
+89 fe:Lollipop
+107 fe:Red question mark
+109 fe:Duck
+111 fe:Duck
+113 fe:Chicken
+139 fe:Robot
+145 fe:Backhand index pointing right
+172 fe:Backhand index pointing right
+164 set:161
+170 set:137
+171 set:134
+205 fe:Mirror
+207 fe:Red heart
+245 clock:1:15
+259 clock:1:15
+268 fe:Leg
+271 set:266
+281 fe:Nose
+286 fe:Framed picture
+299 set:263
+304 set:303
+305 fe:Snake
+306 set:101
+310 fe:Teddy bear
+313 set:309
+318 fe:Shushing face
+349 fe:Hamster
+365 set:795
+406 set:405
+408 set:405
+443 set:883
+509 set:477
+552 set:544
+675 fe:Cup with straw
+681 fe:Cup with straw
+677 fe:Egg
+676 set:670
+726 fe:Squid
+808 set:834
+890 fe:Mobile phone
+919 fe:Glasses
+922 fe:Glasses
+938 fe:Glasses
+924 fe:Jeans
+940 fe:Jeans
+925 fe:Paintbrush
+929 fe:Hammer
+931 fe:Hammer
+948 fe:Key
+949 fe:Watch
+974 set:966
+miss:Is that a teddy bear? fe:Teddy bear
+miss:diamond set:195
+miss:Is he a magician? set:27
+miss:He isn't a magician. set:27
+miss:Is she a farmer? fe:Woman farmer
+miss:juggle set:839
+miss:Saturn fe:Ringed planet
+miss:dress fe:Dress
+miss:Whose dress is this? fe:Dress
+miss:When do you go to dance class? set:1080
+miss:I sometimes go to dance class on Thursdays. set:1080
