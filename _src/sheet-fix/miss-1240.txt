@@ -1,0 +1,30 @@
+best|fe:1st place medal
+How many tomatoes is she slicing?|set:84
+cross|set:-
+miss|set:587
+snorkeling|set:570
+put out|set:592
+Will she take her bag?|set:702
+treat|set:744
+decision|set:747
+wise|set:745
+brightly|set:743
+stay up late|set:-
+Look at the apple.|next
+Look at the boy.|next
+Look at the tulip.|next
+Look at the aquarium.|next
+Look outside.|next
+Look at him.|next
+Look at the movie.|next
+Look at the taxi driver.|next
+It is cold outside.|set:-
+Look at the girl.|next
+Look at the magic.|next
+Look at the show.|next
+Look at the map.|next
+Look at the world.|next
+bump into|set:1012
+Look at the aquarium.|set:908
+Look at the world.|fe:Globe showing europe-africa
+It is cold outside.|fe:Cold face

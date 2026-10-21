@@ -1,0 +1,23 @@
+56 fe:Cross mark
+65 fe:Basketball
+72 fe:Basketball
+53 fe:Hot pepper
+70 fe:Hot pepper
+90 fe:Honey pot
+103 fe:Olive
+119 set:111
+142 fe:Hot beverage
+186 fe:Bone
+232 fe:Door
+320 fe:Scarf
+337 fe:Wood
+354 fe:Wood
+330 fe:Scissors
+385 fe:Shorts
+375 fe:Clown face
+405 fe:Clown face
+539 fe:Elephant
+555 fe:One-piece swimsuit
+557 fe:Shopping cart
+843 fe:Vertical traffic light
+833 fe:Mobile phone

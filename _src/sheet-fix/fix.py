@@ -95,6 +95,9 @@ for v in range(1,7):
             log.append(('교체',r['vol'],r['title'],r['no'],r['en'],grp[r['img']]))
         elif 'img' not in r:
             spec=miss.get(r['en']) or ov.get(r['en']) or auto(r['en'])
+            if spec=='next':
+                nx=[x for x in R if x['vol']==v and x['page']==r['page'] and x['no']==r['no']+1 and 'img' in x]
+                spec=(grp.get(nx[0]['img']) or 'set:%d'%idx[nx[0]['img']]) if nx else None
             if not spec or spec=='set:-': log.append(('빈칸그대로',r['vol'],r['title'],r['no'],r['en'],'')); continue
             refs=[x for x in R if x['vol']==v and x['page']==r['page'] and 'bbox' in x] or [x for x in R if x['vol']==v and 'bbox' in x]
             ref=refs[0]['bbox']
@@ -102,7 +105,17 @@ for v in range(1,7):
             rc=fitz.Rect(ref[0],yc-h/2,ref[2],yc+h/2); p.insert_image(rc,stream=rounded(spec,w,h)); placed[(v,r['page'],r['no'])]=list(rc)
             log.append(('채움',r['vol'],r['title'],r['no'],r['en'],spec))
     import re as _re
-    for r in [r for r in R if r['vol']==v and _re.search(r"n't|n’t|\bnot\b|cannot",r['en'],_re.I) and r['en'].strip().lower()!='not']:
+    def isneg(en):
+        e=en.strip()
+        if e.lower()=='not' or _re.match(r"don.t forget",e,_re.I) or _re.search(r", and you will not",e,_re.I): return False
+        parts=[]
+        for seg in e.split('|'):
+            seg=seg.strip()
+            m=_re.match(r"(.*),\s*\w+(n't|n’t)\s+\w+\s*\?$",seg)
+            if m: seg=m.group(1)
+            parts.append(seg)
+        return any(_re.search(r"n't|n’t|\bnot\b|cannot",p,_re.I) for p in parts)
+    for r in [r for r in R if r['vol']==v and isneg(r['en'])]:
         p=d[r['page']]; bb=r.get('bbox') or placed.get((v,r['page'],r['no']))
         if not bb: continue
         has=any(dr.get('fill') and abs(dr['fill'][0]-0.878)<0.01 and abs(dr['fill'][1]-0.192)<0.01 and dr['rect'].x0<100 and abs((dr['rect'].y0+dr['rect'].y1)/2-r['yc'])<20 for dr in p.get_drawings())
