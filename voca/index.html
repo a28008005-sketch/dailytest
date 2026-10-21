@@ -631,6 +631,10 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 .sb-entry b{display:block; font-size:15px}
 .sb-entry small{display:block; font-size:12px; color:var(--ink-3); margin-top:2px}
 .sb-entry .tag{margin-left:auto}
+a.sb-entry{text-decoration:none}
+.mg-entry{background:linear-gradient(135deg, color-mix(in srgb, #A06BFF 30%, var(--surface)), color-mix(in srgb, #0FC3F4 25%, var(--surface))); border:2px solid #A06BFF}
+.mg-ic{font-size:44px; line-height:1; width:72px; text-align:center; flex:none; animation:sbbob 2s ease-in-out infinite}
+.mg-go{margin-left:auto; font-size:26px; color:#A06BFF}
 .sb-prog{height:8px; border-radius:99px; background:var(--surface-3, var(--line)); margin-top:6px; overflow:hidden}
 .sb-prog-fill{height:100%; background:var(--kelp); border-radius:99px; transition:width .35s ease}
 .sb-pill{
@@ -2775,6 +2779,11 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 
       <div className="spacer"></div>
       <button className="btn btn-primary" onClick=${function () { ac(); TTS.prime(); props.onStart(); }}>오늘 항해 시작 · ${day.label}</button>
+      ${lv.id === 'lv240' ? html`<a className="sb-entry mg-entry" href=${'../game/?from=voca&d=' + encodeURIComponent(day.id)}>
+        <span className="mg-ic">👾</span>
+        <span><b>몬스터 잡기 게임</b><small>${day.label} 단어로 버블팡·두더지·낚시 하고 몬스터 모으기</small></span>
+        <span className="mg-go">›</span>
+      </a>` : null}
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>

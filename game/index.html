@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#003C70">
+<title>웨일리 몬스터 잡기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#003C70; --deep:#012A4F; --cyan:#0FC3F4; --yellow:#FFEE62; --flame:#FF5826; --ink:#16324F;
+  --pink:#FF5C8A; --green:#2BD47D; --paper:#F4FBFF;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; height:100%; background:var(--deep); color:#fff; font-family:'Noto Sans KR',system-ui,sans-serif; overscroll-behavior:none; -webkit-user-select:none; user-select:none}
+button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; padding:0}
+.hidden{display:none !important}
+.jua{font-family:'Jua','Noto Sans KR',sans-serif}
+.screen{position:fixed; inset:0; display:flex; flex-direction:column; overflow:hidden}
+
+/* ───── 홈 ───── */
+#home{background:radial-gradient(120% 70% at 50% 0%, #0d5a96 0%, var(--navy) 45%, var(--deep) 100%); overflow-y:auto}
+.home-in{max-width:720px; width:100%; margin:0 auto; padding:22px 16px 40px; display:flex; flex-direction:column; gap:16px}
+.title{display:flex; align-items:center; gap:12px}
+.title h1{margin:0; font-family:'Jua'; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.1}
+.title small{display:block; font-size:13px; color:#9FD8F5; margin-top:4px}
+.panel{background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.14); border-radius:22px; padding:14px}
+.panel h2{margin:0 0 10px; font-size:14px; color:#9FD8F5; font-weight:700}
+.chips{display:flex; gap:8px; flex-wrap:wrap}
+.chip{padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.1); border:2px solid transparent; font-weight:900; font-size:16px}
+.chip.on{background:var(--yellow); color:var(--navy)}
+.sel{display:flex; gap:8px; flex-wrap:wrap}
+.sel select{font:inherit; font-weight:700; font-size:16px; padding:10px 12px; border-radius:14px; border:0; background:#fff; color:var(--navy)}
+.course{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-family:'Jua'; font-size:20px}
+.course .g{background:#fff; color:var(--navy); border-radius:16px; padding:8px 12px; display:flex; align-items:center; gap:6px; box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.course .arr{color:var(--yellow)}
+.preview{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
+.preview .m{width:64px; height:64px}
+.big{
+  font-family:'Jua'; font-size:26px; padding:16px; border-radius:22px; background:var(--yellow); color:var(--navy);
+  box-shadow:0 6px 0 #C9B21E; transition:transform .1s; width:100%;
+}
+.big:active{transform:translateY(4px); box-shadow:0 2px 0 #C9B21E}
+.ghost{font-weight:900; font-size:16px; padding:12px; border-radius:18px; background:rgba(255,255,255,.12); width:100%}
+.row2{display:flex; gap:10px}
+.opt{display:flex; align-items:center; gap:8px; font-size:14px; color:#CFEAF8}
+.opt input{width:20px; height:20px}
+
+/* ───── 게임 공통 ───── */
+#play{background:var(--navy)}
+.hud{display:flex; align-items:center; gap:10px; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:rgba(0,0,0,.18); z-index:5}
+.hud .x{width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.15); font-size:20px; font-weight:900}
+.hud .mid{flex:1; min-width:0}
+.hud .lbl{font-family:'Jua'; font-size:20px; line-height:1.1}
+.hud .sub{font-size:12px; color:#9FD8F5}
+.dots{display:flex; gap:4px; margin-top:5px}
+.dots i{flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.18)}
+.dots i.done{background:var(--green)} .dots i.cur{background:var(--yellow)}
+.coin{font-family:'Jua'; font-size:22px; background:rgba(255,255,255,.12); padding:6px 12px; border-radius:999px; display:flex; align-items:center; gap:6px}
+.coin.bump{animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.3)}}
+.ask{display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 12px; z-index:4}
+.say{
+  display:flex; align-items:center; gap:10px; background:#fff; color:var(--navy); border-radius:999px; padding:8px 18px 8px 8px;
+  font-family:'Jua'; font-size:22px; box-shadow:0 5px 0 rgba(0,0,0,.25);
+}
+.say .spk{width:46px; height:46px; border-radius:50%; background:var(--cyan); display:grid; place-items:center; animation:ring 1.6s infinite}
+.say .spk svg{width:26px; height:26px; fill:#fff}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(15,195,244,.6)} 70%{box-shadow:0 0 0 14px rgba(15,195,244,0)}}
+.stage{position:relative; flex:1; overflow:hidden; touch-action:none}
+.bar{display:flex; gap:6px; padding:8px 10px; padding-bottom:max(8px, env(safe-area-inset-bottom)); background:rgba(0,0,0,.25); overflow-x:auto; z-index:5}
+.bar .slot{flex:none; width:70px; display:flex; flex-direction:column; align-items:center; gap:3px}
+.bar .slot .m{width:56px; height:56px; transition:filter .3s}
+.bar .slot:not(.caught) .m{filter:grayscale(1) brightness(.55)}
+.bar .slot.hit .m{animation:hop .5s}
+.bar .slot.cur .m{filter:none; animation:bob 1s infinite}
+.pips{display:flex; gap:3px}
+.pips i{width:12px; height:6px; border-radius:3px; background:rgba(255,255,255,.2)}
+.pips i.on{background:var(--yellow)}
+.bar .slot.caught .pips i{background:var(--green)}
+@keyframes hop{40%{transform:translateY(-12px) scale(1.1)}}
+@keyframes bob{50%{transform:translateY(-4px)}}
+
+.pic{width:100%; height:100%; object-fit:contain; display:block; pointer-events:none}
+.txt{font-family:'Jua'; color:var(--navy); text-align:center; line-height:1.1; padding:4px; word-break:break-word}
+.lab{position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); background:var(--navy); color:#fff; font-family:'Jua'; font-size:14px; padding:2px 8px; border-radius:8px; white-space:nowrap; pointer-events:none}
+.glow{animation:glow 1s infinite !important}
+@keyframes glow{50%{filter:drop-shadow(0 0 14px var(--yellow)) drop-shadow(0 0 4px var(--yellow))}}
+
+/* ── 버블팡 ── */
+.g-bubble{background:linear-gradient(180deg,#4FC8F2 0%,#1B8FD0 60%,#0B5E9C 100%)}
+.bub{position:absolute; width:var(--bs); height:var(--bs); border-radius:50%; will-change:transform;
+  background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 8%, rgba(255,255,255,.35) 9% 18%, rgba(255,255,255,.12) 40%, rgba(160,230,255,.35) 75%, rgba(255,255,255,.7) 100%);
+  border:3px solid rgba(255,255,255,.75); box-shadow:inset 0 0 18px rgba(255,255,255,.5), 0 6px 18px rgba(0,40,80,.25)}
+.bub .inner{position:absolute; inset:16%; border-radius:50%; overflow:hidden; background:rgba(255,255,255,.85); display:grid; place-items:center}
+.bub.shake{animation:shake .4s}
+.bub.pop{animation:pop .35s forwards}
+@keyframes pop{to{transform:var(--t) scale(1.5); opacity:0}}
+@keyframes shake{25%{margin-left:-10px} 75%{margin-left:10px}}
+.spark{position:absolute; width:12px; height:12px; border-radius:50%; pointer-events:none; animation:spark .6s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.2); opacity:0}}
+
+/* ── 두더지 ── */
+.g-mole{background:linear-gradient(180deg,#8FE36B 0%,#5BC24A 55%,#3C9A35 100%)}
+.holes{position:absolute; inset:4% 3% 3%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:3%}
+.hole{position:relative; overflow:hidden; border-radius:0 0 50% 50% / 0 0 30% 30%}
+.hole::after{content:''; position:absolute; left:6%; right:6%; bottom:4%; height:22%; border-radius:50%; background:#3B2412; box-shadow:inset 0 6px 0 #22140A; z-index:1}
+.mole{position:absolute; left:50%; bottom:8%; width:74%; transform:translate(-50%,105%); transition:transform .22s cubic-bezier(.3,1.4,.5,1); z-index:2}
+.hole::before{content:''; position:absolute; left:2%; right:2%; bottom:0; height:16%; background:#5BC24A; border-radius:50% 50% 0 0; z-index:3}
+.mole.up{transform:translate(-50%,0)}
+.mole .sign{background:#fff; border-radius:14px; border:3px solid #8B5A2B; aspect-ratio:1; width:78%; margin:0 auto -8%; position:relative; z-index:2; display:grid; place-items:center; overflow:hidden}
+.mole svg{display:block; width:100%}
+.mole.bonk svg{animation:squash .4s}
+.mole.miss svg{animation:tease .5s}
+@keyframes squash{40%{transform:scale(1.2,.7)}}
+@keyframes tease{25%{transform:rotate(-12deg)} 75%{transform:rotate(12deg)}}
+.stars{position:absolute; left:50%; top:30%; font-size:28px; transform:translate(-50%,-50%); animation:stars .7s forwards; z-index:4; pointer-events:none}
+@keyframes stars{to{transform:translate(-50%,-140%) scale(1.4); opacity:0}}
+
+/* ── 낚시 ── */
+.g-fish{background:linear-gradient(180deg,#9BE7FF 0 14%, #29A9E0 14%, #1478B8 55%, #0A4B7E 100%)}
+.wave{position:absolute; left:0; right:0; top:12%; height:16px; background:radial-gradient(circle at 10px -4px, transparent 12px, #29A9E0 13px) repeat-x; background-size:20px 16px}
+.boat{position:absolute; top:1%; width:120px; left:50%; transform:translateX(-50%); z-index:3}
+.line{position:absolute; width:3px; background:#fff; top:9%; z-index:2; transform-origin:top}
+.hook{position:absolute; width:26px; height:26px; margin-left:-11px; z-index:3; transition:top .35s ease-in, left .25s}
+.fish{position:absolute; width:var(--fs); will-change:transform}
+.fish svg{display:block; width:100%; overflow:visible}
+.fish .badge{position:absolute; left:28%; top:6%; width:44%; aspect-ratio:1; border-radius:50%; background:#fff; border:3px solid rgba(255,255,255,.9); overflow:hidden; display:grid; place-items:center; box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.fish.flip svg{transform:scaleX(-1)}
+.bubbles-bg i{position:absolute; bottom:-20px; width:10px; height:10px; border-radius:50%; border:2px solid rgba(255,255,255,.5); animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-110vh)}}
+.splash{position:absolute; font-size:40px; transform:translate(-50%,-50%); animation:stars .8s forwards; z-index:5; pointer-events:none}
+
+/* ───── 잡기 연출 ───── */
+#catch{position:fixed; inset:0; z-index:30; background:radial-gradient(circle at 50% 42%, rgba(30,170,230,.97) 0%, rgba(3,60,112,.98) 45%, rgba(0,20,45,.99) 80%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px}
+.cstage{position:relative; width:240px; height:240px}
+.cstage .m{position:absolute; inset:0; width:100%; height:100%}
+.ball{position:absolute; left:50%; top:50%; width:84px; height:84px; margin:-42px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff 0 10%, #8BE8FF 22%, #0FC3F4 55%, #0573A8 100%); border:4px solid #fff;
+  box-shadow:0 0 0 4px var(--navy), 0 10px 30px rgba(0,0,0,.4)}
+.ball::after{content:''; position:absolute; left:-4px; right:-4px; top:calc(50% - 4px); height:8px; background:var(--navy)}
+.ball b{position:absolute; left:50%; top:50%; width:24px; height:24px; margin:-12px; border-radius:50%; background:#fff; border:4px solid var(--navy); z-index:1}
+.c1 .ball{animation:throw .6s cubic-bezier(.3,.1,.3,1) forwards}
+@keyframes throw{0%{transform:translate(0,320px) scale(.6) rotate(0)} 100%{transform:translate(0,0) scale(1) rotate(720deg)}}
+.c2 .m{animation:suck .4s forwards}
+@keyframes suck{to{transform:scale(0); opacity:0}}
+.c3 .ball{animation:wob 1.5s ease-in-out}
+@keyframes wob{0%,100%{transform:rotate(0)} 10%{transform:rotate(-22deg)} 20%{transform:rotate(0)} 40%{transform:rotate(22deg)} 50%{transform:rotate(0)} 70%{transform:rotate(-22deg)} 80%{transform:rotate(0)}}
+.c4 .ball{animation:flash .5s}
+@keyframes flash{50%{filter:brightness(1.8); transform:scale(1.15)}}
+.c4 .m{animation:appear .5s .1s backwards}
+@keyframes appear{from{transform:scale(0) rotate(-30deg)}}
+.ctitle{font-family:'Jua'; font-size:42px; color:var(--yellow); text-shadow:0 4px 0 rgba(0,0,0,.3); animation:appear .5s}
+.cname{font-family:'Jua'; font-size:28px}
+.cword{display:flex; align-items:center; gap:12px; background:#fff; color:var(--navy); border-radius:20px; padding:8px 18px 8px 8px; font-family:'Jua'; font-size:26px}
+.cword img{width:64px; height:64px; object-fit:contain; border-radius:12px; background:#F4FBFF}
+.cword small{display:block; font-size:16px; color:#5B7A95; font-family:'Noto Sans KR'; font-weight:700}
+.shiny-tag{font-family:'Jua'; font-size:20px; color:#FFD54A; animation:glow 1s infinite}
+.confetti{position:fixed; inset:0; pointer-events:none; z-index:31; overflow:hidden}
+.confetti i{position:absolute; top:-20px; width:10px; height:16px; border-radius:3px; animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* 라운드 안내 */
+#intro{position:fixed; inset:0; z-index:25; display:grid; place-items:center; background:rgba(0,20,45,.85)}
+#intro .card{background:#fff; color:var(--navy); border-radius:28px; padding:26px 30px; text-align:center; animation:appear .4s; min-width:280px}
+#intro .gi{font-size:72px; line-height:1}
+#intro h3{font-family:'Jua'; font-weight:400; font-size:34px; margin:8px 0 4px}
+#intro p{margin:0; color:#5B7A95; font-weight:700}
+#intro .r{font-family:'Jua'; color:var(--flame); font-size:18px}
+
+/* ───── 결과 · 도감 ───── */
+#result,#dex{background:radial-gradient(120% 70% at 50% 0%, #0d5a96 0%, var(--navy) 50%, var(--deep) 100%); overflow-y:auto}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px}
+.mon{background:rgba(255,255,255,.08); border-radius:18px; padding:8px 6px 10px; text-align:center; position:relative}
+.mon .m{width:84px; height:84px; display:block; margin:0 auto}
+.mon b{display:block; font-family:'Jua'; font-weight:400; font-size:16px}
+.mon small{display:block; font-size:12px; color:#9FD8F5}
+.mon.lock .m{filter:brightness(0) opacity(.35)}
+.mon .sh{position:absolute; top:6px; right:8px; color:#FFD54A}
+.stat{display:flex; gap:10px}
+.stat div{flex:1; background:rgba(255,255,255,.1); border-radius:18px; padding:12px; text-align:center}
+.stat b{display:block; font-family:'Jua'; font-size:30px; font-weight:400; color:var(--yellow)}
+.stat span{font-size:12px; color:#9FD8F5}
+.tabs{display:flex; gap:6px}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01s !important}}
+</style>
+</head>
+<body>
+
+<!-- 홈 -->
+<section id="home" class="screen">
+  <div class="home-in">
+    <div class="title">
+      <div id="homeMon" style="width:76px;height:76px"></div>
+      <div><h1>웨일리 몬스터 잡기</h1><small>Space Whale 240 · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
+    </div>
+    <a class="ghost hidden" id="backVoca" href="../voca/" style="text-align:center;text-decoration:none;display:block">← 웨일리 보카로 돌아가기</a>
+    <div class="panel" id="lvPanel">
+      <h2>레벨</h2>
+      <div class="chips" id="lvChips"></div>
+    </div>
+    <div class="panel">
+      <h2>오늘 공부할 날</h2>
+      <div class="sel"><select id="volSel"></select><select id="unitSel"></select><select id="daySel"></select></div>
+    </div>
+    <div class="panel">
+      <h2 id="courseH">오늘의 코스</h2>
+      <div class="course" id="course"></div>
+    </div>
+    <div class="panel">
+      <h2 id="prevH">숨어 있는 몬스터</h2>
+      <div class="preview" id="preview"></div>
+    </div>
+    <label class="opt"><input type="checkbox" id="optText"> 그림 아래 영어 글자도 보여 주기</label>
+    <label class="opt"><input type="checkbox" id="optSlow" checked> 천천히 (처음 하는 친구용)</label>
+    <button class="big" id="startBtn">🎮 모험 시작!</button>
+    <div class="row2"><button class="ghost" id="dexBtn">📖 몬스터 도감</button></div>
+  </div>
+</section>
+
+<!-- 게임 -->
+<section id="play" class="screen hidden">
+  <div class="hud">
+    <button class="x" id="quitBtn" aria-label="그만하기">✕</button>
+    <div class="mid">
+      <div class="lbl" id="gLbl"></div>
+      <div class="dots" id="gDots"></div>
+    </div>
+    <div class="coin" id="coinBox">🪙 <span id="coinN">0</span></div>
+  </div>
+  <div class="ask"><button class="say" id="sayBtn"><span class="spk"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 00-2.2-3.9v7.8A4.5 4.5 0 0016.5 12zm-2.2-8v2.1a6.5 6.5 0 010 11.8V21a8.5 8.5 0 000-17z"/></svg></span><span id="sayTxt">잘 듣고 찾아요!</span></button></div>
+  <div class="stage" id="stage"></div>
+  <div class="bar" id="bar"></div>
+</section>
+
+<div id="intro" class="hidden"><div class="card"><div class="gi" id="iIcon"></div><h3 id="iName"></h3><p id="iHow"></p><div class="r" id="iRound"></div></div></div>
+<div id="catch" class="hidden"></div>
+
+<section id="result" class="screen hidden"><div class="home-in" id="resultIn"></div></section>
+<section id="dex" class="screen hidden"><div class="home-in" id="dexIn"></div></section>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+/* ═════════════ 기본 ═════════════ */
+const DATA = window.GAME_DATA;
+const $ = (s) => document.querySelector(s);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('wmon.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('wmon.' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const GAMES = {
+  bubble: { icon: '🫧', name: '버블팡', how: '소리를 듣고 맞는 방울을 팡! 터뜨려요' },
+  mole: { icon: '🔨', name: '두더지 잡기', how: '맞는 그림을 든 두더지를 콩! 때려요' },
+  fish: { icon: '🎣', name: '물고기 낚시', how: '맞는 그림 물고기를 눌러서 낚아요' },
+};
+// 교재 Day 1~5 = 월~금. 요일마다 게임 순서가 바뀐다.
+const COURSE = {
+  1: { day: '월요일', games: ['bubble', 'mole', 'fish'] },
+  2: { day: '화요일', games: ['mole', 'fish', 'bubble'] },
+  3: { day: '수요일', games: ['fish', 'bubble', 'mole'] },
+  4: { day: '목요일', games: ['bubble', 'fish', 'mole'] },
+  5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 몬스터가 더 잘 나와요!' },
+};
+const NEED = 3; // 몬스터 하나 잡는 데 필요한 정답 수 (게임마다 한 번씩)
+
+/* ═════════════ 소리 ═════════════ */
+const player = new Audio(); player.preload = 'auto';
+let actx = null;
+function ac() { if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
+function tone(f, t, d, type, v, f2) {
+  const c = ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain(); const s = c.currentTime + t;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, s); if (f2) o.frequency.exponentialRampToValueAtTime(f2, s + d);
+  g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v || .08, s + .01); g.gain.exponentialRampToValueAtTime(.0001, s + d);
+  o.connect(g); g.connect(c.destination); o.start(s); o.stop(s + d + .02);
+}
+const SFX = {
+  pop() { tone(700, 0, .08, 'sine', .12, 1400); tone(1600, .04, .08, 'triangle', .05); },
+  bonk() { tone(220, 0, .12, 'square', .08, 90); tone(880, .08, .12, 'triangle', .05); },
+  splash() { tone(400, 0, .25, 'sawtooth', .03, 120); tone(900, .1, .2, 'sine', .05, 1500); },
+  ok() { tone(660, 0, .1, 'triangle', .07); tone(990, .08, .16, 'triangle', .06); },
+  no() { tone(200, 0, .16, 'sawtooth', .04, 150); },
+  coin() { tone(990, 0, .06, 'square', .035); tone(1480, .05, .1, 'square', .03); },
+  whoosh() { tone(300, 0, .5, 'sine', .05, 1200); },
+  wob() { tone(330, 0, .09, 'triangle', .05); },
+  catch() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .09, .3, 'triangle', .06)); },
+};
+function say(w) {
+  try { speechSynthesis.cancel(); } catch (e) {}
+  if (w.a) {
+    player.src = 'audio/' + w.a + '.mp3';
+    player.play().catch(() => tts(w.en));
+  } else tts(w.en);
+}
+function tts(t) { try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; u.rate = .85; speechSynthesis.speak(u); } catch (e) {} }
+
+/* ═════════════ 몬스터 만들기 (단어마다 하나, 늘 같은 모습) ═════════════ */
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function monName(w) {
+  const k = (w.ko || '').split(/[,;(/]/)[0].replace(/[^가-힣]/g, '');
+  return k && k.length <= 4 ? k + '몬' : w.en.replace(/[^A-Za-z]/g, '').replace(/^./, (c) => c.toUpperCase()) + '몬';
+}
+function monSVG(w, opt) {
+  opt = opt || {};
+  const R = rng(hashStr(w.en.toLowerCase()));
+  const h = Math.floor(R() * 360);
+  const body = `hsl(${h} 78% 64%)`, dark = `hsl(${h} 62% 44%)`, belly = `hsl(${h} 90% 88%)`;
+  const acc = `hsl(${(h + 150 + Math.floor(R() * 60)) % 360} 85% 62%)`;
+  const shape = Math.floor(R() * 4), top = Math.floor(R() * 6), eyes = R() < .22 ? 1 : 2, mouth = Math.floor(R() * 4);
+  const spots = R() < .5, arms = R() < .7;
+  let s = '';
+  // 등 장식
+  if (top === 0) s += `<path d="M38 30 L30 8 L50 24 Z M82 30 L90 8 L70 24 Z" fill="${dark}"/>`;
+  if (top === 1) s += `<circle cx="34" cy="22" r="11" fill="${dark}"/><circle cx="86" cy="22" r="11" fill="${dark}"/><circle cx="34" cy="22" r="5" fill="${belly}"/><circle cx="86" cy="22" r="5" fill="${belly}"/>`;
+  if (top === 2) s += `<path d="M48 26 Q42 6 34 4 M72 26 Q78 6 86 4" stroke="${dark}" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="34" cy="5" r="6" fill="${acc}"/><circle cx="86" cy="5" r="6" fill="${acc}"/>`;
+  if (top === 3) s += `<path d="M44 26 Q40 8 48 4 Q50 16 54 24 M76 26 Q80 8 72 4 Q70 16 66 24" fill="${acc}"/>`;
+  if (top === 4) s += `<path d="M60 24 Q52 2 60 0 Q70 4 60 24" fill="#5FD068"/><path d="M60 22 Q74 6 82 12 Q72 22 60 22" fill="#4BB958"/>`;
+  if (top === 5) s += `<path d="M40 30 Q50 6 60 20 Q70 6 80 30" fill="${acc}"/>`;
+  // 몸
+  const bodies = [
+    `<ellipse cx="60" cy="70" rx="42" ry="40" fill="${body}"/>`,
+    `<path d="M60 20 C92 20 100 60 98 82 C96 106 80 112 60 112 C40 112 24 106 22 82 C20 60 28 20 60 20Z" fill="${body}"/>`,
+    `<path d="M16 76 C16 40 36 26 60 26 C84 26 104 40 104 76 L104 98 Q96 110 88 98 Q80 110 72 98 Q66 110 60 98 Q54 110 48 98 Q40 110 32 98 Q24 110 16 98Z" fill="${body}"/>`,
+    `<rect x="20" y="28" width="80" height="82" rx="36" fill="${body}"/>`,
+  ];
+  if (arms) s += `<ellipse cx="18" cy="76" rx="9" ry="14" fill="${dark}" transform="rotate(-25 18 76)"/><ellipse cx="102" cy="76" rx="9" ry="14" fill="${dark}" transform="rotate(25 102 76)"/>`;
+  s += `<ellipse cx="42" cy="112" rx="12" ry="7" fill="${dark}"/><ellipse cx="78" cy="112" rx="12" ry="7" fill="${dark}"/>`;
+  s += bodies[shape];
+  s += `<ellipse cx="60" cy="88" rx="26" ry="20" fill="${belly}" opacity=".9"/>`;
+  if (spots) s += `<circle cx="30" cy="56" r="5" fill="${belly}" opacity=".7"/><circle cx="92" cy="62" r="4" fill="${belly}" opacity=".7"/><circle cx="86" cy="46" r="3" fill="${belly}" opacity=".7"/>`;
+  s += `<ellipse cx="44" cy="42" rx="12" ry="7" fill="#fff" opacity=".3"/>`;
+  // 얼굴
+  const ey = 60;
+  const eye = (x, r) => `<g class="eye"><circle cx="${x}" cy="${ey}" r="${r}" fill="#fff"/><circle cx="${x + 1.5}" cy="${ey + 1.5}" r="${r * .58}" fill="#1E2430"/><circle cx="${x + 3}" cy="${ey - 1.5}" r="${r * .22}" fill="#fff"/></g>`;
+  s += eyes === 1 ? eye(60, 15) : eye(46, 10) + eye(74, 10);
+  s += `<ellipse cx="32" cy="74" rx="6" ry="4" fill="#FF6F91" opacity=".55"/><ellipse cx="88" cy="74" rx="6" ry="4" fill="#FF6F91" opacity=".55"/>`;
+  const my = 78;
+  if (mouth === 0) s += `<path d="M52 ${my} Q60 ${my + 8} 68 ${my}" stroke="#1E2430" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  if (mouth === 1) s += `<path d="M50 ${my} Q60 ${my + 16} 70 ${my} Z" fill="#1E2430"/><path d="M56 ${my + 7} Q60 ${my + 11} 64 ${my + 7}" fill="#FF6F91"/>`;
+  if (mouth === 2) s += `<path d="M50 ${my} Q55 ${my + 6} 60 ${my} Q65 ${my + 6} 70 ${my}" stroke="#1E2430" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  if (mouth === 3) s += `<path d="M50 ${my} Q60 ${my + 12} 70 ${my} Z" fill="#1E2430"/><path d="M54 ${my} L56 ${my + 5} L58 ${my}Z M62 ${my} L64 ${my + 5} L66 ${my}Z" fill="#fff"/>`;
+  let wrap = s;
+  // 필터 id 는 그릴 때마다 새로 — 숨은 화면에 있는 같은 id 를 가리키면 몸이 통째로 안 보인다
+  const fid = 'shine' + (monSVG.n = (monSVG.n || 0) + 1);
+  if (opt.shiny) wrap = `<g filter="url(#${fid})">${s}</g><g fill="#FFE45C"><path d="M14 18 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/><path d="M104 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path d="M98 100 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/></g>`;
+  const defs = opt.shiny ? `<defs><filter id="${fid}"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#FFE45C"/></filter></defs>` : '';
+  return `<svg class="m" viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg">${defs}${wrap}</svg>`;
+}
+
+/* ═════════════ 홈 ═════════════ */
+let sel = store.get('sel', { lv: 'lv240', vol: 1, unit: 1, day: 1 });
+if (!DATA.levels.some((l) => l.id === sel.lv)) sel.lv = DATA.levels[0].id;
+// 웨일리 보카에서 ?d=lv240-V1U2D3 로 들어오면 그날로 맞춘다
+const QS = new URLSearchParams(location.search);
+(function () {
+  const m = /^(\w+)-V(\d)U(\d)D(\d)$/.exec(QS.get('d') || '');
+  if (m && DATA.levels.some((l) => l.id === m[1])) { sel = { lv: m[1], vol: +m[2], unit: +m[3], day: +m[4] }; try { localStorage.setItem('wmon.sel', JSON.stringify(sel)); } catch (e) {} }
+})();
+const opts = store.get('opts', { text: false, slow: true });
+const lvName = { phonics: '파닉스', lv240: '240', lv520: '520' };
+function levelOf(id) { return DATA.levels.find((l) => l.id === id); }
+function dayOf() {
+  const L = levelOf(sel.lv);
+  return L.days.find((d) => d.id.endsWith(`-V${sel.vol}U${sel.unit}D${sel.day}`)) || L.days[0];
+}
+function renderHome() {
+  $('#lvPanel').classList.toggle('hidden', DATA.levels.length < 2);
+  $('#backVoca').classList.toggle('hidden', QS.get('from') !== 'voca');
+  $('#lvChips').innerHTML = '';
+  DATA.levels.forEach((L) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (L.id === sel.lv ? ' on' : ''); b.textContent = lvName[L.id] || L.short;
+    b.onclick = () => { sel.lv = L.id; save(); renderHome(); };
+    $('#lvChips').append(b);
+  });
+  const fill = (el, n, v, pre) => { el.innerHTML = ''; for (let i = 1; i <= n; i++) { const o = document.createElement('option'); o.value = i; o.textContent = pre + i; if (i === v) o.selected = true; el.append(o); } };
+  fill($('#volSel'), 6, sel.vol, 'Vol.'); fill($('#unitSel'), 4, sel.unit, 'Unit '); fill($('#daySel'), 5, sel.day, 'Day ');
+  const c = COURSE[sel.day];
+  $('#courseH').textContent = `Day ${sel.day} · ${c.day} 코스`;
+  $('#course').innerHTML = c.games.map((g, i) => `${i ? '<span class="arr">▶</span>' : ''}<span class="g">${GAMES[g].icon} ${GAMES[g].name}</span>`).join('') + `<span class="arr">▶</span><span class="g">👾 몬스터 잡기</span>`
+    + (c.bonus ? `<div style="flex-basis:100%;font-family:'Noto Sans KR';font-size:13px;color:var(--yellow);margin-top:4px">✨ ${c.bonus}</div>` : '');
+  const d = dayOf();
+  const dex = store.get('dex', {});
+  $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}`;
+  $('#preview').innerHTML = d.words.map((w) => `<div title="${w.en}" style="${dex[key(w)] ? '' : 'filter:brightness(0) opacity(.45)'}">${monSVG(w)}</div>`).join('');
+  $('#optText').checked = !!opts.text; $('#optSlow').checked = !!opts.slow;
+  const total = Object.keys(dex).length;
+  $('#dexBtn').textContent = `📖 몬스터 도감 (${total}마리)`;
+  $('#homeMon').innerHTML = monSVG({ en: 'whaley' }, { shiny: true });
+}
+function save() { store.set('sel', sel); }
+$('#volSel').onchange = (e) => { sel.vol = +e.target.value; save(); renderHome(); };
+$('#unitSel').onchange = (e) => { sel.unit = +e.target.value; save(); renderHome(); };
+$('#daySel').onchange = (e) => { sel.day = +e.target.value; save(); renderHome(); };
+$('#optText').onchange = (e) => { opts.text = e.target.checked; store.set('opts', opts); };
+$('#optSlow').onchange = (e) => { opts.slow = e.target.checked; store.set('opts', opts); };
+$('#startBtn').onclick = () => { ac(); player.muted = true; player.play().catch(() => {}); player.pause(); player.muted = false; startSession(); };
+$('#dexBtn').onclick = () => showDex(sel.lv);
+const key = (w) => w.en.toLowerCase();
+// 결과·도감에서 누르면 그 단어 소리를 낸다 (글자에 따옴표가 있어도 안전하게)
+const WREG = {};
+function reg(w) { WREG[key(w)] = w; return encodeURIComponent(key(w)); }
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) say(WREG[decodeURIComponent(b.dataset.k)]); });
+
+/* ═════════════ 세션 ═════════════ */
+let S = null;
+function show(id) { ['home', 'play', 'result', 'dex'].forEach((x) => $('#' + x).classList.toggle('hidden', x !== id)); }
+
+function startSession() {
+  const d = dayOf();
+  const L = levelOf(sel.lv);
+  const idx = L.days.indexOf(d);
+  // 헷갈림 보기: 같은 날 단어 먼저, 모자라면 앞뒤 날에서
+  const near = [];
+  for (let k = -6; k <= 6; k++) { const dd = L.days[idx + k]; if (dd && k) dd.words.forEach((w) => near.push(w)); }
+  S = {
+    lv: sel.lv, day: d, course: COURSE[sel.day], round: 0, coins: 0,
+    mons: d.words.map((w) => ({ w, gauge: 0, miss: false, caught: false, shiny: false })),
+    pool: near, queue: [], cur: -1, wrong: 0, game: null, busy: false,
+  };
+  show('play');
+  renderBar();
+  nextRound();
+}
+async function nextRound() {
+  if (S.round >= S.course.games.length) return finish();
+  const g = S.course.games[S.round];
+  $('#gLbl').textContent = `${GAMES[g].icon} ${GAMES[g].name}`;
+  $('#play').className = 'screen';
+  $('#iIcon').textContent = GAMES[g].icon; $('#iName').textContent = GAMES[g].name; $('#iHow').textContent = GAMES[g].how;
+  $('#iRound').textContent = `${S.round + 1}번째 게임 / ${S.course.games.length}`;
+  $('#intro').classList.remove('hidden'); SFX.whoosh();
+  await sleep(1700);
+  $('#intro').classList.add('hidden');
+  S.queue = shuffle(S.mons.map((_, i) => i).filter((i) => !S.mons[i].caught || S.round < NEED));
+  S.qTotal = S.queue.length; S.qDone = 0;
+  nextTarget();
+}
+function renderDots() {
+  const n = S.qTotal || 1;
+  $('#gDots').innerHTML = Array.from({ length: n }, (_, i) => `<i class="${i < S.qDone ? 'done' : i === S.qDone ? 'cur' : ''}"></i>`).join('');
+}
+function options(w) {
+  const want = w.p ? (x) => x.p : () => true;
+  const same = S.mons.map((m) => m.w).filter((x) => key(x) !== key(w) && want(x));
+  const far = shuffle(S.pool.filter((x) => key(x) !== key(w) && want(x) && !same.some((y) => key(y) === key(x))));
+  const seen = new Set([key(w)]); const out = [];
+  for (const x of shuffle(same).concat(far)) { if (out.length >= 3) break; if (!seen.has(key(x))) { seen.add(key(x)); out.push(x); } }
+  return shuffle([w].concat(out));
+}
+function nextTarget() {
+  if (S.game) { S.game.stop(); S.game = null; }
+  if (!S.queue.length) { S.round++; return nextRound(); }
+  S.cur = S.queue.shift(); S.wrong = 0; S.busy = false;
+  renderDots(); renderBar();
+  const w = S.mons[S.cur].w;
+  $('#sayTxt').textContent = pick(['잘 듣고 찾아요!', '어떤 걸까?', '귀를 쫑긋!', '찾을 수 있어!']);
+  const g = S.course.games[S.round];
+  S.game = (g === 'bubble' ? Bubble : g === 'mole' ? Mole : Fish)($('#stage'), w, options(w), answer);
+  setTimeout(() => say(w), 350);
+}
+$('#sayBtn').onclick = () => { if (S && S.cur >= 0) say(S.mons[S.cur].w); };
+$('#quitBtn').onclick = () => { if (S && S.game) S.game.stop(); S = null; show('home'); renderHome(); };
+
+function addCoins(n) {
+  S.coins += n; $('#coinN').textContent = S.coins;
+  const c = $('#coinBox'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); SFX.coin();
+}
+// 게임이 정답/오답을 알려 준다. ok 이면 그 게임은 이미 효과를 마친 뒤다.
+async function answer(ok) {
+  if (!S) return;
+  const m = S.mons[S.cur];
+  if (!ok) {
+    m.miss = true; S.wrong++; SFX.no();
+    setTimeout(() => say(m.w), 400);
+    if (S.wrong >= 2 && S.game && S.game.hint) S.game.hint();
+    return;
+  }
+  if (S.busy) return; S.busy = true;
+  SFX.ok();
+  m.gauge = Math.min(NEED, m.gauge + 1);
+  addCoins(S.wrong ? 5 : 10);
+  S.qDone++; renderDots();
+  renderBar(S.cur);
+  await sleep(650);
+  if (!S) return;
+  if (m.gauge >= NEED && !m.caught) {
+    m.caught = true;
+    m.shiny = !m.miss && (S.course.bonus ? Math.random() < .7 : Math.random() < .35);
+    if (S.game) { S.game.stop(); S.game = null; }
+    await catchShow(m);
+    if (!S) return;
+    addCoins(m.shiny ? 50 : 20);
+  }
+  nextTarget();
+}
+function renderBar(hitIdx) {
+  $('#bar').innerHTML = S.mons.map((m, i) => `<div class="slot ${m.caught ? 'caught' : ''} ${i === S.cur && !m.caught ? 'cur' : ''} ${i === hitIdx ? 'hit' : ''}">
+    ${monSVG(m.w, { shiny: m.caught && m.shiny })}<div class="pips">${Array.from({ length: NEED }, (_, k) => `<i class="${k < m.gauge ? 'on' : ''}"></i>`).join('')}</div></div>`).join('');
+}
+
+/* ═════════════ 잡기 연출 ═════════════ */
+async function catchShow(m) {
+  const C = $('#catch');
+  C.innerHTML = `<div class="cstage"><div class="mm">${monSVG(m.w, { shiny: m.shiny })}</div><div class="ball hidden"><b></b></div></div><div id="cTxt" class="ctitle">몬스터 발견!</div>`;
+  C.className = '';
+  const st = C.querySelector('.cstage'), mm = st.querySelector('.mm'), ball = st.querySelector('.ball');
+  mm.style.cssText = 'position:absolute;inset:0;animation:bob 1s infinite';
+  SFX.wob(); await sleep(900);
+  $('#cTxt').textContent = '버블볼 던지기!';
+  ball.classList.remove('hidden'); st.classList.add('c1'); SFX.whoosh(); await sleep(600);
+  st.classList.add('c2'); mm.style.animation = 'suck .4s forwards'; SFX.pop(); await sleep(450);
+  st.classList.remove('c1'); st.classList.add('c3'); $('#cTxt').textContent = '...';
+  for (let i = 0; i < 3; i++) { await sleep(500); SFX.wob(); }
+  await sleep(200);
+  st.classList.remove('c3'); st.classList.add('c4'); SFX.catch(); confetti();
+  mm.style.animation = 'appear .5s .1s backwards'; ball.classList.add('hidden');
+  const w = m.w;
+  const dex = store.get('dex', {});
+  const k = key(w); const was = dex[k];
+  dex[k] = { en: w.en, ko: w.ko, p: w.p || '', a: w.a || '', lv: S.lv, day: S.day.label, n: (was ? was.n : 0) + 1, shiny: !!(m.shiny || (was && was.shiny)), t: Date.now() };
+  store.set('dex', dex);
+  C.innerHTML += `<div class="cname">${monName(w)} ${was ? '' : '<span style="font-size:16px;color:var(--yellow)">NEW!</span>'}</div>
+    ${m.shiny ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
+    <div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${w.en}<small>${w.ko}</small></span></div>
+    <button class="big" style="max-width:320px">계속하기 ▶</button>`;
+  C.querySelector('.ctitle').textContent = '잡았다!';
+  say(w);
+  await new Promise((res) => { C.querySelector('.big').onclick = res; });
+  C.className = 'hidden';
+}
+function confetti() {
+  const box = document.createElement('div'); box.className = 'confetti';
+  const cols = ['#FF5C8A', '#FFEE62', '#0FC3F4', '#2BD47D', '#A06BFF', '#FF8A3D'];
+  for (let i = 0; i < 60; i++) {
+    const e = document.createElement('i');
+    e.style.left = rnd(0, 100) + '%'; e.style.background = pick(cols);
+    e.style.animationDuration = rnd(1.4, 2.6) + 's'; e.style.animationDelay = rnd(0, .4) + 's';
+    box.append(e);
+  }
+  document.body.append(box); setTimeout(() => box.remove(), 3200);
+}
+function sparks(stage, x, y, color) {
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('div'); s.className = 'spark';
+    const a = (i / 14) * Math.PI * 2, d = rnd(50, 110);
+    s.style.cssText = `left:${x - 6}px;top:${y - 6}px;background:${color || pick(['#fff', '#FFEE62', '#8BE8FF'])};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px`;
+    stage.append(s); setTimeout(() => s.remove(), 650);
+  }
+}
+const face = (w) => (w.p ? `<img class="pic" src="pic/${w.p}.jpg" alt="">` : `<div class="txt" style="font-size:22px">${w.en}</div>`) + (opts.text && w.p ? `<span class="lab">${w.en}</span>` : '');
+
+/* ═════════════ 게임 1: 버블팡 ═════════════ */
+function Bubble(stage, target, list, cb) {
+  stage.className = 'stage g-bubble'; stage.innerHTML = '';
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const bs = Math.min(W / 4.2, H / 3.2, 190);
+  const speed = (opts.slow ? H / 9 : H / 6);
+  const lanes = shuffle([0, 1, 2, 3]);
+  let alive = true, raf = 0, last = performance.now(), t0 = last;
+  const B = list.map((w, i) => {
+    const el = document.createElement('button'); el.className = 'bub'; el.style.setProperty('--bs', bs + 'px');
+    el.innerHTML = `<div class="inner">${face(w)}</div>`;
+    const laneW = W / 4;
+    const b = { w, el, x: laneW * lanes[i] + (laneW - bs) / 2, y: H * .38 + ((i * 0.37) % 1) * H * .45 + rnd(0, 30), ph: rnd(0, 6), sp: speed * rnd(.85, 1.15), done: false };
+    el.onpointerdown = (e) => {
+      e.preventDefault(); if (!alive || b.done) return;
+      if (key(w) === key(target)) {
+        b.done = true; alive = false; SFX.pop();
+        el.style.setProperty('--t', el.style.transform); el.classList.add('pop');
+        sparks(stage, b.x + bs / 2, b.y + bs / 2);
+        B.forEach((o) => { if (o !== b) { o.done = true; o.el.style.transition = 'opacity .4s'; o.el.style.opacity = '.25'; } });
+        setTimeout(() => cb(true), 450);
+      } else { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); cb(false); }
+    };
+    stage.append(el); return b;
+  });
+  function loop(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    B.forEach((b) => {
+      if (!b.done || !alive) { if (alive) b.y -= b.sp * dt; }
+      if (b.y < -bs) b.y = H + rnd(10, 80);
+      const x = b.x + Math.sin((now - t0) / 700 + b.ph) * 14;
+      b.el.style.transform = `translate(${x}px,${b.y}px)`;
+    });
+    raf = requestAnimationFrame(loop);
+  }
+  raf = requestAnimationFrame(loop);
+  return {
+    stop() { alive = false; cancelAnimationFrame(raf); },
+    hint() { B.forEach((b) => { if (key(b.w) === key(target)) { b.el.classList.add('glow'); b.sp *= .5; } }); },
+  };
+}
+
+/* ═════════════ 게임 2: 두더지 잡기 ═════════════ */
+const MOLE_SVG = `<svg viewBox="0 0 120 100"><ellipse cx="60" cy="70" rx="44" ry="40" fill="#9A6A42"/><ellipse cx="60" cy="80" rx="28" ry="22" fill="#D8B48A"/>
+  <circle cx="44" cy="54" r="8" fill="#fff"/><circle cx="76" cy="54" r="8" fill="#fff"/><circle cx="45" cy="55" r="4.5" fill="#1E2430"/><circle cx="77" cy="55" r="4.5" fill="#1E2430"/>
+  <ellipse cx="60" cy="68" rx="9" ry="7" fill="#FF7FA0"/><path d="M52 78 Q60 84 68 78" stroke="#1E2430" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="30" cy="68" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/><ellipse cx="90" cy="68" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/>
+  <ellipse cx="24" cy="40" rx="9" ry="12" fill="#7E5233"/><ellipse cx="96" cy="40" rx="9" ry="12" fill="#7E5233"/></svg>`;
+function Mole(stage, target, list, cb) {
+  stage.className = 'stage g-mole'; stage.innerHTML = '<div class="holes"></div>';
+  const wrap = stage.querySelector('.holes');
+  let alive = true, timers = [], sinceTarget = 0, hinted = false;
+  const H = Array.from({ length: 6 }, () => {
+    const h = document.createElement('div'); h.className = 'hole';
+    h.innerHTML = `<button class="mole"><div class="sign"></div>${MOLE_SVG}</button>`;
+    wrap.append(h);
+    const o = { h, m: h.querySelector('.mole'), s: h.querySelector('.sign'), up: false, w: null };
+    o.m.onpointerdown = (e) => {
+      e.preventDefault(); if (!alive || !o.up) return;
+      if (key(o.w) === key(target)) {
+        alive = false; SFX.bonk(); o.m.classList.add('bonk');
+        const st = document.createElement('div'); st.className = 'stars'; st.textContent = '💫⭐'; o.h.append(st);
+        timers.forEach(clearTimeout);
+        setTimeout(() => { H.forEach((x) => x.m.classList.remove('up')); cb(true); }, 550);
+      } else {
+        o.m.classList.remove('miss'); void o.m.offsetWidth; o.m.classList.add('miss'); cb(false);
+        setTimeout(() => down(o), 380);
+      }
+    };
+    return o;
+  });
+  function down(o) { o.up = false; o.m.classList.remove('up', 'bonk', 'miss', 'glow'); }
+  function popOne() {
+    if (!alive) return;
+    const free = H.filter((o) => !o.up);
+    const upNow = H.filter((o) => o.up);
+    // 한 번에 최대 3마리, 같은 그림은 동시에 안 나온다
+    const others = list.filter((w) => key(w) !== key(target) && !upNow.some((x) => key(x.w) === key(w)));
+    if (free.length && upNow.length < 3) {
+      const o = pick(free);
+      const targetUp = upNow.some((x) => key(x.w) === key(target));
+      const showTarget = !targetUp && (sinceTarget >= 1 || Math.random() < .5 || !others.length);
+      if (!showTarget && !others.length) { timers.push(setTimeout(popOne, 400)); return; }
+      o.w = showTarget ? target : pick(others);
+      sinceTarget = showTarget ? 0 : sinceTarget + 1;
+      o.s.innerHTML = face(o.w);
+      o.up = true; o.m.classList.add('up');
+      if (hinted && showTarget) o.m.classList.add('glow');
+      const stay = (opts.slow ? 2900 : 2100) * rnd(.85, 1.2);
+      timers.push(setTimeout(() => { if (alive && o.up) down(o); }, stay));
+    }
+    timers.push(setTimeout(popOne, (opts.slow ? 900 : 650) * rnd(.7, 1.3)));
+  }
+  timers.push(setTimeout(popOne, 300)); timers.push(setTimeout(popOne, 700));
+  return {
+    stop() { alive = false; timers.forEach(clearTimeout); },
+    hint() { hinted = true; H.forEach((o) => { if (o.up && key(o.w) === key(target)) o.m.classList.add('glow'); }); },
+  };
+}
+
+/* ═════════════ 게임 3: 물고기 낚시 ═════════════ */
+function fishSVG(col) {
+  return `<svg viewBox="0 0 140 90"><path d="M104 45 L136 18 L130 45 L136 72Z" fill="${col}" opacity=".9"/>
+    <ellipse cx="62" cy="45" rx="52" ry="38" fill="${col}"/><path d="M50 10 Q66 -4 80 10" fill="${col}"/>
+    <ellipse cx="62" cy="58" rx="36" ry="20" fill="#fff" opacity=".25"/>
+    <circle cx="22" cy="38" r="8" fill="#fff"/><circle cx="20" cy="39" r="4.5" fill="#1E2430"/>
+    <path d="M10 54 Q16 58 22 54" stroke="#1E2430" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+}
+function Fish(stage, target, list, cb) {
+  stage.className = 'stage g-fish';
+  stage.innerHTML = `<div class="wave"></div><div class="bubbles-bg">${Array.from({ length: 10 }, () => `<i style="left:${rnd(0, 100)}%;animation-duration:${rnd(5, 10)}s;animation-delay:${rnd(0, 6)}s"></i>`).join('')}</div>
+    <svg class="boat" viewBox="0 0 120 60"><path d="M6 30 L114 30 L96 54 L24 54Z" fill="#FF8A3D"/><rect x="56" y="2" width="5" height="30" fill="#8B5A2B"/><path d="M61 4 L90 26 L61 26Z" fill="#fff"/><circle cx="40" cy="22" r="10" fill="#0FC3F4"/><circle cx="37" cy="20" r="2" fill="#1E2430"/><circle cx="44" cy="20" r="2" fill="#1E2430"/></svg>
+    <div class="line"></div><svg class="hook" viewBox="0 0 26 26"><path d="M13 0 V14 a6 6 0 1 1 -6 -6" stroke="#E8EEF3" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`;
+  const W = stage.clientWidth, Hh = stage.clientHeight;
+  const fs = Math.min(W / 3.4, Hh / 3.3, 210);
+  const line = stage.querySelector('.line'), hook = stage.querySelector('.hook');
+  const boatX = W / 2 - 30, rodY = Hh * .09;
+  let hookX = boatX, hookY = rodY + 10;
+  function setHook(x, y, ms) {
+    hook.style.transition = `top ${ms}ms ease-in-out, left ${ms}ms ease-in-out`;
+    hook.style.left = x + 'px'; hook.style.top = y + 'px'; hookX = x; hookY = y;
+  }
+  function drawLine() {
+    const hx = hook.offsetLeft + 11, hy = hook.offsetTop;
+    const dx = hx - boatX, dy = hy - rodY; const len = Math.hypot(dx, dy);
+    line.style.left = boatX + 'px'; line.style.top = rodY + 'px'; line.style.height = len + 'px';
+    line.style.transform = `rotate(${Math.atan2(-dx, dy)}rad)`;
+  }
+  setHook(boatX, rodY + 10, 0);
+  const cols = ['#FF8A3D', '#FF5C8A', '#A06BFF', '#FFC93C', '#2BD47D', '#4FA8FF'];
+  const lanesY = shuffle([.24, .42, .6, .78]).map((p) => Hh * p - fs * .32);
+  let alive = true, busy = false, raf = 0, last = performance.now();
+  const base = (opts.slow ? W / 9 : W / 6);
+  const F = list.map((w, i) => {
+    const el = document.createElement('button'); el.className = 'fish'; el.style.setProperty('--fs', fs + 'px');
+    el.innerHTML = `${fishSVG(cols[i % cols.length])}<div class="badge">${face(w)}</div>`;
+    const dir = i % 2 ? 1 : -1;
+    const f = { w, el, x: dir > 0 ? rnd(-fs, W * .3) : rnd(W * .5, W), y: lanesY[i], dir, sp: base * rnd(.8, 1.2), dash: 0, hooked: false };
+    if (dir > 0) el.classList.add('flip');
+    el.onpointerdown = (e) => {
+      e.preventDefault(); if (!alive || busy || f.hooked) return;
+      busy = true;
+      const tx = f.x + fs * .5 - 11, ty = f.y + fs * .25;
+      setHook(tx, ty, 380);
+      setTimeout(() => {
+        if (!alive) return;
+        if (key(w) === key(target)) {
+          f.hooked = true; alive = false; SFX.splash();
+          f.el.style.transition = 'transform .7s ease-in';
+          f.el.style.transform = `translate(${boatX - fs * .4}px,${rodY - fs * .2}px) rotate(${f.dir * 70}deg) scale(.6)`;
+          setHook(boatX, rodY, 700);
+          setTimeout(() => {
+            const sp = document.createElement('div'); sp.className = 'splash'; sp.textContent = '💦✨';
+            sp.style.left = boatX + 'px'; sp.style.top = rodY + 'px'; stage.append(sp);
+          }, 600);
+          setTimeout(() => cb(true), 900);
+        } else {
+          f.dash = 1.2; f.dir *= -1; f.el.classList.toggle('flip');
+          setHook(boatX, rodY + 10, 420); busy = false; cb(false);
+        }
+      }, 400);
+    };
+    stage.append(el); return f;
+  });
+  function loop(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    F.forEach((f) => {
+      if (!f.hooked && alive) {
+        const sp = f.sp * (f.dash > 0 ? 3 : 1); f.dash = Math.max(0, f.dash - dt);
+        f.x += f.dir * sp * dt;
+        if (f.x > W + 10) { f.dir = -1; f.el.classList.remove('flip'); }
+        if (f.x < -fs - 10) { f.dir = 1; f.el.classList.add('flip'); }
+        const bob = Math.sin(now / 500 + f.y) * 6;
+        f.el.style.transform = `translate(${f.x}px,${f.y + bob}px)`;
+      }
+    });
+    drawLine();
+    raf = requestAnimationFrame(loop);
+  }
+  raf = requestAnimationFrame(loop);
+  return {
+    stop() { alive = false; setTimeout(() => cancelAnimationFrame(raf), 900); },
+    hint() { F.forEach((f) => { if (key(f.w) === key(target)) { f.el.classList.add('glow'); f.sp *= .4; } }); },
+  };
+}
+
+/* ═════════════ 결과 · 도감 ═════════════ */
+function finish() {
+  if (S.game) { S.game.stop(); S.game = null; }
+  const caught = S.mons.filter((m) => m.caught), shiny = caught.filter((m) => m.shiny).length;
+  const coins = store.get('coins', 0) + S.coins; store.set('coins', coins);
+  confetti(); SFX.catch();
+  $('#resultIn').innerHTML = `
+    <div style="text-align:center"><div style="font-size:64px">🏆</div>
+      <h1 class="jua" style="font-weight:400;font-size:38px;margin:4px 0">${caught.length}마리 다 잡았다!</h1>
+      <div style="color:#9FD8F5">${S.day.label} · ${S.course.day} 코스 완료</div></div>
+    <div class="stat"><div><b>${caught.length}</b><span>잡은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>+${S.coins}</b><span>코인</span></div></div>
+    <div class="grid">${caught.map((m) => `<button class="mon" data-k="${reg(m.w)}">${m.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(m.w, { shiny: m.shiny })}<b>${monName(m.w)}</b><small>${m.w.en} · ${m.w.ko}</small></button>`).join('')}</div>
+    <button class="big" id="rNext">다음 날 도전 ▶</button>
+    <div class="row2"><button class="ghost" id="rAgain">다시 하기</button><button class="ghost" id="rDex">📖 도감</button><button class="ghost" id="rHome">처음으로</button></div>`;
+  show('result');
+  $('#rAgain').onclick = startSession;
+  $('#rHome').onclick = () => { S = null; show('home'); renderHome(); };
+  $('#rDex').onclick = () => showDex(S.lv);
+  $('#rNext').onclick = () => {
+    if (sel.day < 5) sel.day++; else { sel.day = 1; if (sel.unit < 4) sel.unit++; else { sel.unit = 1; sel.vol = Math.min(6, sel.vol + 1); } }
+    save(); startSession();
+  };
+}
+function showDex(lv) {
+  const dex = store.get('dex', {});
+  const L = levelOf(lv);
+  const all = []; const seen = new Set();
+  L.days.forEach((d) => d.words.forEach((w) => { if (!seen.has(key(w))) { seen.add(key(w)); all.push({ w, d }); } }));
+  const mine = all.filter((x) => dex[key(x.w)]);
+  const shiny = mine.filter((x) => dex[key(x.w)].shiny).length;
+  // 잡은 것 + 지금 Vol 의 못 잡은 것(그림자)
+  const vol = `-V${sel.vol}U`;
+  const locked = all.filter((x) => !dex[key(x.w)] && x.d.id.includes(vol)).slice(0, 40);
+  $('#dexIn').innerHTML = `
+    <div class="title"><div style="font-size:44px">📖</div><div><h1>몬스터 도감</h1><small>단어를 맞혀서 잡은 몬스터들이에요. 누르면 소리가 나요.</small></div></div>
+    <div class="tabs">${DATA.levels.map((x) => `<button class="chip ${x.id === lv ? 'on' : ''}" data-lv="${x.id}">${lvName[x.id]}</button>`).join('')}</div>
+    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>${store.get('coins', 0)}</b><span>누적 코인</span></div></div>
+    <div class="grid">
+      ${mine.map((x) => { const r = dex[key(x.w)]; return `<button class="mon" data-k="${reg(x.w)}">${r.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(x.w, { shiny: r.shiny })}<b>${monName(x.w)}</b><small>${x.w.en} · ${x.w.ko}</small></button>`; }).join('')}
+      ${locked.map((x) => `<div class="mon lock">${monSVG(x.w)}<b>???</b><small>${x.d.label.replace('Vol.', 'V')}</small></div>`).join('')}
+    </div>
+    <button class="big" id="dHome">돌아가기</button>`;
+  show('dex');
+  document.querySelectorAll('#dexIn [data-lv]').forEach((b) => (b.onclick = () => showDex(b.dataset.lv)));
+  $('#dHome').onclick = () => { show(S ? 'result' : 'home'); if (!S) renderHome(); };
+}
+
+renderHome();
+</script>
+</body>
+</html>
