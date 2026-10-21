@@ -2,7 +2,7 @@ import pymupdf as fitz, json, hashlib, sys, os
 S=sys.argv[1]; lv=sys.argv[2]; out=S+f'/w{lv}'
 rows=[]; seen={}
 for v in range(1,7):
-    d=fitz.open(f'/home/user/dailytest/print/{lv}_vol{v}_pic.pdf')
+    d=fitz.open(f'{S}/orig{lv}/{lv}_vol{v}_pic.pdf')
     for pi,p in enumerate(d):
         lines=[]; title=''
         for b in p.get_text('dict')['blocks']:

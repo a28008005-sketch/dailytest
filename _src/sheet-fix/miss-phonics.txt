@@ -1,0 +1,144 @@
+I have a map.|fe:World map
+Fox has a vase.|set:139
+I have a yo-yo.|fe:Yo-yo
+up|fe:Up arrow
+wag|fe:Dog
+hip|set:-
+vet|set:441
+hike|set:484
+line|fe:Straight ruler
+I see the clouds in the blue sky!|fe:Cloud
+Look at the black sky!|fe:Night with stars
+I see the flag in the black sky!|fe:Triangular flag
+I don't have a plane.|fe:Airplane
+I have a slice of bread.|fe:Baguette bread
+But I can see a plane.|fe:Airplane
+I have a black glove.|fe:Gloves
+I have many plums.|set:619
+And I have blue blocks.|fe:Brick
+flute|fe:Flute
+The frog has a frame.|fe:Frog
+What color are the grapes?|fe:Grapes
+Do you have a plane?|fe:Airplane
+I have a tube of glue.|set:624
+The flowers are in the sky.|fe:Tulip
+It is on the plate.|set:622
+It is green!|fe:Green circle
+He has a dragon.|fe:Dragon
+They are on a train.|set:134
+A nice glove is in the box.|fe:Baseball
+What a nice glove!|fe:Baseball
+crib|fe:Baby
+He stops at a store to buy food.|fe:Shopping cart
+They make a big snowman.|fe:Snowman
+Stanley eats too much sweet pie!|fe:Pie
+They drink fruit juice.|fe:Beverage box
+They like the fruit juice.|fe:Beverage box
+She has a drum.|fe:Drum
+There is a small snake under the snow.|fe:Snake
+I can make a snowman.|fe:Snowman
+I can swim in the lake, too.|set:661
+What is that sweet smell?|fe:Candy
+I can sing a song for you.|set:694
+The man has a long cape.|fe:Man superhero
+The king gives a ring to the queen.|fe:Ring
+I can skate on the ice, too.|fe:Ice skate
+A king's daughter is not happy.|fe:Crying face
+Charley is a Chinese boy.|fe:Boy
+We can see a pink dolphin.|fe:Dolphin
+The kids catch the big fish.|fe:Fish
+The chick is in the tub with a ship.|fe:Baby chick
+What a nice lunch on the ship!|fe:Ship
+We can see a cherry tree.|fe:Cherry blossom
+The snail has a cherry.|fe:Cherries
+It is a yellow coat.|fe:Coat
+It is a yellow boat.|fe:Canoe
+I am on Kay's train.|set:134
+The mole likes to dig.|set:521
+The mole finds the seed.|set:521
+Look at the sea.|set:549
+It is a yellow pillow.|set:747
+It is a yellow goat.|fe:Goat
+Let's play in the train.|set:134
+A boy wants a fun story book.|fe:Books
+The boy wants a new toy.|fe:Teddy bear
+They are at the toy shop.|fe:Teddy bear
+They drink soy milk at the park.|fe:Glass of milk
+A clown makes soup in his house.|fe:Clown face
+He puts water into a pot.|set:425
+They eat the soup on the couch.|fe:Pot of food
+A boy is in a house.|fe:House
+The mouse eats up the cookies.|fe:Cookie
+She wants a new blouse.|set:961
+They are in the train.|set:134
+The girl makes a pot.|set:756
+She puts the honey into the pot.|fe:Honey pot
+They sit on a bench and look at the stars.|fe:Night with stars
+My sister and I go to a store.|fe:Shopping bags
+We buy pork and corn for dinner.|fe:Ear of corn
+My teachers buy some flowers.|fe:Bouquet
+The singer plays the horn.|set:833
+She sings with her sister.|fe:Microphone
+They have a brown horse.|set:815
+They see a turtle at the shore.|fe:Turtle
+Koo is a gorilla in the zoo.|set:204
+He chews and eats the food.|fe:Face savoring food
+He looks at the moon.|set:841
+My teachers buys some flowers.|fe:Bouquet
+Are they lights?|set:940
+I can see the pie.|set:840
+The girl has a mule.|set:529
+The girl lies on the bed.|fe:Bed
+Have a good night!|fe:Crescent moon
+The hungry kids cry.|fe:Loudly crying face
+They want food.|fe:Pot of food
+They're my new shoes.|fe:Running shoe
+My new yellow shoes.|fe:Running shoe
+The boy has some food.|fe:Hamburger
+The thief wants the brown seed.|set:935
+The crown is on a purple pillow.|fe:Crown
+Kangaroo plays computer games.|fe:Kangaroo
+Panda plays football.|fe:American football
+Bear plays the violin.|fe:Violin
+Rabbit drinks lemonade.|fe:Rabbit
+Brody is on a plane.|fe:Airplane
+Brody eats jam and bread.|fe:Baguette bread
+The blanket is blue and brown.|set:-
+Welcome to Brazil! says Brody's friend.|fe:Waving hand
+We watch a lot of animals.|fe:Lion
+The cheetah has sharp teeth.|fe:Leopard
+We eat sandwiches for lunch on the bench.|fe:Sandwich
+I take three photos on my phone.|fe:Camera with flash
+She makes a thin pizza.|fe:Pizza
+He reads a thick book.|fe:Closed book
+A cub cooks with a cat.|fe:Cooking
+Look at their faces!|fe:Grinning face
+Gilbert is a good cook.|fe:Cook
+He has a big smile on his face.|fe:Grinning face with big eyes
+"Knock on the gate."|set:482
+He sees a sign on the gate of a castle.|fe:Castle
+I want corn and garlic!|fe:Garlic
+These are for you, cub.|fe:Tiger face
+A princess lives in the castle.|fe:Princess
+A man has a map.|fe:World map
+They find six hens and ten eggs.|set:440
+They are on the mat.|set:432
+Jane drops the vase!|set:139
+Jane opens the case.|set:550
+Andy and Monkey are happy!|fe:Monkey
+Let's eat together, Monkey! says Andy.|fe:Monkey
+Monkey is hungry.|fe:Monkey
+He bites an apple.|set:575
+Kyle is an ant.|fe:Ant
+He can fly in the sky!|set:945
+My crew wears white coats.|fe:Coat
+We have food and pillows.|set:747
+We can enjoy fishing.|fe:Fishing pole
+Do you want to ride on my boat?|fe:Canoe
+Mouse sells roses to a girl.|fe:Rose
+They are in a flower shop.|fe:Bouquet
+Look at the limes.|set:509
+It is not a pine tree!|fe:Evergreen tree
+It is a flute.|fe:Flute
+Look at the rake!|set:547
+My father works in the city.|set:892

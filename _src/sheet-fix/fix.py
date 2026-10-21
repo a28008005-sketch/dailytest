@@ -40,17 +40,24 @@ def src(spec):
         poly=[(tx+px*sw,ty+py*sw),(bx+px*sw,by+py*sw),(bx+px*hw,by+py*hw),(hx,hy),(bx-px*hw,by-py*hw),(bx-px*sw,by-py*sw),(tx-px*sw,ty-py*sw)]
         d.polygon(poly,fill=(224,49,49))
         return im.resize((320,240),Image.LANCZOS)
-grp={}; miss={}
+grp={}; miss={}; ov={}
 for line in open(W+'/map.txt',encoding='utf8'):
-    line=line.split('#',1)[0].rstrip() if not line.startswith('miss:') else line.rstrip()
-    if not line.strip(): continue
-    if line.startswith('miss:'):
-        a,b=line[5:].rsplit(' ',1) if False else (None,None)
+    line=line.rstrip('\n')
+    if not line.strip() or line.startswith('#'): continue
+    if line.startswith('miss:') or line.startswith('en:'):
+        body=line.split(':',1)[1]
         for kind in ('set:','fe:','clock:','arrow:'):
-            i=line.find(' '+kind)
-            if i>0: miss[line[5:i]]=line[i+1:]; break
+            i=body.rfind(' '+kind)
+            if i>0: (miss if line.startswith('miss:') else ov)[body[:i]]=body[i+1:]; break
     else:
-        a,b=line.split(' ',1); grp[order[int(a)]]=b
+        a,b=line.split(' ',1); grp[order[int(a)]]=b.split(' #')[0].strip()
+if os.path.exists(W+'/miss.txt'):
+    for l in open(W+'/miss.txt',encoding='utf8'):
+        if '|' in l: en,sp=l.rstrip('\n').rsplit('|',1); miss[en]=sp
+idx={h:i for i,h in enumerate(order)}
+def auto(en):
+    for x in R:
+        if x['en']==en and 'img' in x and x['en'] not in ov: return grp.get(x['img'],'set:%d'%idx[x['img']])
 cache={}
 def jpg(spec):
     if spec not in cache:
@@ -70,19 +77,23 @@ for v in range(1,7):
     fn=f'{S}/orig{lv}/{lv}_vol{v}_pic.pdf'; d=fitz.open(fn); done=set()
     for r in [r for r in R if r['vol']==v]:
         p=d[r['page']]
-        if 'img' in r and r['img'] in grp:
+        if 'img' in r and r['en'] in ov:
+            rc=fitz.Rect(r['bbox']); p.insert_image(rc,stream=rounded(ov[r['en']],0,0))
+            log.append(('교체',r['vol'],r['title'],r['no'],r['en'],ov[r['en']]))
+        elif 'img' in r and r['img'] in grp:
             if r['xref'] not in done:
                 setjpg(d,r['xref'],jpg(grp[r['img']])); done.add(r['xref'])
             log.append(('교체',r['vol'],r['title'],r['no'],r['en'],grp[r['img']]))
         elif 'img' not in r:
-            spec=miss.get(r['en'])
-            if not spec: log.append(('빈칸그대로',r['vol'],r['title'],r['no'],r['en'],'')); continue
-            ref=[x for x in R if x['vol']==v and x['page']==r['page'] and 'bbox' in x][0]['bbox']
+            spec=miss.get(r['en']) or ov.get(r['en']) or auto(r['en'])
+            if not spec or spec=='set:-': log.append(('빈칸그대로',r['vol'],r['title'],r['no'],r['en'],'')); continue
+            refs=[x for x in R if x['vol']==v and x['page']==r['page'] and 'bbox' in x] or [x for x in R if x['vol']==v and 'bbox' in x]
+            ref=refs[0]['bbox']
             w=ref[2]-ref[0]; h=ref[3]-ref[1]; yc=r['yc']+0.35
             rc=fitz.Rect(ref[0],yc-h/2,ref[2],yc+h/2); p.insert_image(rc,stream=rounded(spec,w,h)); placed[(v,r['page'],r['no'])]=list(rc)
             log.append(('채움',r['vol'],r['title'],r['no'],r['en'],spec))
     import re as _re
-    for r in [r for r in R if r['vol']==v and _re.search(r"n't|n’t|\bnot\b|cannot",r['en'],_re.I)]:
+    for r in [r for r in R if r['vol']==v and _re.search(r"n't|n’t|\bnot\b|cannot",r['en'],_re.I) and r['en'].strip().lower()!='not']:
         p=d[r['page']]; bb=r.get('bbox') or placed.get((v,r['page'],r['no']))
         if not bb: continue
         has=any(dr.get('fill') and abs(dr['fill'][0]-0.878)<0.01 and abs(dr['fill'][1]-0.192)<0.01 and dr['rect'].x0<100 and abs((dr['rect'].y0+dr['rect'].y1)/2-r['yc'])<20 for dr in p.get_drawings())

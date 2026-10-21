@@ -1,0 +1,64 @@
+# 그룹번호 spec | en:문장 spec (그 문장 줄만 덮어쓰기) | miss:문장 spec
+0 set:3
+44 set:3
+en:It is a fork. fe:Fork and knife
+15 fe:Fork and knife
+24 fe:Fork and knife
+en:I see a hat. fe:Womans hat
+29 fe:Womans hat
+62 fe:Womans hat
+en:I see a girl. set:26
+en:I see a horse. set:31
+en:It is an egg. fe:Egg
+10 fe:Egg
+23 fe:Egg
+58 fe:Key
+78 fe:Key
+95 fe:Key
+103 set:105
+en:It is a robot. set:114
+en:The moon is up in the sky. fe:Full moon
+en:I have an orange. set:129
+157 fe:Yo-yo
+201 fe:Yo-yo
+en:It is a window. set:171
+162 fe:Keycap 0
+168 fe:Keycap 6
+en:You have a peach. set:149
+en:This is a fork. fe:Fork and knife
+en:They are in the jet. set:219
+en:The man has a nap. set:250
+en:The man is at the dam. set:207
+en:I can hit the ball. set:252
+474 set:483
+494 fe:Keycap 9
+en:She is in the dome. set:554
+en:There Is a note on the dome. set:554
+559 set:520
+618 fe:Wine glass
+672 set:657
+684 fe:Straight ruler
+687 fe:Ring
+706 fe:Cherries
+en:We can see a white whale. fe:Spouting whale
+757 fe:Fox
+780 fe:Owl
+789 fe:Owl
+790 fe:Speedboat
+800 fe:Owl
+813 fe:Bottle with popping cork
+829 fe:Bottle with popping cork
+835 fe:Necktie
+858 fe:Turtle
+856 set:760
+864 fe:Fork and knife
+873 fe:Cherries
+890 set:913
+920 fe:Giraffe
+962 fe:Fork and knife
+972 fe:Fork and knife
+en:The bird can fly in the sky. fe:Bird
+en:The kids ride a yellow boat. fe:Canoe
+en:The bride has a white dress and a clock. fe:Woman with veil
+en:circle fe:Orange circle
+en:The cub stirs rice making circles. fe:Cooked rice
