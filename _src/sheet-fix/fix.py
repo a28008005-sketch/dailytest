@@ -107,6 +107,12 @@ for v in range(1,7):
     import re as _re
     def isneg(en):
         e=en.strip()
+        # 형태는 부정이지만 뜻은 긍정(그림이 그 내용 그대로)인 문장
+        POS=["I don't mind waiting.","It won't be scary if you close your eyes.","I can't wait to travel.","can't wait to",
+             "If I didn't have a parachute, I would get hurt.","If you have not eaten meat bone tea, you should try it.",
+             "Speaking Chinese is not easy.","In the future, we'll not have to drive on the road.",
+             "You aren't going to believe this.","Lena wasn't scared anymore."]
+        if e in POS: return False
         if e.lower()=='not' or _re.match(r"don.t forget",e,_re.I) or _re.search(r", and you will not",e,_re.I): return False
         parts=[]
         for seg in e.split('|'):
