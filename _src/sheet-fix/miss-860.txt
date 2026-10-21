@@ -1,0 +1,24 @@
+German|set:53
+outside|set:74
+bake|fe:Baguette bread
+town|fe:Houses
+What does Sam like?|fe:Thinking face
+fish|fe:Fishing pole
+basketball|fe:Basketball
+What do you eat?|set:344
+We eat a lot of seafood.|set:344
+jogging suit|fe:Running shirt
+wipe|set:488
+hallway|fe:Door
+Who does Jake study with?|set:497
+edge|set:-
+onion ring|fe:Onion
+poster|fe:Framed picture
+paintbrush|fe:Paintbrush
+curly|set:623
+How often do you meet?|set:694
+obey|set:759
+fall down|set:781
+barbecue|fe:Meat on bone
+parent|set:584
+Do I come down the ladder?|fe:Ladder

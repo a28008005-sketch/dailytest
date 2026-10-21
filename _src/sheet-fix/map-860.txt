@@ -1,0 +1,26 @@
+22 set:32
+23 fe:Foot
+27 fe:Kitchen knife
+56 set:67
+128 set:130
+120 fe:Film projector
+137 fe:Film projector
+133 fe:Sun behind cloud
+134 fe:Sun
+139 fe:Sun
+125 fe:Rainbow
+159 set:153
+204 set:201
+247 fe:Wine glass
+271 fe:Wine glass
+262 fe:Chopsticks
+333 fe:Popcorn
+346 set:344
+365 fe:Magnet
+396 fe:Magnet
+382 fe:Violin
+418 fe:Flute
+420 fe:Key
+435 set:438
+500 fe:Kitchen knife
+782 fe:Leg

@@ -15,7 +15,7 @@ for v in range(1,7):
         nums=[L for L in lines if L[0]<50 and L[4].isdigit() and L[1]>190 and 'ExtraBold' in L[5]]
         for n in nums:
             yc=(n[1]+n[3])/2
-            en=' '.join(L[4] for L in lines if 100<L[0]<360 and abs((L[1]+L[3])/2-yc)<12)
+            en=' '.join(L[4] for L in lines if 95<L[0]<360 and abs((L[1]+L[3])/2-yc)<12)
             ko=' '.join(L[4] for L in lines if L[0]>=360 and abs((L[1]+L[3])/2-yc)<12)
             im=[i for i in ims if abs((i['bbox'][1]+i['bbox'][3])/2-yc)<15]
             r=dict(vol=v,page=pi,title=title,no=int(n[4]),en=en,ko=ko,yc=yc)
