@@ -10,7 +10,18 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '공개용', 'game');
 const LEVELS = ['lv240']; // 우선 240 레벨만 (파닉스·520 은 나중에)
 
-const db = JSON.parse(fs.readFileSync(path.join(ROOT, 'words_db.json'), 'utf8'));
+// 단어는 배포된 웨일리 보카 안의 데이터를 그대로 쓴다(다른 작업에서 고친 뜻·철자가 바로 반영되도록).
+// 그 파일을 못 읽으면 로컬 words_db.json 으로.
+function loadDb() {
+  try {
+    const html = fs.readFileSync(path.join(ROOT, '공개용', 'voca', 'index.html'), 'utf8');
+    const m = html.match(/<script type="application\/json" id="db">([\s\S]*?)<\/script>/);
+    if (m) { const d = JSON.parse(m[1]); console.log('단어: 웨일리 보카 데이터', d.meta && d.meta.builtAt); return d; }
+  } catch (e) { /* 아래로 */ }
+  console.log('단어: words_db.json');
+  return JSON.parse(fs.readFileSync(path.join(ROOT, 'words_db.json'), 'utf8'));
+}
+const db = loadDb();
 const pics = JSON.parse(fs.readFileSync(path.join(ROOT, '그림', 'index.json'), 'utf8')).items;
 const sha = (t) => crypto.createHash('sha1').update(t).digest('hex').slice(0, 16);
 

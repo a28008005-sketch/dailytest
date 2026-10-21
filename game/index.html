@@ -45,6 +45,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 .big:active{transform:translateY(4px); box-shadow:0 2px 0 #C9B21E}
 .ghost{font-weight:900; font-size:16px; padding:12px; border-radius:18px; background:rgba(255,255,255,.12); width:100%}
 .row2{display:flex; gap:10px}
+.who{background:rgba(255,238,98,.12); border:2px solid rgba(255,238,98,.35); border-radius:18px; padding:10px 14px; font-size:15px}
+.who b{color:var(--yellow)}
+.who span{display:block; font-size:12px; color:#CFEAF8; margin-top:2px}
 .opt{display:flex; align-items:center; gap:8px; font-size:14px; color:#CFEAF8}
 .opt input{width:20px; height:20px}
 
@@ -196,6 +199,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
       <div id="homeMon" style="width:76px;height:76px"></div>
       <div><h1>웨일리 몬스터 잡기</h1><small>Space Whale 240 · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
     </div>
+    <div class="who" id="who"></div>
     <a class="ghost hidden" id="backVoca" href="../voca/" style="text-align:center;text-decoration:none;display:block">← 웨일리 보카로 돌아가기</a>
     <div class="panel" id="lvPanel">
       <h2>레벨</h2>
@@ -355,14 +359,82 @@ function monSVG(w, opt) {
   return `<svg class="m" viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg">${defs}${wrap}</svg>`;
 }
 
+/* ═════════════ 웨일리 보카 진도·코인 연결 ═════════════ */
+// 보카와 같은 사이트라 기기 저장소를 같이 쓴다. 보카에 로그인한 학생이 있으면
+// 코인·도감·게임한 날을 그 학생 진도(swv.progress.<학생>)에 넣고, 보카와 똑같이 학원 서버에도 올린다.
+// 로그인한 학생이 없으면 이 기기에만 저장한다(체험).
+const VOCA_API = 'https://hello-world.a28008005.workers.dev';
+const Voca = (function () {
+  const rd = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const code = () => { try { return localStorage.getItem('swv.code'); } catch (e) { return null; } };
+  const profile = rd('swv.profile');
+  const on = !!(profile && profile.studentId);
+  const pkey = on ? 'swv.progress.' + profile.studentId : '';
+  let timer = 0;
+  function push(p) {
+    const c = code(); if (!c) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fetch(VOCA_API + '/api/voca/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+        body: JSON.stringify({ code: c, levelId: profile.levelId || '', dayIdx: p.dayIdx || 0, progress: p }),
+      }).catch(() => {});
+    }, 800);
+  }
+  return {
+    on, profile,
+    prog() { return (on && rd(pkey)) || null; },
+    update(fn) {
+      if (!on) return null;
+      const p = rd(pkey) || { dayIdx: 0, coins: 0 };
+      fn(p);
+      try { localStorage.setItem(pkey, JSON.stringify(p)); } catch (e) {}
+      push(p);
+      return p;
+    },
+  };
+})();
+// 도감: 보카 학생이면 진도 안 mon = {단어: [잡은 횟수, 반짝 0/1]}, 아니면 이 기기에
+function getDex() {
+  if (Voca.on) {
+    const m = (Voca.prog() || {}).mon || {}; const out = {};
+    for (const k in m) out[k] = { n: m[k][0], shiny: !!m[k][1] };
+    return out;
+  }
+  return store.get('dex', {});
+}
+function addDex(w, shiny) {
+  const k = key(w); let was = null;
+  if (Voca.on) {
+    Voca.update((p) => { p.mon = p.mon || {}; was = p.mon[k] || null; p.mon[k] = [(was ? was[0] : 0) + 1, (shiny || (was && was[1])) ? 1 : 0]; });
+  } else {
+    const dex = store.get('dex', {}); was = dex[k] || null;
+    dex[k] = { n: (was ? was.n : 0) + 1, shiny: !!(shiny || (was && was.shiny)) }; store.set('dex', dex);
+  }
+  return !!was;
+}
+function bankCoins(n) { if (Voca.on) Voca.update((p) => { p.coins = (p.coins || 0) + n; }); else store.set('coins', store.get('coins', 0) + n); }
+function totalCoins() { return Voca.on ? ((Voca.prog() || {}).coins || 0) : store.get('coins', 0); }
+
 /* ═════════════ 홈 ═════════════ */
 let sel = store.get('sel', { lv: 'lv240', vol: 1, unit: 1, day: 1 });
 if (!DATA.levels.some((l) => l.id === sel.lv)) sel.lv = DATA.levels[0].id;
-// 웨일리 보카에서 ?d=lv240-V1U2D3 로 들어오면 그날로 맞춘다
 const QS = new URLSearchParams(location.search);
 (function () {
-  const m = /^(\w+)-V(\d)U(\d)D(\d)$/.exec(QS.get('d') || '');
-  if (m && DATA.levels.some((l) => l.id === m[1])) { sel = { lv: m[1], vol: +m[2], unit: +m[3], day: +m[4] }; try { localStorage.setItem('wmon.sel', JSON.stringify(sel)); } catch (e) {} }
+  const setFrom = (id) => {
+    const m = /^(\w+)-V(\d)U(\d)D(\d)$/.exec(id || '');
+    if (!m || !DATA.levels.some((l) => l.id === m[1])) return false;
+    sel = { lv: m[1], vol: +m[2], unit: +m[3], day: +m[4] };
+    try { localStorage.setItem('wmon.sel', JSON.stringify(sel)); } catch (e) {}
+    return true;
+  };
+  // 웨일리 보카에서 ?d=lv240-V1U2D3 로 들어오면 그날, 아니면 로그인한 학생의 보카 진도 날
+  if (setFrom(QS.get('d'))) return;
+  if (Voca.on) {
+    const L = DATA.levels.find((l) => l.id === Voca.profile.levelId);
+    const p = Voca.prog();
+    if (L && p) setFrom((L.days[Math.min(p.dayIdx || 0, L.days.length - 1)] || {}).id);
+  }
 })();
 const opts = store.get('opts', { text: false, slow: true });
 const lvName = { phonics: '파닉스', lv240: '240', lv520: '520' };
@@ -388,7 +460,10 @@ function renderHome() {
   $('#course').innerHTML = c.games.map((g, i) => `${i ? '<span class="arr">▶</span>' : ''}<span class="g">${GAMES[g].icon} ${GAMES[g].name}</span>`).join('') + `<span class="arr">▶</span><span class="g">👾 몬스터 잡기</span>`
     + (c.bonus ? `<div style="flex-basis:100%;font-family:'Noto Sans KR';font-size:13px;color:var(--yellow);margin-top:4px">✨ ${c.bonus}</div>` : '');
   const d = dayOf();
-  const dex = store.get('dex', {});
+  const dex = getDex();
+  $('#who').innerHTML = Voca.on
+    ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>잡은 몬스터와 코인이 웨일리 보카에 같이 쌓여요</span>`
+    : `🎮 체험 모드<span>웨일리 보카에 로그인하면 코인·도감이 내 진도에 쌓여요 (지금은 이 기기에만 저장)</span>`;
   $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}`;
   $('#preview').innerHTML = d.words.map((w) => `<div title="${w.en}" style="${dex[key(w)] ? '' : 'filter:brightness(0) opacity(.45)'}">${monSVG(w)}</div>`).join('');
   $('#optText').checked = !!opts.text; $('#optSlow').checked = !!opts.slow;
@@ -472,6 +547,7 @@ $('#quitBtn').onclick = () => { if (S && S.game) S.game.stop(); S = null; show('
 
 function addCoins(n) {
   S.coins += n; $('#coinN').textContent = S.coins;
+  bankCoins(n);
   const c = $('#coinBox'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); SFX.coin();
 }
 // 게임이 정답/오답을 알려 준다. ok 이면 그 게임은 이미 효과를 마친 뒤다.
@@ -524,10 +600,7 @@ async function catchShow(m) {
   st.classList.remove('c3'); st.classList.add('c4'); SFX.catch(); confetti();
   mm.style.animation = 'appear .5s .1s backwards'; ball.classList.add('hidden');
   const w = m.w;
-  const dex = store.get('dex', {});
-  const k = key(w); const was = dex[k];
-  dex[k] = { en: w.en, ko: w.ko, p: w.p || '', a: w.a || '', lv: S.lv, day: S.day.label, n: (was ? was.n : 0) + 1, shiny: !!(m.shiny || (was && was.shiny)), t: Date.now() };
-  store.set('dex', dex);
+  const was = addDex(w, m.shiny);
   C.innerHTML += `<div class="cname">${monName(w)} ${was ? '' : '<span style="font-size:16px;color:var(--yellow)">NEW!</span>'}</div>
     ${m.shiny ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
     <div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${w.en}<small>${w.ko}</small></span></div>
@@ -748,13 +821,14 @@ function Fish(stage, target, list, cb) {
 function finish() {
   if (S.game) { S.game.stop(); S.game = null; }
   const caught = S.mons.filter((m) => m.caught), shiny = caught.filter((m) => m.shiny).length;
-  const coins = store.get('coins', 0) + S.coins; store.set('coins', coins);
+  // 오늘 게임한 날을 진도에 남긴다 (보카 홈에서 '완료'로 보인다)
+  if (Voca.on) Voca.update((p) => { p.gameDays = p.gameDays || {}; p.gameDays[S.day.id] = caught.length; });
   confetti(); SFX.catch();
   $('#resultIn').innerHTML = `
     <div style="text-align:center"><div style="font-size:64px">🏆</div>
       <h1 class="jua" style="font-weight:400;font-size:38px;margin:4px 0">${caught.length}마리 다 잡았다!</h1>
       <div style="color:#9FD8F5">${S.day.label} · ${S.course.day} 코스 완료</div></div>
-    <div class="stat"><div><b>${caught.length}</b><span>잡은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>+${S.coins}</b><span>코인</span></div></div>
+    <div class="stat"><div><b>${caught.length}</b><span>잡은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>+${S.coins}</b><span>${Voca.on ? '보카 코인 (총 ' + totalCoins().toLocaleString() + ')' : '코인'}</span></div></div>
     <div class="grid">${caught.map((m) => `<button class="mon" data-k="${reg(m.w)}">${m.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(m.w, { shiny: m.shiny })}<b>${monName(m.w)}</b><small>${m.w.en} · ${m.w.ko}</small></button>`).join('')}</div>
     <button class="big" id="rNext">다음 날 도전 ▶</button>
     <div class="row2"><button class="ghost" id="rAgain">다시 하기</button><button class="ghost" id="rDex">📖 도감</button><button class="ghost" id="rHome">처음으로</button></div>`;
@@ -768,7 +842,7 @@ function finish() {
   };
 }
 function showDex(lv) {
-  const dex = store.get('dex', {});
+  const dex = getDex();
   const L = levelOf(lv);
   const all = []; const seen = new Set();
   L.days.forEach((d) => d.words.forEach((w) => { if (!seen.has(key(w))) { seen.add(key(w)); all.push({ w, d }); } }));
@@ -778,9 +852,9 @@ function showDex(lv) {
   const vol = `-V${sel.vol}U`;
   const locked = all.filter((x) => !dex[key(x.w)] && x.d.id.includes(vol)).slice(0, 40);
   $('#dexIn').innerHTML = `
-    <div class="title"><div style="font-size:44px">📖</div><div><h1>몬스터 도감</h1><small>단어를 맞혀서 잡은 몬스터들이에요. 누르면 소리가 나요.</small></div></div>
+    <div class="title"><div style="font-size:44px">📖</div><div><h1>몬스터 도감</h1><small>${Voca.on ? (Voca.profile.name || '') + ' 님이 ' : ''}단어를 맞혀서 잡은 몬스터들이에요. 누르면 소리가 나요.</small></div></div>
     <div class="tabs">${DATA.levels.map((x) => `<button class="chip ${x.id === lv ? 'on' : ''}" data-lv="${x.id}">${lvName[x.id]}</button>`).join('')}</div>
-    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>${store.get('coins', 0)}</b><span>누적 코인</span></div></div>
+    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>${totalCoins().toLocaleString()}</b><span>${Voca.on ? '보카 코인' : '누적 코인'}</span></div></div>
     <div class="grid">
       ${mine.map((x) => { const r = dex[key(x.w)]; return `<button class="mon" data-k="${reg(x.w)}">${r.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(x.w, { shiny: r.shiny })}<b>${monName(x.w)}</b><small>${x.w.en} · ${x.w.ko}</small></button>`; }).join('')}
       ${locked.map((x) => `<div class="mon lock">${monSVG(x.w)}<b>???</b><small>${x.d.label.replace('Vol.', 'V')}</small></div>`).join('')}

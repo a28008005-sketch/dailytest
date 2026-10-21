@@ -2781,8 +2781,8 @@ a.sb-entry{text-decoration:none}
       <button className="btn btn-primary" onClick=${function () { ac(); TTS.prime(); props.onStart(); }}>오늘 항해 시작 · ${day.label}</button>
       ${lv.id === 'lv240' ? html`<a className="sb-entry mg-entry" href=${'../game/?from=voca&d=' + encodeURIComponent(day.id)}>
         <span className="mg-ic">👾</span>
-        <span><b>몬스터 잡기 게임</b><small>${day.label} 단어로 버블팡·두더지·낚시 하고 몬스터 모으기</small></span>
-        <span className="mg-go">›</span>
+        <span><b>몬스터 잡기 게임</b><small>${day.label} 단어로 버블팡·두더지·낚시 · 도감 ${Object.keys(prog.mon || {}).length}마리 · 코인이 여기 쌓여요</small></span>
+        ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">오늘 완료 · ${prog.gameDays[day.id]}마리</span>` : html`<span className="mg-go">›</span>`}
       </a>` : null}
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
