@@ -29,13 +29,24 @@ def src(spec):
     if k=='set': return Image.open(f'{W}/img/{order[int(v)]}.png').convert('RGB')
     if k=='fe': return fe(v)
     if k=='clock': h,m=v.split(':'); return clock(int(h),int(m))
+    if k=='arrow':
+        parts=v.split(':'); im=Image.open(f'{W}/img/{order[int(parts[0])]}.png').convert('RGB').resize((960,720),Image.LANCZOS)
+        d=ImageDraw.Draw(im)
+        if len(parts)>2:
+            x0,y0,x1,y1=[int(t)*3 for t in parts[3].split(',')]; d.rectangle([x0,y0,x1,y1],fill='white')
+        tx,ty,hx,hy=[int(t)*3 for t in parts[1].split(',')]
+        L=math.hypot(hx-tx,hy-ty); ux,uy=(hx-tx)/L,(hy-ty)/L; px,py=-uy,ux
+        sw,hw,hl=15,39,54; bx,by=hx-ux*hl,hy-uy*hl
+        poly=[(tx+px*sw,ty+py*sw),(bx+px*sw,by+py*sw),(bx+px*hw,by+py*hw),(hx,hy),(bx-px*hw,by-py*hw),(bx-px*sw,by-py*sw),(tx-px*sw,ty-py*sw)]
+        d.polygon(poly,fill=(224,49,49))
+        return im.resize((320,240),Image.LANCZOS)
 grp={}; miss={}
 for line in open(W+'/map.txt',encoding='utf8'):
     line=line.split('#',1)[0].rstrip() if not line.startswith('miss:') else line.rstrip()
     if not line.strip(): continue
     if line.startswith('miss:'):
         a,b=line[5:].rsplit(' ',1) if False else (None,None)
-        for kind in ('set:','fe:','clock:'):
+        for kind in ('set:','fe:','clock:','arrow:'):
             i=line.find(' '+kind)
             if i>0: miss[line[5:i]]=line[i+1:]; break
     else:
@@ -49,26 +60,42 @@ def rounded(spec,wpt,hpt):
     im=Image.open(jpg(spec)).convert('RGBA'); mask=Image.new('L',im.size,0)
     rad=int(im.width*4/40); ImageDraw.Draw(mask).rounded_rectangle([0,0,im.width-1,im.height-1],rad,fill=255); im.putalpha(mask)
     b=io.BytesIO(); im.save(b,'PNG'); return b.getvalue()
-log=[]
+log=[]; placed={}
+def setjpg(doc,xref,fn):
+    data=open(fn,'rb').read(); w,h=Image.open(fn).size
+    doc.update_stream(xref,data,compress=False)
+    for k,val in (('Filter','/DCTDecode'),('Width',str(w)),('Height',str(h)),('ColorSpace','/DeviceRGB'),('BitsPerComponent','8'),('SMask','null'),('DecodeParms','null'),('Mask','null'),('Decode','null')):
+        doc.xref_set_key(xref,k,val)
 for v in range(1,7):
-    fn=f'/home/user/dailytest/print/{lv}_vol{v}_pic.pdf'; d=fitz.open(fn); done=set()
+    fn=f'{S}/orig{lv}/{lv}_vol{v}_pic.pdf'; d=fitz.open(fn); done=set()
     for r in [r for r in R if r['vol']==v]:
         p=d[r['page']]
         if 'img' in r and r['img'] in grp:
             if r['xref'] not in done:
-                p.replace_image(r['xref'],filename=jpg(grp[r['img']])); done.add(r['xref'])
+                setjpg(d,r['xref'],jpg(grp[r['img']])); done.add(r['xref'])
             log.append(('교체',r['vol'],r['title'],r['no'],r['en'],grp[r['img']]))
         elif 'img' not in r:
             spec=miss.get(r['en'])
             if not spec: log.append(('빈칸그대로',r['vol'],r['title'],r['no'],r['en'],'')); continue
             ref=[x for x in R if x['vol']==v and x['page']==r['page'] and 'bbox' in x][0]['bbox']
             w=ref[2]-ref[0]; h=ref[3]-ref[1]; yc=r['yc']+0.35
-            p.insert_image(fitz.Rect(ref[0],yc-h/2,ref[2],yc+h/2),stream=rounded(spec,w,h))
+            rc=fitz.Rect(ref[0],yc-h/2,ref[2],yc+h/2); p.insert_image(rc,stream=rounded(spec,w,h)); placed[(v,r['page'],r['no'])]=list(rc)
             log.append(('채움',r['vol'],r['title'],r['no'],r['en'],spec))
+    import re as _re
+    for r in [r for r in R if r['vol']==v and _re.search(r"n't|n’t|\bnot\b|cannot",r['en'],_re.I)]:
+        p=d[r['page']]; bb=r.get('bbox') or placed.get((v,r['page'],r['no']))
+        if not bb: continue
+        has=any(dr.get('fill') and abs(dr['fill'][0]-0.878)<0.01 and abs(dr['fill'][1]-0.192)<0.01 and dr['rect'].x0<100 and abs((dr['rect'].y0+dr['rect'].y1)/2-r['yc'])<20 for dr in p.get_drawings())
+        if has: continue
+        cx,cy=bb[2]-2.95,bb[3]-3.7
+        p.draw_circle(fitz.Point(cx,cy),6.12,color=(1,1,1),fill=(0.8784,0.1922,0.1922),width=0.9)
+        for a,b in [((-2.45,-2.45),(2.45,2.45)),((-2.45,2.45),(2.45,-2.45))]:
+            p.draw_line(fitz.Point(cx+a[0],cy+a[1]),fitz.Point(cx+b[0],cy+b[1]),color=(1,1,1),width=1.2,lineCap=1)
+        log.append(('X추가',r['vol'],r['title'],r['no'],r['en'],''))
     d.save(f'{OUT}/{lv}_vol{v}_pic.pdf',garbage=4,deflate=True)
 json.dump(log,open(W+'/log.json','w'),ensure_ascii=False,indent=0)
 allp=fitz.open(); 
 for v in range(1,7): allp.insert_pdf(fitz.open(f'{OUT}/{lv}_vol{v}_pic.pdf'))
-allp.set_metadata(fitz.open(f'/home/user/dailytest/print/{lv}_all_pic.pdf').metadata)
+allp.set_metadata(fitz.open(f'{S}/orig{lv}/{lv}_all_pic.pdf').metadata)
 allp.save(f'{OUT}/{lv}_all_pic.pdf',garbage=4,deflate=True)
 import collections; print(collections.Counter(x[0] for x in log)); print(len(grp),'groups',len(miss),'miss specs')

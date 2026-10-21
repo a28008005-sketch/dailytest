@@ -46,7 +46,7 @@
 318 fe:Shushing face
 349 fe:Hamster
 365 set:795
-406 set:405
+406 arrow:405:265,4,208,24:erase:50,35,99,113
 408 set:405
 443 set:883
 509 set:477
@@ -80,3 +80,7 @@ miss:dress fe:Dress
 miss:Whose dress is this? fe:Dress
 miss:When do you go to dance class? set:1080
 miss:I sometimes go to dance class on Thursdays. set:1080
+401 arrow:401:318,40,256,72
+419 arrow:419:318,40,256,72
+402 arrow:402:178,38,124,64
+104 set:101
