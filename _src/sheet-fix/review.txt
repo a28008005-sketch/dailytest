@@ -1,0 +1,62 @@
+# idx  replacement-concept   (reason)
+6 pencil case   # cut off
+3 pencil
+7 pencil
+29 pencil
+34 pencil
+10 pencil sharpener # cut in half
+15 pencil sharpener
+30 pencil sharpener
+11 apple   # zoomed, cut
+31 apple
+19 crayon  # unrecognizable stripe
+23 crayon
+22 marker  # unrecognizable
+43 six     # wrong crop (cupcake, number cut)
+79 six
+44 three   # number cut off
+45 seven
+85 seven
+48 five
+46 ten
+86 ten
+72 lollipop  # cut tops
+76 lollipop  # zoomed
+89 lollipop
+107 question # giant cropped ?
+109 duck  # head cut
+111 duck
+113 chicken # cut
+139 robot # unrecognizable
+145 touch # unclear
+172 touch
+164 lamp # cut
+170 balloon # zoomed
+171 airplane # cut
+205 mirror # cut
+206 rug # unrecognizable
+207 heart # cut gray
+245 one fifteen # very faint
+259 one fifteen # faint
+268 leg # unrecognizable crop
+271 arm # unrecognizable
+281 nose # cut
+284 shoulder # unclear
+294 shoulder
+286 painting # unclear
+299 gift-point # object cut out (What's that?)
+304 short # unclear
+305 long # unclear
+306 big # cut
+310 toy # unclear
+313 card # unrecognizable
+318 quiet # unclear
+349 hamster # pixelated cut
+365 famous # unclear zoom
+394 ugly # unclear zoom
+406 tall # unclear crop
+408 short # unclear crop
+417 ugly # zoomed
+443 singer-woman # "She's a singer" but boy
+509 waiter # blank crop
+552 on # unclear crop
