@@ -1,0 +1,28 @@
+84 fe:Cup with straw
+107 fe:Cup with straw
+93 fe:Chopsticks
+161 fe:Flute
+185 fe:Flute
+202 fe:Peanuts
+203 set:200
+211 fe:Glass of milk
+219 fe:Leafy green
+233 fe:Leafy green
+220 fe:Bread
+229 set:200
+230 fe:Glass of milk
+245 fe:Teapot
+288 fe:Cheese wedge
+295 fe:Wastebasket
+297 fe:Salt
+315 fe:Salt
+309 fe:Magnifying glass tilted left
+423 fe:Leafy green
+433 fe:Gem stone
+529 fe:Wing
+621 fe:Collision
+647 fe:Collision
+615 fe:Light bulb
+672 fe:Hourglass done
+691 fe:Female sign
+722 fe:Twelve oclock

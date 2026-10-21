@@ -1,0 +1,13 @@
+clothes|set:79
+simple|set:-
+clap|fe:Clapping hands
+entire|set:-
+classic|fe:Hamburger
+How did you jump?|set:465
+We jumped high.|set:465
+ahead of|set:-
+shoot|fe:Bow and arrow
+I don't have a tent.|fe:Tent
+I'm nervous.|fe:Anxious face with sweat
+I'm scary.|fe:Fearful face
+Please wait for me.|fe:Hourglass not done
