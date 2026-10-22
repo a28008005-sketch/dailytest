@@ -197,7 +197,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
   <div class="home-in">
     <div class="title">
       <div id="homeMon" style="width:76px;height:76px"></div>
-      <div><h1>웨일리 몬스터 잡기</h1><small>Space Whale 240 · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
+      <div><h1>웨일리 몬스터 잡기</h1><small id="subTitle">오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
     </div>
     <div class="who" id="who"></div>
     <a class="ghost hidden" id="backVoca" href="../voca/" style="text-align:center;text-decoration:none;display:block">← 웨일리 보카로 돌아가기</a>
@@ -444,13 +444,15 @@ function dayOf() {
   return L.days.find((d) => d.id.endsWith(`-V${sel.vol}U${sel.unit}D${sel.day}`)) || L.days[0];
 }
 function renderHome() {
-  $('#lvPanel').classList.toggle('hidden', DATA.levels.length < 2);
+  const own = Voca.on && DATA.levels.some((l) => l.id === Voca.profile.levelId);
+  $('#lvPanel').classList.toggle('hidden', DATA.levels.length < 2 || own);
+  $('#subTitle').textContent = `${lvName[sel.lv] === '파닉스' ? 'Phonics' : 'Space Whale ' + lvName[sel.lv]} · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!`;
   $('#backVoca').classList.toggle('hidden', QS.get('from') !== 'voca');
   $('#lvChips').innerHTML = '';
   DATA.levels.forEach((L) => {
     const b = document.createElement('button');
     b.className = 'chip' + (L.id === sel.lv ? ' on' : ''); b.textContent = lvName[L.id] || L.short;
-    b.onclick = () => { sel.lv = L.id; save(); renderHome(); };
+    b.onclick = () => { if (sel.lv !== L.id) sel = { lv: L.id, vol: 1, unit: 1, day: 1 }; save(); renderHome(); };
     $('#lvChips').append(b);
   });
   const fill = (el, n, v, pre) => { el.innerHTML = ''; for (let i = 1; i <= n; i++) { const o = document.createElement('option'); o.value = i; o.textContent = pre + i; if (i === v) o.selected = true; el.append(o); } };
@@ -464,7 +466,7 @@ function renderHome() {
   $('#who').innerHTML = Voca.on
     ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>잡은 몬스터와 코인이 웨일리 보카에 같이 쌓여요</span>`
     : `🎮 체험 모드<span>웨일리 보카에 로그인하면 코인·도감이 내 진도에 쌓여요 (지금은 이 기기에만 저장)</span>`;
-  $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}`;
+  $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}` + (d.review ? ' · 문장만 배우는 날이라 앞에서 배운 단어로 복습해요' : '');
   $('#preview').innerHTML = d.words.map((w) => `<div title="${w.en}" style="${dex[key(w)] ? '' : 'filter:brightness(0) opacity(.45)'}">${monSVG(w)}</div>`).join('');
   $('#optText').checked = !!opts.text; $('#optSlow').checked = !!opts.slow;
   const total = Object.keys(dex).length;

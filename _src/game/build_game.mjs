@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '공개용', 'game');
-const LEVELS = ['lv240']; // 우선 240 레벨만 (파닉스·520 은 나중에)
+const LEVELS = ['phonics', 'lv240']; // 파닉스·240 (520 은 나중에)
 
 // 단어는 배포된 웨일리 보카 안의 데이터를 그대로 쓴다(다른 작업에서 고친 뜻·철자가 바로 반영되도록).
 // 그 파일을 못 읽으면 로컬 words_db.json 으로.
@@ -55,8 +55,20 @@ for (const id of LEVELS) {
       } else missAud++;
       words.push(w);
     }
-    if (words.length) level.days.push({ id: d.id, label: d.label, words });
+    // 단어 없는 날(문장만 있는 날)도 빼지 않는다 — 보카 진도(dayIdx)와 순서가 어긋나면 엉뚱한 날이 열린다.
+    level.days.push({ id: d.id, label: d.label, words });
   }
+  // 그런 날은 같은 단원 앞날 단어로 복습 게임을 한다.
+  level.days.forEach((d) => {
+    if (d.words.length) return;
+    const unit = d.id.replace(/D\d+$/, 'D');
+    const prev = level.days.filter((x) => x.id.startsWith(unit) && x !== d && x.words.length && x.id < d.id);
+    // 단원 첫날이라 앞날이 없으면 레벨 전체에서 바로 앞날들
+    const before = prev.length ? prev : level.days.slice(0, level.days.indexOf(d)).filter((x) => x.words.length).slice(-3);
+    const pool = before.flatMap((x) => x.words);
+    d.words = pool.filter((w, i) => w.p && pool.findIndex((y) => y.en === w.en) === i).slice(-6);
+    d.review = true;
+  });
   out.levels.push(level);
 }
 fs.writeFileSync(path.join(OUT, 'data.js'), 'window.GAME_DATA = ' + JSON.stringify(out) + ';\n');
