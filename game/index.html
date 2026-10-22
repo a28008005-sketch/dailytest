@@ -140,6 +140,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 #catch{position:fixed; inset:0; z-index:30; background:radial-gradient(circle at 50% 42%, rgba(30,170,230,.97) 0%, rgba(3,60,112,.98) 45%, rgba(0,20,45,.99) 80%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px}
 .cstage{position:relative; width:240px; height:240px}
 .cstage .m{position:absolute; inset:0; width:100%; height:100%}
+.cstage .mm > div > .m{position:static; display:block}
 .ball{position:absolute; left:50%; top:50%; width:84px; height:84px; margin:-42px; border-radius:50%;
   background:radial-gradient(circle at 35% 30%, #fff 0 10%, #8BE8FF 22%, #0FC3F4 55%, #0573A8 100%); border:4px solid #fff;
   box-shadow:0 0 0 4px var(--navy), 0 10px 30px rgba(0,0,0,.4)}
@@ -158,6 +159,8 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 .ctitle{font-family:'Jua'; font-size:42px; color:var(--yellow); text-shadow:0 4px 0 rgba(0,0,0,.3); animation:appear .5s}
 .cname{font-family:'Jua'; font-size:28px}
 .cword{display:flex; align-items:center; gap:12px; background:#fff; color:var(--navy); border-radius:20px; padding:8px 18px 8px 8px; font-family:'Jua'; font-size:26px}
+.cgrid{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:720px}
+.cgrid .cword{font-size:22px}
 .cword img{width:64px; height:64px; object-fit:contain; border-radius:12px; background:#F4FBFF}
 .cword small{display:block; font-size:16px; color:#5B7A95; font-family:'Noto Sans KR'; font-weight:700}
 .shiny-tag{font-family:'Jua'; font-size:20px; color:#FFD54A; animation:glow 1s infinite}
@@ -272,7 +275,8 @@ const COURSE = {
   4: { day: '목요일', games: ['bubble', 'fish', 'mole'] },
   5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 몬스터가 더 잘 나와요!' },
 };
-const NEED = 3; // 몬스터 하나 잡는 데 필요한 정답 수 (게임마다 한 번씩)
+// 몬스터마다 잡는 데 필요한 정답 수를 1·2·3 으로 섞는다. 그래야 마지막 게임에서만 줄줄이 잡히지 않고
+// 게임마다 고르게(약 1/3씩) 잡힌다. 잡은 몬스터는 그 게임이 끝날 때 한 번에 보여 준다.
 
 /* ═════════════ 소리 ═════════════ */
 const player = new Audio(); player.preload = 'auto';
@@ -500,9 +504,10 @@ function startSession() {
   for (let k = -6; k <= 6; k++) { const dd = L.days[idx + k]; if (dd && k) dd.words.forEach((w) => near.push(w)); }
   S = {
     lv: sel.lv, day: d, course: COURSE[sel.day], round: 0, coins: 0,
-    mons: d.words.map((w) => ({ w, gauge: 0, miss: false, caught: false, shiny: false })),
-    pool: near, queue: [], cur: -1, wrong: 0, game: null, busy: false,
+    mons: d.words.map((w) => ({ w, gauge: 0, need: 3, miss: false, caught: false, shiny: false })),
+    pool: near, queue: [], cur: -1, wrong: 0, game: null, busy: false, pending: [],
   };
+  shuffle(S.mons.map((_, i) => i)).forEach((i, k) => { S.mons[i].need = 1 + (k % 3); });
   show('play');
   renderBar();
   nextRound();
@@ -517,7 +522,7 @@ async function nextRound() {
   $('#intro').classList.remove('hidden'); SFX.whoosh();
   await sleep(1700);
   $('#intro').classList.add('hidden');
-  S.queue = shuffle(S.mons.map((_, i) => i).filter((i) => !S.mons[i].caught || S.round < NEED));
+  S.queue = shuffle(S.mons.map((_, i) => i));
   S.qTotal = S.queue.length; S.qDone = 0;
   nextTarget();
 }
@@ -533,9 +538,18 @@ function options(w) {
   for (const x of shuffle(same).concat(far)) { if (out.length >= 3) break; if (!seen.has(key(x))) { seen.add(key(x)); out.push(x); } }
   return shuffle([w].concat(out));
 }
-function nextTarget() {
+async function nextTarget() {
   if (S.game) { S.game.stop(); S.game = null; }
-  if (!S.queue.length) { S.round++; return nextRound(); }
+  if (!S.queue.length) {
+    // 이 게임에서 잡은 몬스터를 한꺼번에
+    if (S.pending.length) {
+      const got = S.pending; S.pending = [];
+      await catchShow(got);
+      if (!S) return;
+      got.forEach((m) => addCoins(m.shiny ? 50 : 20));
+    }
+    S.round++; return nextRound();
+  }
   S.cur = S.queue.shift(); S.wrong = 0; S.busy = false;
   renderDots(); renderBar();
   const w = S.mons[S.cur].w;
@@ -564,51 +578,53 @@ async function answer(ok) {
   }
   if (S.busy) return; S.busy = true;
   SFX.ok();
-  m.gauge = Math.min(NEED, m.gauge + 1);
+  m.gauge = Math.min(m.need, m.gauge + 1);
+  if (m.gauge >= m.need && !m.caught) {
+    m.caught = true;
+    m.shiny = !m.miss && (S.course.bonus ? Math.random() < .7 : Math.random() < .35);
+    S.pending.push(m);
+  }
   addCoins(S.wrong ? 5 : 10);
   S.qDone++; renderDots();
   renderBar(S.cur);
   await sleep(650);
   if (!S) return;
-  if (m.gauge >= NEED && !m.caught) {
-    m.caught = true;
-    m.shiny = !m.miss && (S.course.bonus ? Math.random() < .7 : Math.random() < .35);
-    if (S.game) { S.game.stop(); S.game = null; }
-    await catchShow(m);
-    if (!S) return;
-    addCoins(m.shiny ? 50 : 20);
-  }
   nextTarget();
 }
 function renderBar(hitIdx) {
   $('#bar').innerHTML = S.mons.map((m, i) => `<div class="slot ${m.caught ? 'caught' : ''} ${i === S.cur && !m.caught ? 'cur' : ''} ${i === hitIdx ? 'hit' : ''}">
-    ${monSVG(m.w, { shiny: m.caught && m.shiny })}<div class="pips">${Array.from({ length: NEED }, (_, k) => `<i class="${k < m.gauge ? 'on' : ''}"></i>`).join('')}</div></div>`).join('');
+    ${monSVG(m.w, { shiny: m.caught && m.shiny })}<div class="pips">${Array.from({ length: m.need }, (_, k) => `<i class="${k < m.gauge ? 'on' : ''}"></i>`).join('')}</div></div>`).join('');
 }
 
 /* ═════════════ 잡기 연출 ═════════════ */
-async function catchShow(m) {
+async function catchShow(list) {
   const C = $('#catch');
-  C.innerHTML = `<div class="cstage"><div class="mm">${monSVG(m.w, { shiny: m.shiny })}</div><div class="ball hidden"><b></b></div></div><div id="cTxt" class="ctitle">몬스터 발견!</div>`;
+  const n = list.length;
+  const size = n === 1 ? 240 : n === 2 ? 170 : 130;
+  C.innerHTML = `<div class="cstage" style="width:${Math.min(92, n * 30 + 40)}vw;max-width:${size * n + 40}px;height:${size}px">
+      <div class="mm" style="position:absolute;inset:0;display:flex;justify-content:center;gap:8px;animation:bob 1s infinite">${list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w, { shiny: m.shiny })}</div>`).join('')}</div>
+      <div class="ball hidden"><b></b></div></div>
+    <div id="cTxt" class="ctitle">몬스터 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
   C.className = '';
   const st = C.querySelector('.cstage'), mm = st.querySelector('.mm'), ball = st.querySelector('.ball');
-  mm.style.cssText = 'position:absolute;inset:0;animation:bob 1s infinite';
   SFX.wob(); await sleep(900);
   $('#cTxt').textContent = '버블볼 던지기!';
   ball.classList.remove('hidden'); st.classList.add('c1'); SFX.whoosh(); await sleep(600);
-  st.classList.add('c2'); mm.style.animation = 'suck .4s forwards'; SFX.pop(); await sleep(450);
+  mm.style.animation = 'suck .4s forwards'; SFX.pop(); await sleep(450);
   st.classList.remove('c1'); st.classList.add('c3'); $('#cTxt').textContent = '...';
   for (let i = 0; i < 3; i++) { await sleep(500); SFX.wob(); }
   await sleep(200);
   st.classList.remove('c3'); st.classList.add('c4'); SFX.catch(); confetti();
   mm.style.animation = 'appear .5s .1s backwards'; ball.classList.add('hidden');
-  const w = m.w;
-  const was = addDex(w, m.shiny);
-  C.innerHTML += `<div class="cname">${monName(w)} ${was ? '' : '<span style="font-size:16px;color:var(--yellow)">NEW!</span>'}</div>
-    ${m.shiny ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
-    <div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${w.en}<small>${w.ko}</small></span></div>
+  const cards = list.map((m) => {
+    const w = m.w, was = addDex(w, m.shiny);
+    return `<div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${monName(w)} ${was ? '' : '<b style="font-size:13px;color:var(--flame)">NEW</b>'}${m.shiny ? ' ✨' : ''}<small>${w.en} · ${w.ko}</small></span></div>`;
+  }).join('');
+  C.innerHTML += `<div class="cgrid">${cards}</div>
+    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
     <button class="big" style="max-width:320px">계속하기 ▶</button>`;
-  C.querySelector('.ctitle').textContent = '잡았다!';
-  say(w);
+  C.querySelector('.ctitle').textContent = n > 1 ? n + '마리 잡았다!' : '잡았다!';
+  (async () => { for (const m of list) { if (C.classList.contains('hidden')) break; say(m.w); await sleep(1300); } })();
   await new Promise((res) => { C.querySelector('.big').onclick = res; });
   C.className = 'hidden';
 }
@@ -704,6 +720,13 @@ function Mole(stage, target, list, cb) {
     };
     return o;
   });
+  // 두더지 크기는 구멍의 가로·세로 둘 다에 맞춘다. 가로로 눕힌 태블릿은 구멍이 납작해서
+  // 가로만 보고 키우면 그림 카드가 위로 잘려 얼굴만 보였다. (두더지+카드 높이 ≈ 너비 × 1.55)
+  {
+    const r = H[0].h.getBoundingClientRect();
+    const mw = Math.max(60, Math.min(r.width * .74, r.height * .92 / 1.55));
+    H.forEach((o) => { o.m.style.width = mw + 'px'; });
+  }
   function down(o) { o.up = false; o.m.classList.remove('up', 'bonk', 'miss', 'glow'); }
   function popOne() {
     if (!alive) return;
