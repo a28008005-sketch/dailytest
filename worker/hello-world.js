@@ -559,6 +559,12 @@ async function findStudentByCode(env, code) {
   const clean = String(code || '').trim().toUpperCase();
   if (!/^[A-Z0-9]{4,12}$/.test(clean)) return { error: '코드는 영문과 숫자로만 되어 있습니다' };
 
+  // 원생관리에만 등록된 학생의 코드(W로 시작)는 원생관리 명부에서 찾는다.
+  if (/^W[A-Z0-9]{7}$/.test(clean)) {
+    const hit = (await cloudStudents(env)).find(s => cloudCode(s.id) === clean);
+    if (hit) return { name: hit.name, code: clean };
+  }
+
   const found = await notionQuery(env, DATABASES.students, {
     property: '단어장코드',
     rich_text: { equals: clean },
@@ -616,38 +622,97 @@ async function ensureCode(env, page, pages) {
   return code;
 }
 
+// ── 원생관리(학원 클라우드) 명부 ──
+// 원장님이 원생관리 홈페이지에 학생을 등록하면, 그 '학부모 연락처'로도 보카에 들어올 수 있다.
+// 키가 없거나 클라우드가 응답하지 않으면 빈 명부로 보고 노션 명부만 쓴다.
+async function cloudStudents(env) {
+  const key = env.SUPABASE_SERVICE_KEY;
+  if (!key) return [];
+  try {
+    const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+    const res = await fetch(base + '?kind=eq.student&deleted=eq.false&select=id,data', { headers: staffCloudHeaders(key) });
+    if (!res.ok) return [];
+    return (await res.json())
+      .map(row => Object.assign({}, row.data || {}, { id: row.id }))
+      .filter(s => String(s.name || '').trim())
+      .map(s => Object.assign(s, { name: String(s.name).trim() }));
+  } catch (e) {
+    return [];
+  }
+}
+
+// 원생관리 학생에게는 명부에 코드를 적지 않고, 학생 번호(id)에서 늘 같은 코드를 만들어 쓴다.
+// 원생관리 화면이 저장할 때 다른 칸을 덮어쓰지 않도록, 워커는 그 명부를 고치지 않는다.
+function cloudCode(id) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let h = 2166136261;
+  for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  let code = 'W';
+  for (let i = 0; i < 7; i++) {
+    code += chars[h % 32];
+    h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
+  }
+  return code;
+}
+
+// 원생관리의 학부모 연락처 칸에는 '010-…, 010-…' 처럼 두 번호가 함께 적혀 있기도 하다.
+function cloudPhonesOf(s) {
+  return [...new Set(String(s.parentPhone || '').split(/[,/;·\n]|\s{2,}/).map(phoneLast4).filter(Boolean))];
+}
+
 async function findStudentByPhone4(env, phone4, payload) {
-  const pages = await notionQueryAll(env, DATABASES.students);
+  // 두 명부를 함께 본다. 노션이 잠시 안 돼도 원생관리 명부로는 들어올 수 있게 한다.
+  const [cloud, pages] = await Promise.all([
+    cloudStudents(env),
+    notionQueryAll(env, DATABASES.students).catch(() => []),
+  ]);
 
   let anyPhone = false;
-  let list = [];
+  const list = [];
+  const seen = new Set();
+
+  // 원생관리 명부가 먼저다. 같은 이름이 노션에도 있고 단어장코드가 있으면 그 코드를 그대로 써서
+  // 예전에 하던 진도가 이어지게 한다.
+  for (const s of cloud) {
+    const phones = cloudPhonesOf(s);
+    if (phones.length) anyPhone = true;
+    if (s.status === '퇴원생' || s.archived) continue;
+    if (!phones.includes(phone4) || seen.has(s.name)) continue;
+    seen.add(s.name);
+    const page = pages.find(p => textOf(p.properties['이름']) === s.name && textOf(p.properties['상태']) !== '퇴원생');
+    list.push({ id: s.id, name: s.name, grade: s.grade || '', page, code: page ? '' : cloudCode(s.id) });
+  }
+
+  // 원생관리에 아직 없는 학생은 예전처럼 노션 명부로 찾는다.
   for (const page of pages) {
     const phones = parentPhonesOf(page);
     if (phones.length) anyPhone = true;
     if (textOf(page.properties['상태']) === '퇴원생') continue;
-    if (phones.includes(phone4)) list.push(page);
+    const name = textOf(page.properties['이름']);
+    if (!phones.includes(phone4) || seen.has(name)) continue;
+    seen.add(name);
+    list.push({ id: page.id, name, grade: textOf(page.properties['학년']), page, code: '' });
   }
 
   if (!anyPhone) return { error: '학생 명부에 학부모 연락처가 없습니다. 선생님께 알려 주세요' };
   if (list.length === 0) return { error: '이 번호로 등록된 학생이 없어요. 번호를 다시 확인해 주세요' };
 
-  // 형제·자매가 이름을 고른 뒤 다시 들어온 경우
-  if (payload.studentId) list = list.filter(page => page.id === String(payload.studentId));
-  else if (payload.name) list = list.filter(page => textOf(page.properties['이름']) === String(payload.name).trim());
-  if (list.length === 0) return { error: '이름을 다시 골라 주세요' };
+  // 형제·자매가 이름을 고른 뒤 다시 들어온 경우. 앞서 받은 id가 노션 쪽 번호여도 찾아 준다.
+  let picked = list;
+  if (payload.studentId) {
+    const want = String(payload.studentId);
+    picked = list.filter(x => x.id === want || (x.page && x.page.id === want));
+  } else if (payload.name) {
+    picked = list.filter(x => x.name === String(payload.name).trim());
+  }
+  if (picked.length === 0) return { error: '이름을 다시 골라 주세요' };
 
-  if (list.length > 1) {
-    return {
-      choices: list.map(page => ({
-        id: page.id,
-        name: textOf(page.properties['이름']),
-        grade: textOf(page.properties['학년']),
-      })),
-    };
+  if (picked.length > 1) {
+    return { choices: picked.map(x => ({ id: x.id, name: x.name, grade: x.grade })) };
   }
 
-  const page = list[0];
-  return { name: textOf(page.properties['이름']), code: await ensureCode(env, page, pages) };
+  const one = picked[0];
+  return { name: one.name, code: one.code || await ensureCode(env, one.page, pages) };
 }
 
 // 학생이 부모님 휴대폰 뒤 4자리(또는 예전 학습코드)를 넣으면 이름과 지난 진도를 돌려준다.

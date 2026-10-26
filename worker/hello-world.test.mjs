@@ -205,3 +205,44 @@ r = await (await worker.fetch(new Request('https://w.test/api/health'), env)).js
 assert.equal(r.hasStaffCloud, true);
 
 console.log('보카 성적 → 원생관리 클라우드: 모두 통과');
+
+// 11) 원생관리 홈페이지에 등록한 학생도 학부모 연락처 뒤 4자리로 들어온다
+cloudRows[0].data.parentPhone = '010-1234-5678';                       // 노션에도 있는 학생 (코드 GR2831)
+cloudRows.push(
+  { id: 'stu-mj', data: { name: '정민준', status: '등록생', grade: '2학년', parentPhone: '010-7777-2468' } },
+  { id: 'stu-he', data: { name: '김하은', status: '등록생', grade: '5학년', parentPhone: '010-5555-0001, 01012345678' } },
+  { id: 'stu-out', data: { name: '최퇴원', status: '퇴원생', parentPhone: '010-8888-1357' } },
+);
+
+// 원생관리에만 있는 학생: 명부를 고치지 않고 늘 같은 코드(W…)로 들어온다
+r = await call('/api/voca/login', { phone4: '2468' });
+assert.equal(r.success, true); assert.equal(r.name, '정민준'); assert.match(r.code, /^W[A-Z2-9]{7}$/);
+const mjCode = r.code;
+assert.equal((await call('/api/voca/login', { phone4: '2468' })).code, mjCode);
+assert.ok(cloudCalls.every(c => c[0] === 'GET'));
+// 그 코드로 진도 저장·다시 들어오기가 된다
+const before = writes.length;
+r = await call('/api/voca/save', { code: mjCode, levelId: '240', dayIdx: 2, progress: { dayIdx: 2 } });
+assert.equal(r.success, true); assert.ok(writes.length > before);
+r = await call('/api/voca/login', { code: mjCode });
+assert.equal(r.success, true); assert.equal(r.name, '정민준');
+
+// 형제: 원생관리(김하윤·김하은) + 노션에만 있는 김하준이 한 목록에 나온다
+r = await call('/api/voca/login', { phone4: '5678' });
+assert.deepEqual(r.choices.map(c => c.name).sort(), ['김하윤', '김하은', '김하준'].sort());
+// 노션에 코드가 있는 학생은 그 코드를 그대로 써서 예전 진도가 이어진다
+r = await call('/api/voca/login', { phone4: '5678', studentId: 's-ha' });
+assert.equal(r.success, true); assert.equal(r.code, 'GR2831');
+r = await call('/api/voca/login', { phone4: '5678', name: '김하은' });
+assert.equal(r.name, '김하은'); assert.match(r.code, /^W/);
+
+// 퇴원생은 못 들어온다
+assert.match((await call('/api/voca/login', { phone4: '1357' })).error, /등록된 학생이 없/);
+
+// 원생관리 클라우드가 고장 나도 노션 명부로는 들어온다
+cloudFail = true;
+r = await call('/api/voca/login', { phone4: '4321' });
+assert.equal(r.success, true); assert.equal(r.name, '이서아');
+cloudFail = false;
+
+console.log('원생관리 명부로 보카 로그인: 모두 통과');
