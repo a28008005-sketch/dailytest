@@ -730,6 +730,9 @@ a.sb-entry{text-decoration:none}
 .sb-prog{position:relative; overflow:visible}
 .sb-rider{position:absolute; top:50%; transform:translate(-50%,-55%); font-size:20px; transition:left .45s cubic-bezier(.3,1.4,.5,1); filter:drop-shadow(0 2px 2px rgba(0,0,0,.3)); animation:sbbob 1.6s ease-in-out infinite}
 .sb-combo{font:800 15px/1 var(--f-num); color:#FF7A1A; background:color-mix(in srgb, #FF7A1A 16%, var(--surface)); border:2px solid #FF7A1A; border-radius:999px; padding:5px 10px; animation:sbpop .45s cubic-bezier(.3,1.8,.5,1)}
+.pts-card{display:flex;gap:12px;align-items:center;border:1.5px solid #FFD400;background:linear-gradient(135deg,rgba(255,212,0,.14),rgba(255,212,0,.04))}
+.pts-ic{font-size:30px;line-height:1}
+.review-card{border:1.5px dashed var(--brand,#0A3A63)}
 .sb-coins{animation:sbpop .4s cubic-bezier(.3,1.8,.5,1)}
 @keyframes sbpop{0%{transform:scale(.6)} 60%{transform:scale(1.25)} 100%{transform:scale(1)}}
 .sb-toast{
@@ -2060,6 +2063,14 @@ a.sb-entry{text-decoration:none}
   }
   var OFFSET = [0, 46, 0, -46];
 
+  // 앞 날짜로 복습하러 갈 때: 원래 하던 날짜(reviewFrom)를 기억해 두고, 그 날을 끝내면 돌아온다.
+  function reviewTo(p, di) {
+    var from = p.reviewFrom != null ? p.reviewFrom : (p.dayIdx || 0);
+    var np = Object.assign({}, p, { dayIdx: di });
+    if (di < from) np.reviewFrom = from; else delete np.reviewFrom;
+    return np;
+  }
+
   function Trail(props) {
     var lv = props.lv, dayIdx = props.dayIdx, done = props.doneDays || {};
     var prevDone = [];
@@ -2717,6 +2728,35 @@ a.sb-entry{text-decoration:none}
     </div>`;
   }
 
+  /* 고래 포인트 — 마켓데이·고래카드로 바꾸는 진짜 포인트. 앱 코인(꾸미기용)과 다르다.
+     학원 서버(워커)가 계산하고, 앱은 받아서 보여 주기만 한다. */
+  function usePoints() {
+    var _p = useState(window.whalePointsCache || null), pts = _p[0], setPts = _p[1];
+    useEffect(function () {
+      function on(e) { setPts(e.detail); }
+      window.addEventListener('whale-points', on);
+      if (window.whalePoints) window.whalePoints();
+      return function () { window.removeEventListener('whale-points', on); };
+    }, []);
+    return pts;
+  }
+  function PointsCard(props) {
+    var pts = usePoints();
+    if (!pts || pts.success === false || pts.balance == null) return null;
+    var full = pts.month >= pts.monthCap;
+    return html`<div className="card-flat pts-card">
+      <div className="pts-ic">🐋</div>
+      <div style=${{ flex: 1 }}>
+        <div className="eyebrow">고래 포인트</div>
+        <div className="num" style=${{ fontSize: '22px', fontWeight: 700 }}>${pts.balance.toLocaleString()}P
+          ${props.earned && pts.earned ? html`<span className="tag" data-kind="ok" style=${{ marginLeft: '8px', fontSize: '12px' }}>오늘 +${pts.earned}P</span>` : null}</div>
+        <div style=${{ fontSize: '12px', color: 'var(--ink-3)', marginTop: '2px' }}>
+          ${full ? '이번 달 포인트를 다 모았어요! 다음 달에 또 모아요' : '이번 달 ' + pts.month + ' / ' + pts.monthCap + 'P · 오늘 학습을 끝내면 쌓여요'}
+        </div>
+      </div>
+    </div>`;
+  }
+
   function Home(props) {
     var p = props.profile, prog = props.progress, lv = byId[p.levelId] || LEVELS[0];
     var dayIdx = Math.min(prog.dayIdx || 0, lv.days.length - 1);
@@ -2756,6 +2796,17 @@ a.sb-entry{text-decoration:none}
           <div className="num" style=${{ fontSize: '22px', fontWeight: 600, marginTop: '2px' }}>${masteredCount}</div>
         </div>
       </div>
+
+      <${PointsCard}/>
+
+      ${prog.reviewFrom != null && lv.days[prog.reviewFrom] ? html`<div className="card review-card">
+        <div style=${{ fontWeight: 700, fontSize: '14px' }}>🔁 복습 중 · ${day.label}</div>
+        <div className="h-sub">이 날을 끝내면 원래 진도 <b>${lv.days[prog.reviewFrom].label}</b>로 자동으로 돌아가요.</div>
+        <div className="row" style=${{ gap: '8px', marginTop: '8px' }}>
+          <button className="btn btn-ghost" onClick=${props.onResume}>원래 진도로 돌아가기</button>
+          <button className="btn btn-ghost" onClick=${props.onKeepHere}>여기부터 새로 이어가기</button>
+        </div>
+      </div>` : null}
 
       <div className="card" style=${{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div className="row">
@@ -3321,6 +3372,7 @@ nextRef.current = function () {
       <${Bubbles} seed="fin"/>
       <div className="eyebrow">오늘의 학습 완료</div>
       <h1 className="h-title" style=${{ fontSize: '30px' }}>${r.student.name} 님, 수고했어요</h1>
+      <${PointsCard} earned=${true}/>
       <div className="readout">
         <div><div className="k">종합 정답률</div><div className="v">${r.overall.accuracyPct}%</div></div>
         <div><div className="k">총점</div><div className="v">${r.overall.score.toLocaleString()}</div></div>
@@ -3816,6 +3868,9 @@ nextRef.current = function () {
         np.doneDays = Object.assign({}, pr.doneDays);
         np.doneDays[lv.id + '|' + dayIdx] = 1;
         np.dayIdx = Math.min(dayIdx + 1, lv.days.length - 1);
+        // 복습하던 날을 끝내면 원래 하던 날짜로 돌아간다
+        if (pr.reviewFrom != null && pr.reviewFrom > dayIdx) np.dayIdx = Math.min(pr.reviewFrom, lv.days.length - 1);
+        delete np.reviewFrom;
         var t = todayStr();
         if (pr.lastDate !== t) {
           var y = new Date(Date.now() - 86400000);
@@ -3833,12 +3888,19 @@ nextRef.current = function () {
     var body;
     if (view === 'home') {
       body = html`<${Home} profile=${profile} progress=${progress} go=${setView} onStart=${startSession} onSignOut=${signOut}
-        onJump=${function (di) { setProgress(function (p) { return Object.assign({}, p, { dayIdx: di }); }); }}/>`;
+        onJump=${function (di) { setProgress(function (p) { return reviewTo(p, di); }); }}
+        onResume=${function () { setProgress(function (p) { var np = Object.assign({}, p, { dayIdx: p.reviewFrom }); delete np.reviewFrom; return np; }); }}
+        onKeepHere=${function () { setProgress(function (p) { var np = Object.assign({}, p); delete np.reviewFrom; return np; }); }}/>`;
     } else if (view === 'picker') {
       body = html`<${Picker} profile=${profile} progress=${progress} back=${function () { setView('home'); }}
         onPick=${function (lid, di) {
+          var same = lid === lv.id;
           setProfile(Object.assign({}, profile, { levelId: lid }));
-          setProgress(function (p) { return Object.assign({}, p, { dayIdx: di }); });
+          setProgress(function (p) {
+            // 같은 교재에서 이미 끝낸 앞 날짜를 고르면 복습이다: 원래 진도를 기억해 둔다.
+            if (same && (p.doneDays || {})[lid + '|' + di] && di < (p.reviewFrom != null ? p.reviewFrom : dayIdx)) return reviewTo(p, di);
+            var np = Object.assign({}, p, { dayIdx: di }); delete np.reviewFrom; return np;
+          });
           setView('home');
         }}/>`;
     } else if (view === 'shop') {
@@ -4067,8 +4129,27 @@ nextRef.current = function () {
       fetch(API + '/api/voca/report', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body), keepalive: true
-      }).catch(function () {});
+      }).then(function (res) { return body.status === 'done' ? res.json() : null; })
+        .then(function (j) { if (j && j.points) tellPoints(j.points); })
+        .catch(function () {});
     } catch (e) {}
+  };
+
+  // ── 고래 포인트 — 학원 서버가 계산한 값을 받아 화면에 알린다 ──
+  function tellPoints(p) {
+    if (!p || p.balance == null) return;
+    window.whalePointsCache = Object.assign({}, window.whalePointsCache || {}, p);
+    try { window.dispatchEvent(new CustomEvent('whale-points', { detail: window.whalePointsCache })); } catch (e) {}
+  }
+  window.whalePoints = function () {
+    var code = get(K_CODE);
+    if (!code) return;
+    fetch(API + '/api/voca/points', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.success) tellPoints(Object.assign(j, { earned: (window.whalePointsCache || {}).earned || 0 }));
+    }).catch(function () {});
   };
 
   // ── 진도를 서버에 올린다. 연달아 바뀌면 마지막 것만 보낸다 ──
@@ -4088,6 +4169,7 @@ nextRef.current = function () {
   };
 
   function clearSession() {
+    window.whalePointsCache = null;
     try {
       localStorage.removeItem(K_CODE);
       localStorage.removeItem(K_PROFILE);

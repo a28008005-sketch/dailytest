@@ -377,7 +377,105 @@ async function pushVocaToStaffCloud(env, r) {
     body: JSON.stringify([{ kind: 'vocab', id, data, deleted: false }]),
   });
   if (!put.ok) throw new Error('학원 클라우드 저장 실패 ' + put.status + ': ' + (await put.text()).slice(0, 200));
+
+  // 하루치를 끝낸 학생에게 고래 포인트를 준다. 포인트가 실패해도 성적은 이미 들어갔다.
+  if (r.status === 'done' && r.pointsOk) {
+    try {
+      r.points = await awardVocaPoints(env, studentId, r);
+    } catch (error) {
+      r.points = { error: error.message };
+    }
+  }
   return 'ok';
+}
+
+// ── 고래 포인트 ──
+// 보카 앱 코인(꾸미기·게임용)과 따로 센다. 고래 포인트는 마켓데이·고래카드로 바꿔 주는 진짜 돈이라
+// 학생 기기가 아니라 여기(워커)에서만 계산하고, 원생관리 클라우드에 한 줄씩 남긴다.
+//  · 하루 학습(오늘 항해)을 끝내면 8P, 그날 정답률이 90% 이상이면 2P 더
+//  · 7일 연속으로 끝내면 10P 더 (7일·14일·21일…)
+//  · 하루 한 번만, 한 달에 300P(3,000원)까지. 같은 날 복습을 더 해도 늘지 않는다
+//  · 1P = 10원. 원장님이 원생관리 '고래 포인트' 화면에서 쓴 만큼 뺀다(음수 줄)
+const POINT_RULES = { won: 10, day: 8, high: 2, highPct: 90, streak: 7, streakBonus: 10, monthCap: 300 };
+
+async function cloudPointRows(env, studentId) {
+  const key = env.SUPABASE_SERVICE_KEY;
+  const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+  const res = await fetch(base + '?kind=eq.point&deleted=eq.false&data->>studentId=eq.' + encodeURIComponent(studentId) + '&select=id,data',
+    { headers: staffCloudHeaders(key) });
+  if (!res.ok) throw new Error('학원 클라우드 응답 ' + res.status);
+  return (await res.json()).map(row => Object.assign({}, row.data || {}, { id: row.id }));
+}
+
+function pointSummary(rows, today) {
+  const month = today.slice(0, 7);
+  let balance = 0;
+  let earnedMonth = 0;
+  for (const p of rows) {
+    const n = Number(p.amount) || 0;
+    balance += n;
+    if (p.source === 'whaley-voca' && String(p.date || '').slice(0, 7) === month) earnedMonth += n;
+  }
+  return { balance, month: earnedMonth, monthCap: POINT_RULES.monthCap, won: POINT_RULES.won };
+}
+
+function dayBefore(ymd, n) {
+  const d = new Date(ymd + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+async function awardVocaPoints(env, studentId, r) {
+  const rows = await cloudPointRows(env, studentId);
+  const id = 'pt-' + studentId + '-' + r.date;
+  const sum = pointSummary(rows, r.date);
+  if (rows.some(p => p.id === id)) return Object.assign(sum, { earned: 0, already: true });
+
+  // 어제부터 거꾸로 며칠 연속으로 끝냈는지
+  const auto = new Set(rows.filter(p => p.source === 'whaley-voca').map(p => p.date));
+  let streak = 1;
+  while (auto.has(dayBefore(r.date, streak))) streak++;
+
+  const parts = ['하루 학습 완료 ' + POINT_RULES.day + 'P'];
+  let amount = POINT_RULES.day;
+  if ((r.clearPct || 0) >= POINT_RULES.highPct) { amount += POINT_RULES.high; parts.push('정답률 ' + POINT_RULES.highPct + '% 이상 ' + POINT_RULES.high + 'P'); }
+  if (streak % POINT_RULES.streak === 0) { amount += POINT_RULES.streakBonus; parts.push(streak + '일 연속 ' + POINT_RULES.streakBonus + 'P'); }
+
+  const room = Math.max(0, POINT_RULES.monthCap - sum.month);
+  if (room <= 0) return Object.assign(sum, { earned: 0, capped: true });
+  if (amount > room) { amount = room; parts.push('이번 달 최대 ' + POINT_RULES.monthCap + 'P까지'); }
+
+  const data = {
+    id, studentId, date: r.date, amount,
+    reason: '보카 ' + (r.level + ' ' + (r.dayLabel || r.day + '일차')).trim() + ' · ' + parts.join(' + '),
+    source: 'whaley-voca', streak, updatedAt: new Date().toISOString(),
+  };
+  const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+  // 같은 날 보고가 두 번 겹쳐 와도 한 줄만 남는다 (id가 같으면 무시)
+  const put = await fetch(base, {
+    method: 'POST',
+    headers: Object.assign(staffCloudHeaders(env.SUPABASE_SERVICE_KEY), { Prefer: 'resolution=ignore-duplicates,return=minimal' }),
+    body: JSON.stringify([{ kind: 'point', id, data, deleted: false }]),
+  });
+  if (!put.ok) throw new Error('포인트 저장 실패 ' + put.status);
+  return { balance: sum.balance + amount, month: sum.month + amount, monthCap: POINT_RULES.monthCap, won: POINT_RULES.won, earned: amount, streak };
+}
+
+// 앱 홈 화면에 보여 줄 포인트. 학생 코드로만 물어볼 수 있다.
+async function vocaPoints(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const student = await findStudentByCode(env, payload && payload.code);
+    if (student.error) return { success: false, error: student.error };
+    const matches = (await cloudStudents(env)).filter(s => s.name === student.name);
+    if (matches.length !== 1) return { success: false, error: matches.length ? 'same-name' : 'no-student' };
+    const rows = await cloudPointRows(env, matches[0].id);
+    const recent = rows.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
+      .slice(0, 10).map(p => ({ date: p.date, amount: Number(p.amount) || 0, reason: p.reason || '' }));
+    return Object.assign({ success: true }, pointSummary(rows, seoulToday()), { recent });
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 }
 
 const VOCA_STATUS = { 'in-progress': '학습 중', stopped: '중간에 멈춤', done: '완료' };
@@ -430,13 +528,22 @@ async function reportVoca(env, payload) {
   const notion = checked.status === 'done'
     ? await reportVocaToNotion(env, checked)
     : { success: true, status: checked.status };
+  // 포인트는 진짜 돈이라, 이름만이 아니라 그 학생의 코드까지 맞아야 준다.
+  if (checked.status === 'done' && payload && payload.code) {
+    try {
+      const who = await findStudentByCode(env, payload.code);
+      checked.pointsOk = !who.error && who.name === checked.student;
+    } catch (e) {
+      checked.pointsOk = false;
+    }
+  }
   let cloud;
   try {
     cloud = await pushVocaToStaffCloud(env, checked);
   } catch (error) {
     cloud = 'error: ' + error.message;
   }
-  return Object.assign(notion, { cloud });
+  return Object.assign(notion, { cloud }, checked.points ? { points: checked.points } : {});
 }
 
 async function reportVocaToNotion(env, checked) {
@@ -1558,6 +1665,9 @@ async function handleRequest(request, env) {
     if (path === '/api/voca/login' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
       return json(await vocaLogin(env, payload));
+    }
+    if (path === '/api/voca/points' && request.method === 'POST') {
+      return json(await vocaPoints(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/voca/save' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));

@@ -110,18 +110,27 @@ const cloudRows = [
 ];
 const cloudCalls = [];
 const cloudVocab = {};
+const cloudPoints = {};
 let cloudFail = false;
 const notionFetch = globalThis.fetch;
 globalThis.fetch = async (url, init = {}) => {
   if (url.startsWith('https://olzyfwiurfgaxctdemxa.supabase.co/rest/v1/records')) {
     cloudCalls.push([init.method || 'GET', url, init.headers, init.body ? JSON.parse(init.body) : null]);
     if (cloudFail) return { ok: false, status: 500, json: async () => ({}), text: async () => 'boom' };
+    if (!init.method && url.includes('kind=eq.point')) {
+      const sid = decodeURIComponent((url.match(/data->>studentId=eq\.([^&]+)/) || [])[1] || '');
+      const rows = Object.values(cloudPoints).filter(p => p.data.studentId === sid && !p.deleted);
+      return { ok: true, json: async () => rows, text: async () => '' };
+    }
     if (!init.method) {
       const vid = (url.match(/kind=eq\.vocab&id=eq\.([^&]+)/) || [])[1];
       const rows = vid ? (cloudVocab[decodeURIComponent(vid)] ? [{ data: cloudVocab[decodeURIComponent(vid)] }] : []) : cloudRows;
       return { ok: true, json: async () => rows, text: async () => '' };
     }
-    JSON.parse(init.body).forEach(row => { cloudVocab[row.id] = row.data; });
+    JSON.parse(init.body).forEach(row => {
+      if (row.kind === 'point') { if (!cloudPoints[row.id]) cloudPoints[row.id] = row; }   // ignore-duplicates
+      else cloudVocab[row.id] = row.data;
+    });
     return { ok: true, status: 201, json: async () => ({}), text: async () => '' };
   }
   if (url.includes('/databases/934da1ef')) {
@@ -246,3 +255,54 @@ assert.equal(r.success, true); assert.equal(r.name, '이서아');
 cloudFail = false;
 
 console.log('원생관리 명부로 보카 로그인: 모두 통과');
+
+// 12) 고래 포인트: 하루치를 끝내면 서버가 계산해 원생관리에 한 줄 남긴다
+const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const back = n => { const d = new Date(today + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+const done = { student: '정민준', code: mjCode, level: '240', day: 5, dayLabel: 'Day 5', correct: 30, total: 32, status: 'done', clearPct: 94 };
+
+// 코드가 없거나 남의 코드면 포인트는 없다 (성적은 그대로 들어감)
+r = await call('/api/voca/report', { ...done, code: undefined });
+assert.equal(r.cloud, 'ok'); assert.equal(r.points, undefined);
+r = await call('/api/voca/report', { ...done, code: 'GR2831' });
+assert.equal(r.points, undefined); assert.equal(Object.keys(cloudPoints).length, 0);
+
+// 정답률 94% → 8 + 2 = 10P
+r = await call('/api/voca/report', done);
+assert.equal(r.points.earned, 10); assert.equal(r.points.balance, 10); assert.equal(r.points.month, 10);
+const pt = cloudPoints['pt-stu-mj-' + today];
+assert.equal(pt.data.amount, 10); assert.equal(pt.data.source, 'whaley-voca'); assert.match(pt.data.reason, /하루 학습 완료 8P \+ 정답률 90% 이상 2P/);
+// 같은 날 또 끝내도(복습) 늘지 않는다
+r = await call('/api/voca/report', { ...done, day: 6 });
+assert.equal(r.points.earned, 0); assert.equal(r.points.already, true); assert.equal(r.points.balance, 10);
+// 학습 중 보고에는 포인트가 없다
+r = await call('/api/voca/report', { ...done, status: 'in-progress' });
+assert.equal(r.points, undefined);
+
+// 7일 연속이면 10P 더 (정답률 80%대 → 8P + 10P)
+delete cloudPoints['pt-stu-mj-' + today];
+for (let i = 1; i <= 6; i++) cloudPoints['pt-stu-mj-' + back(i)] = { kind: 'point', id: 'pt-stu-mj-' + back(i), data: { studentId: 'stu-mj', date: back(i), amount: 8, source: 'whaley-voca' } };
+r = await call('/api/voca/report', { ...done, clearPct: 85 });
+assert.equal(r.points.earned, 18); assert.equal(r.points.streak, 7);
+assert.match(cloudPoints['pt-stu-mj-' + today].data.reason, /7일 연속 10P/);
+
+// 원장님이 원생관리에서 뺀 줄(음수)은 잔액에서 빠지고, 이번 달 적립 상한에는 안 들어간다
+cloudPoints['pt-use-1'] = { kind: 'point', id: 'pt-use-1', data: { studentId: 'stu-mj', date: today, amount: -30, source: 'staff', reason: '마켓데이' } };
+r = await call('/api/voca/points', { code: mjCode });
+assert.equal(r.success, true); assert.equal(r.balance, 6 * 8 + 18 - 30); assert.equal(r.won, 10); assert.equal(r.monthCap, 300);
+assert.equal(r.recent.length, 8);
+assert.match((await call('/api/voca/points', { code: 'ZZ9999' })).error, /찾을 수 없/);
+
+// 한 달 300P(3,000원)까지만
+for (const k of Object.keys(cloudPoints)) delete cloudPoints[k];
+cloudPoints['pt-big'] = { kind: 'point', id: 'pt-big', data: { studentId: 'stu-mj', date: today.slice(0, 8) + '01', amount: today.slice(8) === '01' ? 0 : 295, source: 'whaley-voca' } };
+if (today.slice(8) !== '01') {
+  r = await call('/api/voca/report', done);
+  assert.equal(r.points.earned, 5); assert.equal(r.points.month, 300);
+  delete cloudPoints['pt-stu-mj-' + today];
+  cloudPoints['pt-big'].data.amount = 300;
+  r = await call('/api/voca/report', done);
+  assert.equal(r.points.earned, 0); assert.equal(r.points.capped, true);
+}
+
+console.log('고래 포인트: 모두 통과');
