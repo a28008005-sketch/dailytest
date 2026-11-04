@@ -2056,6 +2056,9 @@ a.sb-entry{text-decoration:none}
   var PASS_PCT = 80;
   // 80%가 안 돼도 오답 클리어를 이만큼 돌면 오늘은 여기까지 한다. (남은 오답은 리포트에 남는다)
   var MAX_CLEAR_ROUNDS = 3;
+  // 4단계를 다 못 끝내도 이 단계 수만큼(STEP 1부터 세어서) 끝냈으면 '오늘 공부함'으로 인정한다.
+  // 인정된 날은 다음 날 처음 열 때 진도가 한 칸 자동으로 넘어간다. (몬스터 잡기 게임을 한 판 끝낸 날도 인정)
+  var PARTIAL_MIN_STEPS = 1;
   function dayClearPct(s) {
     var base = s.stats.filter(function (x) { return x.stage <= 3; }).reduce(function (a, x) { return a + x.total; }, 0);
     if (!base) return 0;
@@ -2798,6 +2801,11 @@ a.sb-entry{text-decoration:none}
       </div>
 
       <${PointsCard}/>
+
+      ${prog.lastAdvance && prog.lastAdvance.date === todayStr() && prog.lastAdvance.to === day.label ? html`<div className="card review-card">
+        <div style=${{ fontWeight: 700, fontSize: '14px' }}>🌊 새 항로가 열렸어요 · ${day.label}</div>
+        <div className="h-sub">지난번에 ${prog.lastAdvance.from}을(를) ${prog.lastAdvance.src === 'game' ? '몬스터 잡기로' : 'STEP ' + prog.lastAdvance.steps + '까지'} 공부해서 오늘은 ${day.label}로 넘어왔어요.</div>
+      </div>` : null}
 
       ${prog.reviewFrom != null && lv.days[prog.reviewFrom] ? html`<div className="card review-card">
         <div style=${{ fontWeight: 700, fontSize: '14px' }}>🔁 복습 중 · ${day.label}</div>
@@ -3576,6 +3584,69 @@ nextRef.current = function () {
     useEffect(function () { LS.set(K_SETTINGS, settings); }, [settings]);
     useEffect(function () { if (profile) { LS.set(progKey(profile.studentId), progress); if (window.whaleSaveProgress) window.whaleSaveProgress(profile, progress); } }, [progress, profile]);
 
+    // ── 하루를 끝까지 못 마쳐도 진도가 멈추지 않게 ──
+    // 예전에는 4단계를 다 마쳐야만 다음 날이 열려서, 1~2단계만 하고 끄는 아이는 계속 첫날에 머물렀다.
+    // 이제 단계를 PARTIAL_MIN_STEPS 개 이상 끝내면 '오늘 공부함'(progress.partial)으로 적어 두고,
+    // 다음 날 처음 열 때 진도를 한 칸 넘긴다. (같은 날 다시 하면 그날 안에는 같은 일차 그대로)
+    // ※ 이 훅들은 로그인 화면 분기보다 앞에 있어야 하므로 lv·dayIdx 대신 progress 에서 직접 계산한다.
+    useEffect(function () {
+      if (!profile || !session || view !== 'stageend' || !session.lastStat) return;
+      if (session.stats.length < PARTIAL_MIN_STEPS) return;
+      var L = byId[profile.levelId];
+      if (!L) return;
+      var doneStage = session.lastStat.stage || session.stage;
+      setProgress(function (p) {
+        var di = Math.min(p.dayIdx || 0, L.days.length - 1);
+        var day = L.days[di];
+        if (!day) return p;
+        var t = todayStr(), pt = p.partial;
+        var same = pt && pt.dayId === day.id && pt.date === t;
+        var np = Object.assign({}, p);
+        np.partial = { lid: L.id, dayId: day.id, date: t, steps: Math.max(same ? (pt.steps || 0) : 0, doneStage), src: 'voca' };
+        // 오늘 맞힌 단어는 미리 복습 풀에 넣는다 (다음 날 STEP 2 복습에 나온다)
+        np.mastered = Object.assign({}, p.mastered);
+        (session.mastered || []).forEach(function (id) { np.mastered[id] = 1; });
+        if (p.lastDate !== t) {
+          var y = new Date(Date.now() - 86400000);
+          var ys = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+          np.streakDays = p.lastDate === ys ? (p.streakDays || 0) + 1 : 1;
+          np.lastDate = t;
+        }
+        return np;
+      });
+    }, [view, session && session.stats.length]);
+
+    useEffect(function () {
+      if (!profile) return;
+      function advanceIfNewDay() {
+        setProgress(function (p) {
+          var pt = p.partial;
+          if (!pt) return p;
+          if (pt.date === todayStr()) return p;          // 오늘 공부한 것은 내일 넘긴다
+          var np = Object.assign({}, p);
+          delete np.partial;
+          var L = byId[pt.lid];
+          if (!L || profile.levelId !== pt.lid) return np;  // 교재를 바꿨으면 표시만 지운다
+          var cur = Math.min(p.dayIdx || 0, L.days.length - 1);
+          if (!L.days[cur] || L.days[cur].id !== pt.dayId) return np;  // 이미 다른 날로 옮겼으면 그대로 둔다
+          np.doneDays = Object.assign({}, p.doneDays);
+          np.doneDays[L.id + '|' + cur] = 1;
+          np.partialDays = Object.assign({}, p.partialDays);
+          np.partialDays[L.id + '|' + cur] = pt.steps || 1;
+          np.dayIdx = Math.min(cur + 1, L.days.length - 1);
+          // 복습하던 날이었다면 원래 하던 날짜로 돌아간다 (끝까지 마쳤을 때와 같은 규칙)
+          if (p.reviewFrom != null && p.reviewFrom > cur) np.dayIdx = Math.min(p.reviewFrom, L.days.length - 1);
+          delete np.reviewFrom;
+          np.lastAdvance = { date: todayStr(), from: L.days[cur].label, to: L.days[np.dayIdx].label, steps: pt.steps || 1, src: pt.src || 'voca' };
+          return np;
+        });
+      }
+      advanceIfNewDay();
+      function onVis() { if (!document.hidden) advanceIfNewDay(); }
+      document.addEventListener('visibilitychange', onVis);
+      return function () { document.removeEventListener('visibilitychange', onVis); };
+    }, [profile && profile.studentId, profile && profile.levelId]);
+
     useEffect(function () {
       if (!profile || !pendingStart) return;
       setPendingStart(false);
@@ -3871,6 +3942,7 @@ nextRef.current = function () {
         // 복습하던 날을 끝내면 원래 하던 날짜로 돌아간다
         if (pr.reviewFrom != null && pr.reviewFrom > dayIdx) np.dayIdx = Math.min(pr.reviewFrom, lv.days.length - 1);
         delete np.reviewFrom;
+        delete np.partial;   // 끝까지 마쳐서 이미 넘어갔으니 '일부만 공부함' 표시는 지운다
         var t = todayStr();
         if (pr.lastDate !== t) {
           var y = new Date(Date.now() - 86400000);

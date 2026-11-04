@@ -847,7 +847,18 @@ function finish() {
   if (S.game) { S.game.stop(); S.game = null; }
   const caught = S.mons.filter((m) => m.caught), shiny = caught.filter((m) => m.shiny).length;
   // 오늘 게임한 날을 진도에 남긴다 (보카 홈에서 '완료'로 보인다)
-  if (Voca.on) Voca.update((p) => { p.gameDays = p.gameDays || {}; p.gameDays[S.day.id] = caught.length; });
+  // 한 판을 끝냈으면 '오늘 공부함'으로도 적어 둔다 → 보카가 다음 날 처음 열릴 때 진도를 한 칸 넘긴다.
+  // (보카의 현재 진도 날과 같은 날을 했을 때만 적는다. 복습이나 다른 날을 한 것은 진도에 영향이 없다.)
+  if (Voca.on) Voca.update((p) => {
+    p.gameDays = p.gameDays || {}; p.gameDays[S.day.id] = caught.length;
+    const L = DATA.levels.find((l) => l.id === (Voca.profile.levelId || ''));
+    const cur = L && L.days[Math.min(p.dayIdx || 0, L.days.length - 1)];
+    if (cur && cur.id === S.day.id) {
+      const d = new Date(), t = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const same = p.partial && p.partial.dayId === cur.id && p.partial.date === t;
+      p.partial = { lid: L.id, dayId: cur.id, date: t, steps: same ? (p.partial.steps || 1) : 1, src: same ? (p.partial.src || 'game') : 'game' };
+    }
+  });
   confetti(); SFX.catch();
   $('#resultIn').innerHTML = `
     <div style="text-align:center"><div style="font-size:64px">🏆</div>
