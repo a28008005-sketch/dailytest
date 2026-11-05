@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f2a7a">
+<title>센텐스뱅크 서바이벌 영상 · 고래영어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Archivo+Black&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#132f86; --navy-d:#0b1f5e; --ink:#003C70; --gold:#ffd21f; --coral:#ff6b4a; --mint:#2fd39a;
+  --paper:#fff; --frame:#b8bdc7; --frame-d:#8f959f; --mist:rgba(255,255,255,.06); --muted:#66708a; --line:#e3e8f2;
+  --lv:#ffed04;
+  --f-d:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
+  --f-e:"Archivo Black","Arial Black",system-ui,sans-serif;
+  --f-b:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--navy-d);color:#fff;font-family:var(--f-b);-webkit-user-select:none;user-select:none}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* ── 고르기 화면 ── */
+#home{min-height:100%;padding:28px max(16px,env(safe-area-inset-left)) 48px;background:radial-gradient(1100px 480px at 50% -8%,#24439f 0%,transparent 70%),var(--navy-d)}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:38px;background:#fff;border-radius:10px;padding:4px 8px}
+.brand b{font-family:var(--f-e);letter-spacing:.05em;font-size:14px;opacity:.85}
+h1{font-family:var(--f-d);font-weight:400;font-size:clamp(34px,6vw,60px);line-height:1.08;margin:0}
+h1 em{font-style:normal;color:var(--gold)}
+.lead{margin:6px 0 0;opacity:.82;line-height:1.65;font-size:15px;max-width:62ch}
+.lab{font-size:12px;font-weight:900;letter-spacing:.12em;opacity:.6;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:10px 18px;font-weight:900;font-size:18px}
+.chip .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--c);margin-right:8px;vertical-align:1px}
+.chip[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff}
+.panel{background:#fff;color:#1b2440;border-radius:20px;padding:20px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px}
+@media (max-width:820px){.panel{grid-template-columns:1fr}}
+.panel h2{margin:0 0 4px;font-family:var(--f-d);font-weight:400;font-size:30px;color:var(--ink)}
+.panel .meta{color:var(--muted);font-weight:700;font-size:14px;margin-bottom:12px}
+.strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.strip img{height:70px;border-radius:6px;flex:none;border:1px solid var(--line)}
+.flow{margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:#3b4766}
+.flow b{color:var(--ink)}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{display:flex;flex-direction:column;gap:6px}
+.opt>span{font-size:13px;font-weight:900;color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:2px solid var(--line);background:#fff;color:#1b2440;border-radius:999px;padding:6px 13px;font-size:14px;font-weight:700}
+.seg button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.opt input{font:inherit;font-weight:700;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;color:#1b2440}
+.go{margin-top:6px;border:0;border-radius:14px;background:var(--gold);color:var(--ink);font-weight:900;font-size:19px;padding:15px}
+.go small{display:block;font-size:12px;font-weight:700;opacity:.75;margin-top:2px}
+
+/* ── 영상 화면 ── */
+#play{position:fixed;inset:0;background:#000;display:grid;place-items:center;overflow:hidden;z-index:10}
+#play.nocursor{cursor:none}
+#stage{width:1280px;height:720px;flex:none;position:relative;overflow:hidden;transform-origin:center;background:radial-gradient(900px 520px at 50% 40%,#1b3a9a 0%,var(--navy) 55%,var(--navy-d) 100%)}
+.bgw{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-e);font-size:176px;line-height:.9;color:var(--mist);pointer-events:none}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.in{animation:in .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.ts{font-size:40px;font-weight:700;letter-spacing:-.01em}
+.tb{font-family:var(--f-d);font-size:124px;line-height:1.05;margin-top:8px}
+.tb i{display:inline-block;width:10px;height:100px;background:#fff;margin-left:12px;vertical-align:-8px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.wl1{font-size:36px;font-weight:700}
+.wl2{font-family:var(--f-e);font-size:44px;margin-top:6px;letter-spacing:.01em}
+.wl3{font-family:var(--f-d);font-size:120px;line-height:1;margin-top:14px}
+.badge{display:inline-flex;align-items:center;gap:12px;margin-top:28px;background:var(--lv);color:var(--ink);border-radius:999px;padding:10px 30px;font-family:var(--f-e);font-size:30px}
+.who{font-family:var(--f-d);font-size:70px;color:var(--gold);margin-top:16px}
+.count{font-family:var(--f-e);font-size:300px;line-height:1;color:var(--gold);animation:pop .9s ease-out both}
+.count.go{font-size:220px;color:#fff}
+@keyframes pop{0%{transform:scale(1.7);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(.93)}}
+.ready{font-family:var(--f-e);font-size:64px;margin-bottom:6px}
+
+/* 화이트보드 */
+.hud{position:absolute;top:22px;left:30px;right:30px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-e);font-size:22px}
+.hud .lv{background:var(--lv);color:var(--ink);padding:6px 18px;border-radius:999px}
+.hud .pg{opacity:.85}
+.board{position:absolute;left:50%;top:58px;width:734px;height:524px;margin-left:-367px;background:var(--frame);border-radius:18px;box-shadow:inset 0 0 0 7px var(--frame-d),0 14px 0 -4px rgba(0,0,0,.25)}
+.stripe{position:absolute;inset:14px;border-radius:8px;background:repeating-linear-gradient(-45deg,var(--gold) 0 16px,#fff 16px 30px)}
+.paper{position:absolute;left:27px;top:27px;width:680px;height:470px;background:#fff;border-radius:4px;overflow:hidden}
+.paper img{width:100%;height:100%;object-fit:contain;display:block}
+.tray{position:absolute;left:50%;top:578px;width:800px;margin-left:-400px;height:22px;background:var(--frame);border-radius:6px;box-shadow:inset 0 -5px 0 var(--frame-d)}
+.tray i{position:absolute;top:-11px;height:14px;border-radius:4px}
+.cardin{animation:cardin .45s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes cardin{from{transform:translateX(70px) rotate(2deg);opacity:0}to{transform:none;opacity:1}}
+/* 대사 말풍선 (보드 위에 겹쳐 뜸) */
+.say{position:absolute;left:50%;transform:translateX(-50%);top:612px;display:flex;align-items:center;gap:14px;padding:14px 26px 14px 14px;border-radius:999px;background:#fff;color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.28);max-width:1180px;white-space:nowrap;transition:opacity .3s,transform .3s}
+.say.hide{opacity:0;transform:translate(-50%,14px)}
+.say .who2{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-e);font-size:26px;color:#fff;background:var(--ink)}
+.say.ans .who2{background:var(--coral)}
+.say .txt{font-family:var(--f-e);font-size:40px;letter-spacing:.005em;line-height:1.1}
+.say .txt.m{font-size:33px}.say .txt.s{font-size:27px}
+.say .ring{flex:none;width:58px;height:58px;position:relative;margin-left:6px}
+.say .ring svg{width:58px;height:58px;transform:rotate(-90deg)}
+.say .ring .bg{stroke:#e8edf6}.say .ring .fg{stroke:var(--gold);transition:stroke-dashoffset .1s linear}
+.say .ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-e);font-size:22px;color:var(--ink)}
+.say.ans .ring{display:none}
+
+.clear{font-family:var(--f-e);font-size:124px;color:var(--gold);line-height:1}
+.clname{font-family:var(--f-d);font-size:74px;margin-top:18px}
+.clsub{font-size:30px;font-weight:700;opacity:.92;margin-top:14px}
+#confetti{position:absolute;inset:0;pointer-events:none}
+.outro{background:#fff;color:var(--ink)}
+.outro .bgw{color:#e9effb}
+.outro img{width:420px;position:relative}
+.outro .t{position:relative;font-family:var(--f-e);font-size:30px;letter-spacing:.2em;margin-top:22px;color:#5d6b90}
+.paused{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:var(--coral);color:#fff;font-weight:900;font-size:24px;padding:8px 18px;border-radius:10px}
+
+.ctl{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.75));z-index:20;transition:opacity .3s}
+.ctl.off{opacity:0;pointer-events:none}
+.ctl button{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:9px 14px;font-size:14px;font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="home">
+  <div class="wrap">
+    <div class="brand"><img src="logo.png" alt="고래영어"><b>SENTENCE BANK</b></div>
+    <div>
+      <h1>센텐스뱅크 <em>서바이벌</em> 영상</h1>
+      <p class="lead">교재 한 권을 끝낸 날, 이 화면을 띄우고 도전하세요. 카드가 교재 순서대로 나오고 선생님 목소리가 영어로 물어봅니다. 학생이 대답하면 정답이 뜨고 원어민 음성이 다시 읽어 줘요. 화면 녹화나 촬영을 하면 그대로 부모님께 보낼 영상이 됩니다.</p>
+    </div>
+    <div><div class="lab">LEVEL</div><div class="chips" id="lvChips"></div></div>
+    <div><div class="lab">VOLUME</div><div class="chips" id="volChips"></div></div>
+    <div class="panel">
+      <div>
+        <h2 id="pTitle">240 · Vol.1</h2>
+        <div class="meta" id="pMeta"></div>
+        <div class="strip" id="pStrip"></div>
+        <div class="flow">
+          <div><b>한글 질문 카드</b> → "Say it in English!" → 학생이 영어로 말하기 → 정답 + 원어민 음성</div>
+          <div><b>대답 카드</b> → 선생님이 알맞은 영어 질문 → 학생이 대답하기 → 정답 + 원어민 음성</div>
+        </div>
+      </div>
+      <div class="opts">
+        <div class="opt"><span>도전하는 학생 이름</span><input id="kid" maxlength="12" placeholder="예: 김지니 (비워 두면 생략)"></div>
+        <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
+        <div class="opt"><span>생각 시간</span><div class="seg" id="oThink"></div></div>
+        <div class="opt"><span>정답</span><div class="seg" id="oAns"></div></div>
+        <div class="opt"><span>카드 순서</span><div class="seg" id="oOrder"></div></div>
+        <button class="go" id="goBtn">▶ 서바이벌 시작<small>시작하면 전체화면으로 바뀝니다 · 스페이스바 멈춤 · ← → 이전/다음</small></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="play" hidden>
+  <div id="stage">
+    <div class="bgw" aria-hidden="true"><span>SENTENCE</span><span>BANK</span><span>SURVIVAL</span></div>
+    <section class="scene" id="scTitle"><div class="ts">큰 목소리로, 자신 있게, 끝까지 도전하는</div><div class="tb">센텐스뱅크 서바이벌<i></i></div></section>
+    <section class="scene" id="scWelcome" hidden><div class="wl1">고래영어</div><div class="wl2">SENTENCE BANK SURVIVAL에 오신 것을</div><div class="wl3">환영합니다</div><div class="badge" id="wBadge"></div><div class="who" id="wWho"></div></section>
+    <section class="scene" id="scCount" hidden><div class="ready" id="rdy">Are you ready?</div><div class="count" id="cnt">3</div></section>
+    <section class="scene" id="scCard" hidden>
+      <div class="hud"><span class="lv" id="hLv"></span><span class="pg" id="hPg"></span></div>
+      <div class="board"><div class="stripe"></div><div class="paper" id="paper"><img id="cImg" alt=""></div></div>
+      <div class="tray"><i style="left:40px;width:76px;background:#222"></i><i style="left:130px;width:76px;background:#2b41b0"></i><i style="right:40px;width:86px;background:#ff5a2a"></i></div>
+      <div class="say hide" id="say"><div class="who2" id="sWho">T</div><div class="txt" id="sTxt"></div><div class="ring"><svg viewBox="0 0 58 58"><circle class="bg" cx="29" cy="29" r="24" fill="none" stroke-width="6"/><circle class="fg" id="rFg" cx="29" cy="29" r="24" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="0"/></svg><b id="rNum"></b></div></div>
+    </section>
+    <section class="scene" id="scClear" hidden><canvas id="confetti" width="1280" height="720"></canvas><div class="clear">MISSION CLEAR!</div><div class="clname" id="clName"></div><div class="clsub" id="clSub"></div></section>
+    <section class="scene outro" id="scOutro" hidden><div class="bgw" aria-hidden="true"><span>WHALE</span><span>ENGLISH</span></div><img src="logo.png" alt="고래영어 WHALE ENGLISH"><div class="t">SENTENCE BANK SURVIVAL</div></section>
+    <div class="paused" id="pz" hidden>일시정지 · 스페이스바로 계속</div>
+  </div>
+  <div class="ctl off" id="ctl"><button id="bPrev">◀ 이전</button><button id="bPause">⏸ 멈춤</button><button id="bNext">다음 ▶</button><button id="bFs">⛶ 전체화면</button><button id="bRe">↺ 처음부터</button><button id="bExit">✕ 나가기</button></div>
+</div>
+
+<script src="cards.js"></script>
+<script>
+var D = window.CARD_DATA, $ = function (s) { return document.querySelector(s); };
+var LS = { get: function (k, d) { try { var v = localStorage.getItem('sbs.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+           set: function (k, v) { try { localStorage.setItem('sbs.' + k, JSON.stringify(v)); } catch (e) {} } };
+var THINK_DEF = { '240': 4, '520': 5, '860': 5, '1240': 6, '1680': 7 };
+var sel = { lv: '240', vol: 1 };
+var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq') };
+var q = new URLSearchParams(location.search);
+if (q.get('lv') && D.levels.some(function (l) { return l.id === q.get('lv'); })) sel.lv = q.get('lv');
+if (+q.get('v') >= 1 && +q.get('v') <= 6) sel.vol = +q.get('v');
+function level() { return D.levels.filter(function (l) { return l.id === sel.lv; })[0]; }
+function volCards() { return level().cards.filter(function (c) { return c.vol === sel.vol && (!opt.unit || c.unit === opt.unit); }); }
+function thinkSec() { return opt.think || THINK_DEF[sel.lv]; }
+function ink(hex) { var n = parseInt(hex.slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#003C70' : '#fff'; }
+
+/* ── 고르기 화면 ── */
+function seg(id, list, key, after) {
+  var el = $(id); el.innerHTML = '';
+  list.forEach(function (it) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = it[1];
+    b.setAttribute('aria-pressed', String(opt[key] === it[0]));
+    b.onclick = function () { opt[key] = it[0]; if (key !== 'unit') LS.set(key, it[0]); seg(id, list, key, after); if (after) after(); };
+    el.appendChild(b);
+  });
+}
+function renderHome() {
+  var lc = $('#lvChips'); lc.innerHTML = '';
+  D.levels.forEach(function (l) {
+    var b = document.createElement('button'); b.className = 'chip'; b.style.setProperty('--c', l.color);
+    b.innerHTML = '<span class="dot"></span>' + l.id; b.setAttribute('aria-pressed', String(l.id === sel.lv));
+    b.onclick = function () { sel.lv = l.id; opt.unit = 0; sync(); renderHome(); }; lc.appendChild(b);
+  });
+  var vc = $('#volChips'); vc.innerHTML = '';
+  for (var v = 1; v <= 6; v++) (function (v) {
+    var b = document.createElement('button'); b.className = 'chip'; b.textContent = 'Vol.' + v; b.setAttribute('aria-pressed', String(v === sel.vol));
+    b.onclick = function () { sel.vol = v; opt.unit = 0; sync(); renderHome(); }; vc.appendChild(b);
+  })(v);
+  seg('#oUnit', [[0, 'Vol 전체'], [1, 'Unit 1'], [2, 'Unit 2'], [3, 'Unit 3'], [4, 'Unit 4']], 'unit', renderPanel);
+  seg('#oThink', [[0, '레벨 기본(' + THINK_DEF[sel.lv] + '초)'], [3, '3초'], [5, '5초'], [8, '8초']], 'think', renderPanel);
+  seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
+  seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
+  renderPanel();
+}
+function renderPanel() {
+  var cs = volCards(), l = level();
+  $('#pTitle').textContent = l.id + ' · Vol.' + sel.vol + (opt.unit ? ' · Unit ' + opt.unit : '');
+  var per = opt.ans === 'show' ? thinkSec() + 5.5 : thinkSec() + 2.5;
+  var mins = Math.round((cs.length * per + 22) / 60 * 10) / 10;
+  $('#pMeta').textContent = cs[0].no + '–' + cs[cs.length - 1].no + ' · ' + cs.length + '장 · 약 ' + mins + '분';
+  $('#pStrip').innerHTML = cs.slice(0, 14).map(function (c) { return '<img loading="lazy" src="img/' + l.id + '/' + c.no + '.webp" alt="">'; }).join('');
+}
+function sync() { history.replaceState(null, '', '?lv=' + sel.lv + '&v=' + sel.vol); }
+$('#kid').value = LS.get('kid', '');
+$('#kid').oninput = function () { LS.set('kid', this.value); };
+
+/* ── 소리 ── */
+var voice = new Audio(), sfxPool = {};
+['card', 'question', 'answer', 'tick', 'go', 'intro', 'clear', 'outro'].forEach(function (k) { var a = new Audio('sfx/' + k + '.mp3'); a.preload = 'auto'; sfxPool[k] = a; });
+var SFX_VOL = { card: .55, question: .45, answer: .4, tick: .55, go: .6, intro: .6, clear: .75, outro: .55 };
+function sfx(k) { try { var a = sfxPool[k].cloneNode(); a.volume = SFX_VOL[k]; a.play().catch(function () {}); } catch (e) {} }
+var ttsVoice = null;
+function pickVoice() { try { var vs = speechSynthesis.getVoices(); ttsVoice = vs.filter(function (v) { return /Google US English/.test(v.name); })[0] || vs.filter(function (v) { return /^en-US/.test(v.lang) && /Natural|Aria|Jenny|Samantha/.test(v.name); })[0] || vs.filter(function (v) { return /^en/.test(v.lang); })[0] || null; } catch (e) {} }
+try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+// 소리 하나를 끝까지 재생. 파일이 없으면 브라우저 원어민 음성으로 읽음.
+function speak(src, fallbackText, token) {
+  return new Promise(function (done) {
+    var finished = false, t;
+    function end() { if (finished) return; finished = true; clearTimeout(t); done(); }
+    function tts() {
+      if (!fallbackText || !window.speechSynthesis) return end();
+      try { var u = new SpeechSynthesisUtterance(fallbackText); u.lang = 'en-US'; if (ttsVoice) u.voice = ttsVoice; u.rate = .95; u.onend = end; u.onerror = end; speechSynthesis.cancel(); speechSynthesis.speak(u); t = setTimeout(end, 7000); } catch (e) { end(); }
+    }
+    if (!src) return tts();
+    voice.onended = end; voice.onerror = function () { voice.onerror = null; tts(); };
+    voice.src = src; voice.currentTime = 0; voice.volume = 1;
+    var p = voice.play(); if (p && p.catch) p.catch(function () { tts(); });
+    t = setTimeout(end, 9000);
+  });
+}
+function hush() { try { voice.pause(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
+
+/* ── 재생 엔진 ── */
+var run = 0, cards = [], idx = 0, paused = false, resumeFn = null;
+function alive(r) { return r === run; }
+function sleep(ms, r) {
+  return new Promise(function (res) {
+    var left = ms, start = Date.now(), t = null;
+    function arm() { start = Date.now(); t = setTimeout(function () { resumeFn = null; res(); }, left); }
+    function check() { if (!alive(r)) return; if (paused) { resumeFn = function () { arm(); }; return; } arm(); }
+    sleep.pauseHook = function () { if (t) { clearTimeout(t); left -= Date.now() - start; t = null; resumeFn = arm; } };
+    check();
+  });
+}
+function waitPaused(r) { return new Promise(function (res) { (function loop() { if (!alive(r)) return; if (!paused) return res(); setTimeout(loop, 120); })(); }); }
+function show(id) { Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (s) { s.hidden = s.id !== id; }); var el = $('#' + id); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+function fit() { var s = Math.min(innerWidth / 1280, innerHeight / 720); $('#stage').style.transform = 'scale(' + s + ')'; }
+addEventListener('resize', fit);
+function sizeCls(t) { return t.length > 52 ? 's' : t.length > 38 ? 'm' : ''; }
+function bubble(kind, text) {
+  var b = $('#say'); b.classList.add('hide');
+  setTimeout(function () {
+    b.className = 'say' + (kind === 'a' ? ' ans' : '');
+    $('#sWho').textContent = kind === 'a' ? 'A' : 'Q';
+    var tx = $('#sTxt'); tx.textContent = text; tx.className = 'txt ' + sizeCls(text);
+    $('#rNum').textContent = ''; $('#rFg').style.strokeDashoffset = 0;
+  }, 120);
+}
+function ring(sec, r) {
+  return new Promise(function (res) {
+    var total = sec * 1000, used = 0, last = Date.now(), fg = $('#rFg'), num = $('#rNum');
+    (function loop() {
+      if (!alive(r)) return;
+      var now = Date.now(); if (!paused) used += now - last; last = now;
+      var f = Math.min(1, used / total); fg.style.strokeDashoffset = 150.8 * f; num.textContent = Math.max(1, Math.ceil((total - used) / 1000));
+      if (f >= 1) { num.textContent = ''; return res(); }
+      requestAnimationFrame(loop);
+    })();
+  });
+}
+function preload(c) { if (!c) return; var l = sel.lv; new Image().src = 'img/' + l + '/' + c.no + '.webp'; if (c.aa) fetch('audio/' + c.aa + '.mp3').catch(function () {}); if (c.qLang === 'en' && c.qa) fetch('audio/' + c.qa + '.mp3').catch(function () {}); }
+
+function start() {
+  var l = level(); cards = volCards().slice();
+  if (opt.order === 'rand') for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
+  var kid = $('#kid').value.trim();
+  document.documentElement.style.setProperty('--lv', l.color);
+  $('#stage').style.setProperty('--lv', l.color);
+  $('#wBadge').style.color = ink(l.color); $('#hLv').style.color = ink(l.color);
+  $('#wBadge').textContent = 'LEVEL ' + l.id + ' · VOL.' + sel.vol + (opt.unit ? ' · UNIT ' + opt.unit : '');
+  $('#hLv').textContent = l.id + ' · Vol.' + sel.vol;
+  $('#wWho').textContent = kid ? kid + ' 도전!' : '';
+  $('#clName').textContent = kid ? kid + ', 완주 성공!' : '완주 성공!';
+  $('#clSub').textContent = 'Level ' + l.id + ' · Vol.' + sel.vol + (opt.unit ? ' Unit ' + opt.unit : '') + ' · ' + cards.length + '문장을 영어로 말했어요';
+  $('#home').hidden = true; $('#play').hidden = false; fit(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
+  try { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {}
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(function () {}); } catch (e) {}
+  preload(cards[0]); preload(cards[1]);
+  intro(++run);
+}
+async function intro(r) {
+  show('scTitle'); sfx('intro'); await sleep(3200, r); if (!alive(r)) return;
+  show('scWelcome'); await speak('voice/welcome.mp3', 'Welcome to Sentence Bank Survival!', r); await sleep(1600, r); if (!alive(r)) return;
+  show('scCount'); $('#rdy').hidden = false; var c = $('#cnt'); c.className = 'count'; c.textContent = '';
+  await speak('voice/ready.mp3', "Are you ready? Let's go!", r); if (!alive(r)) return;
+  for (var n = 3; n >= 1; n--) { c.textContent = n; c.className = 'count'; void c.offsetWidth; c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; sfx('tick'); await sleep(850, r); if (!alive(r)) return; }
+  $('#rdy').hidden = true; c.textContent = 'GO!'; c.className = 'count go'; sfx('go'); await sleep(900, r); if (!alive(r)) return;
+  idx = 0; playCards(r);
+}
+async function playCards(r) {
+  show('scCard');
+  while (idx < cards.length) {
+    if (!alive(r)) return;
+    var c = cards[idx], my = idx; preload(cards[idx + 1]); preload(cards[idx + 2]);
+    $('#hPg').textContent = (idx + 1) + ' / ' + cards.length;
+    var p = $('#paper'); p.classList.remove('cardin'); void p.offsetWidth; $('#cImg').src = 'img/' + sel.lv + '/' + c.no + '.webp'; p.classList.add('cardin');
+    $('#say').classList.add('hide'); sfx('card');
+    await sleep(650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    // 1) 선생님 대사
+    if (c.qLang === 'ko') { bubble('q', 'Say it in English!'); await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); }
+    else { bubble('q', c.q); await sleep(150, r); await speak(c.qa ? 'audio/' + c.qa + '.mp3' : '', c.q, r); }
+    await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    // 2) 학생 차례
+    await ring(thinkSec(), r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    // 3) 정답
+    if (opt.ans === 'show') {
+      sfx('answer'); bubble('a', c.a); await sleep(380, r);
+      await speak(c.aa ? 'audio/' + c.aa + '.mp3' : '', c.a, r); await sleep(700, r);
+    } else { await sleep(300, r); }
+    await waitPaused(r); if (!alive(r)) return;
+    if (idx === my) idx++;
+  }
+  if (alive(r)) finish(r);
+}
+var confRun = 0;
+async function finish(r) {
+  show('scClear'); sfx('clear'); confetti(++confRun);
+  await sleep(1200, r); await speak('voice/great.mp3', 'Mission clear! Great job!', r); await sleep(3300, r); if (!alive(r)) return;
+  show('scOutro'); sfx('outro'); await sleep(3500, r);
+}
+function confetti(id) {
+  var cv = $('#confetti'), x = cv.getContext('2d'), cols = ['#ffd21f', '#ff6b4a', '#7ee0a1', '#8fb3ff', '#ffffff'], ps = [], f = 0;
+  for (var i = 0; i < 170; i++) ps.push({ x: 640 + (Math.random() - .5) * 200, y: 380, vx: (Math.random() - .5) * 24, vy: -6 - Math.random() * 18, s: 7 + Math.random() * 10, r: Math.random() * 6, c: cols[Math.random() * 5 | 0] });
+  (function loop() { if (id !== confRun) return; x.clearRect(0, 0, 1280, 720); ps.forEach(function (p) { p.vy += .42; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += .12; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }); if (++f < 260) requestAnimationFrame(loop); })();
+}
+function togglePause() {
+  if ($('#play').hidden) return;
+  paused = !paused; $('#pz').hidden = !paused; $('#bPause').textContent = paused ? '▶ 계속' : '⏸ 멈춤';
+  if (paused) { try { voice.pause(); } catch (e) {} try { speechSynthesis.pause(); } catch (e) {} if (sleep.pauseHook) sleep.pauseHook(); }
+  else { try { if (voice.src && !voice.ended && voice.currentTime > 0) voice.play().catch(function () {}); } catch (e) {} try { speechSynthesis.resume(); } catch (e) {} if (resumeFn) { var f = resumeFn; resumeFn = null; f(); } }
+}
+function jump(d) {
+  if ($('#scCard').hidden) return;
+  hush(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
+  idx = Math.max(0, Math.min(cards.length - 1, idx + d)); var r = ++run; playCards(r);
+}
+function exit() { run++; confRun++; hush(); $('#play').hidden = true; $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
+function fs() { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {} }
+$('#goBtn').onclick = start;
+$('#bPause').onclick = togglePause; $('#bPrev').onclick = function () { jump(-1); }; $('#bNext').onclick = function () { jump(1); };
+$('#bFs').onclick = fs; $('#bExit').onclick = exit; $('#bRe').onclick = function () { hush(); start(); };
+addEventListener('keydown', function (e) {
+  if ($('#play').hidden) return;
+  if (e.code === 'Space') { e.preventDefault(); togglePause(); }
+  else if (e.key === 'ArrowRight') jump(1); else if (e.key === 'ArrowLeft') jump(-1);
+  else if (e.key === 'Escape' && !document.fullscreenElement) exit();
+});
+var hideT = 0;
+function wake() { $('#ctl').classList.remove('off'); $('#play').classList.remove('nocursor'); clearTimeout(hideT); hideT = setTimeout(function () { $('#ctl').classList.add('off'); $('#play').classList.add('nocursor'); }, 2000); }
+$('#play').addEventListener('mousemove', wake); $('#play').addEventListener('touchstart', wake, { passive: true });
+renderHome();
+</script>
+</body>
+</html>
