@@ -64,6 +64,29 @@ h1 em{font-style:normal;color:var(--gold)}
 .inst{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .inst button{border:0;border-radius:12px;background:var(--gold);color:var(--ink);font-weight:900;font-size:15px;padding:10px 16px}
 .inst .hint{font-size:13px;opacity:.85;line-height:1.5}
+.whobox{display:flex;flex-direction:column;gap:8px}
+.row4{display:flex;gap:8px}
+.row4 input{flex:1;min-width:0;letter-spacing:.3em;font-size:20px;text-align:center}
+.row4 button,.me button{border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:900;font-size:15px;padding:0 16px}
+.me{display:flex;align-items:center;gap:10px;background:#eef6ff;border-radius:12px;padding:10px 12px}
+.me b{font-size:18px;color:var(--ink);flex:1}
+.me button{background:#fff;color:var(--ink);border:2px solid var(--line);padding:6px 12px;font-size:13px}
+.whomsg{font-size:13px;color:#c0392b;min-height:0}
+.whomsg.ok{color:var(--muted)}
+.recnote{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-2px}
+#face{position:absolute;width:216px;height:216px;border-radius:50%;object-fit:cover;transform:scaleX(-1);border:6px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#000;left:1040px;top:222px;z-index:3}
+#face.low{top:482px}
+.rec{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.45);color:#fff;font-weight:900;font-size:18px;padding:6px 14px;border-radius:999px;z-index:4}
+.rec i{width:12px;height:12px;border-radius:50%;background:#ff3b30;animation:blink 1s steps(1) infinite}
+.over{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgba(6,16,50,.86)}
+.over .box{background:#fff;color:#1b2440;border-radius:24px;padding:36px 44px;min-width:560px;max-width:880px;text-align:center;display:flex;flex-direction:column;gap:16px;align-items:center}
+.over h3{margin:0;font-family:var(--f-d);font-weight:400;font-size:46px;color:var(--ink)}
+.over p{margin:0;font-size:22px;color:#46506b;line-height:1.5}
+.over .bar{width:100%;height:16px;border-radius:999px;background:#e8edf6;overflow:hidden}
+.over .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--coral));transition:width .3s}
+.over .btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.over .btns button,.over .btns a{border:0;border-radius:14px;font-weight:900;font-size:22px;padding:14px 26px;background:var(--gold);color:var(--ink);text-decoration:none}
+.over .btns .sec{background:#eef1f7}
 .go small{display:block;font-size:12px;font-weight:700;opacity:.75;margin-top:2px}
 
 /* ── 영상 화면 ── */
@@ -152,7 +175,14 @@ h1 em{font-style:normal;color:var(--gold)}
         </div>
       </div>
       <div class="opts">
-        <div class="opt"><span>도전하는 학생 이름</span><input id="kid" maxlength="12" placeholder="예: 김지니 (비워 두면 생략)"></div>
+        <div class="opt"><span>도전하는 학생</span>
+          <div class="whobox">
+            <div class="me" id="me" hidden><b id="meName"></b><button type="button" id="meOut">바꾸기</button></div>
+            <div class="row4" id="ph4Row"><input id="ph4" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="학부모 휴대폰 뒤 4자리" autocomplete="off"><button type="button" id="ph4Go">확인</button></div>
+            <div class="seg" id="whoChoices"></div>
+            <div class="whomsg ok" id="whoMsg">학생을 고르면 연습 기록이 선생님 화면에 남아요.</div>
+          </div></div>
+        <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
         <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
         <div class="opt"><span>생각 시간</span><div class="seg" id="oThink"></div></div>
         <div class="opt"><span>정답</span><div class="seg" id="oAns"></div></div>
@@ -178,6 +208,9 @@ h1 em{font-style:normal;color:var(--gold)}
     <section class="scene" id="scClear" hidden><canvas id="confetti" width="1280" height="720"></canvas><div class="clear">MISSION CLEAR!</div><div class="clname" id="clName"></div><div class="clsub" id="clSub"></div></section>
     <section class="scene outro" id="scOutro" hidden><div class="bgw" aria-hidden="true"><span>WHALE</span><span>ENGLISH</span></div><img src="logo.png" alt="고래영어 WHALE ENGLISH"><div class="t">SENTENCE BANK SURVIVAL</div></section>
     <div class="paused" id="pz" hidden>일시정지 · 스페이스바로 계속</div>
+    <video id="face" muted playsinline autoplay hidden></video>
+    <div class="rec" id="recTag" hidden><i></i>REC</div>
+    <div class="over" id="over" hidden><div class="box"><h3 id="ovT"></h3><p id="ovP"></p><div class="bar" id="ovBar" hidden><i id="ovFill"></i></div><div class="btns" id="ovBtns"></div></div></div>
   </div>
   <div class="ctl off" id="ctl"><button id="bPrev">◀ 이전</button><button id="bPause">⏸ 멈춤</button><button id="bNext">다음 ▶</button><button id="bFs">⛶ 전체화면</button><button id="bRe">↺ 처음부터</button><button id="bExit">✕ 나가기</button></div>
 </div>
@@ -189,7 +222,10 @@ var LS = { get: function (k, d) { try { var v = localStorage.getItem('sbs.' + k)
            set: function (k, v) { try { localStorage.setItem('sbs.' + k, JSON.stringify(v)); } catch (e) {} } };
 var THINK_DEF = { '240': 4, '520': 5, '860': 5, '1240': 6, '1680': 7 };
 var sel = { lv: '240', vol: 1 };
-var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq') };
+var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice') };
+var me = LS.get('me', null); // { name, code }
+var HW_API = 'https://staff.whalejinju.kr/hw/api/sv';
+var LOGIN_API = 'https://hello-world.a28008005.workers.dev/api/voca/login';
 var q = new URLSearchParams(location.search);
 var last = LS.get('sel', null); if (last && !q.get('lv')) { sel.lv = last.lv; sel.vol = last.vol; }
 if (q.get('lv') && D.levels.some(function (l) { return l.id === q.get('lv'); })) sel.lv = q.get('lv');
@@ -225,6 +261,8 @@ function renderHome() {
   seg('#oThink', [[0, '레벨 기본(' + THINK_DEF[sel.lv] + '초)'], [3, '3초'], [5, '5초'], [8, '8초']], 'think', renderPanel);
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
+  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', renderMode);
+  renderMode(); renderMe();
   renderPanel();
 }
 function renderPanel() {
@@ -236,14 +274,50 @@ function renderPanel() {
   $('#pStrip').innerHTML = cs.slice(0, 14).map(function (c) { return '<img loading="lazy" src="img/' + l.id + '/' + c.no + '.webp" alt="">'; }).join('');
 }
 function sync() { LS.set('sel', { lv: sel.lv, vol: sel.vol }); history.replaceState(null, '', '?lv=' + sel.lv + '&v=' + sel.vol); }
-$('#kid').value = LS.get('kid', '');
-$('#kid').oninput = function () { LS.set('kid', this.value); };
+function kidName() { return me && me.name ? me.name : ''; }
+function renderMode() {
+  $('#modeNote').textContent = opt.mode === 'real'
+    ? '카드 화면과 내 얼굴·목소리가 한 영상으로 녹화되고, 끝나면 선생님께 자동으로 올라가요. (카메라·마이크 허용 필요)'
+    : '연습은 녹화하지 않고 횟수와 범위만 기록해요.';
+  $('#goBtn').firstChild.textContent = opt.mode === 'real' ? '🎥 실전 녹화 시작' : '▶ 서바이벌 시작';
+}
+function renderMe() {
+  var on = !!(me && me.name);
+  $('#me').hidden = !on; $('#ph4Row').hidden = on;
+  $('#meName').textContent = on ? me.name + ' ✓' : '';
+  if (on) { $('#whoChoices').innerHTML = ''; msg(''); }
+}
+function msg(t, ok) { var m = $('#whoMsg'); m.textContent = t; m.className = 'whomsg' + (ok ? ' ok' : ''); }
+function login(extra) {
+  var p4 = $('#ph4').value.replace(/\D/g, '');
+  if (p4.length !== 4) { msg('휴대폰 번호 뒤 4자리를 넣어 주세요.'); return; }
+  msg('확인하는 중…', true); $('#whoChoices').innerHTML = '';
+  var body = Object.assign({ phone4: p4 }, extra || {});
+  fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.success) { me = { name: j.name, code: j.code || '' }; LS.set('me', me); renderMe(); return; }
+      if (j && j.choices) {
+        msg('이름을 골라 주세요.', true);
+        var box = $('#whoChoices'); box.innerHTML = '';
+        j.choices.forEach(function (c) {
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = c.name;
+          b.onclick = function () { login({ studentId: c.id }); }; box.appendChild(b);
+        });
+        return;
+      }
+      msg((j && j.error) || '학생을 찾지 못했어요.');
+    }).catch(function () { msg('인터넷 연결을 확인해 주세요.'); });
+}
+$('#ph4Go').onclick = function () { login(); };
+$('#ph4').onkeydown = function (e) { if (e.key === 'Enter') login(); };
+$('#meOut').onclick = function () { me = null; LS.set('me', null); $('#ph4').value = ''; renderMe(); msg('학생을 고르면 연습 기록이 선생님 화면에 남아요.', true); };
 
 /* ── 소리 ── */
 var voice = new Audio(), sfxPool = {};
 ['card', 'question', 'answer', 'tick', 'go', 'intro', 'clear', 'outro'].forEach(function (k) { var a = new Audio('sfx/' + k + '.mp3'); a.preload = 'auto'; sfxPool[k] = a; });
 var SFX_VOL = { card: .55, question: .45, answer: .4, tick: .55, go: .6, intro: .6, clear: .75, outro: .55 };
-function sfx(k) { try { var a = sfxPool[k].cloneNode(); a.volume = SFX_VOL[k]; a.play().catch(function () {}); } catch (e) {} }
+function sfx(k) { try { var a = sfxPool[k].cloneNode(); a.volume = SFX_VOL[k]; if (REC.on) route(a); a.play().catch(function () {}); } catch (e) {} }
 var ttsVoice = null;
 function pickVoice() { try { var vs = speechSynthesis.getVoices(); ttsVoice = vs.filter(function (v) { return /Google US English/.test(v.name); })[0] || vs.filter(function (v) { return /^en-US/.test(v.lang) && /Natural|Aria|Jenny|Samantha/.test(v.name); })[0] || vs.filter(function (v) { return /^en/.test(v.lang); })[0] || null; } catch (e) {} }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
@@ -278,13 +352,14 @@ function sleep(ms, r) {
   });
 }
 function waitPaused(r) { return new Promise(function (res) { (function loop() { if (!alive(r)) return; if (!paused) return res(); setTimeout(loop, 120); })(); }); }
-function show(id) { Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (s) { s.hidden = s.id !== id; }); var el = $('#' + id); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+function show(id) { V.scene = id; V.sceneT = performance.now(); $('#face').classList.toggle('low', id !== 'scCard'); Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (s) { s.hidden = s.id !== id; }); var el = $('#' + id); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
 function fit() { var s = Math.min(innerWidth / 1280, innerHeight / 720); $('#stage').style.transform = 'scale(' + s + ')'; }
 addEventListener('resize', fit);
 function sizeCls(t) { return t.length > 52 ? 's' : t.length > 38 ? 'm' : ''; }
 function bubble(kind, text) {
-  var b = $('#say'); b.classList.add('hide');
+  var b = $('#say'); b.classList.add('hide'); V.bubble = null;
   setTimeout(function () {
+    V.bubble = { kind: kind, text: text, t: performance.now() }; V.ring = 0; V.ringNum = '';
     b.className = 'say' + (kind === 'a' ? ' ans' : '');
     $('#sWho').textContent = kind === 'a' ? 'A' : 'Q';
     var tx = $('#sTxt'); tx.textContent = text; tx.className = 'txt ' + sizeCls(text);
@@ -297,18 +372,20 @@ function ring(sec, r) {
     (function loop() {
       if (!alive(r)) return;
       var now = Date.now(); if (!paused) used += now - last; last = now;
-      var f = Math.min(1, used / total); fg.style.strokeDashoffset = 150.8 * f; num.textContent = Math.max(1, Math.ceil((total - used) / 1000));
-      if (f >= 1) { num.textContent = ''; return res(); }
+      var f = Math.min(1, used / total); fg.style.strokeDashoffset = 150.8 * f; num.textContent = Math.max(1, Math.ceil((total - used) / 1000)); V.ring = f; V.ringNum = num.textContent;
+      if (f >= 1) { num.textContent = ''; V.ringNum = ''; return res(); }
       requestAnimationFrame(loop);
     })();
   });
 }
 function preload(c) { if (!c) return; var l = sel.lv; new Image().src = 'img/' + l + '/' + c.no + '.webp'; if (c.aa) fetch('audio/' + c.aa + '.mp3').catch(function () {}); if (c.qLang === 'en' && c.qa) fetch('audio/' + c.qa + '.mp3').catch(function () {}); }
 
-function start() {
+async function start() {
+  if (opt.mode === 'real' && !kidName()) { msg('실전 녹화는 먼저 학생을 골라 주세요. (학부모 휴대폰 뒤 4자리)'); $('#ph4').focus(); return; }
   var l = level(); cards = volCards().slice();
   if (opt.order === 'rand') for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
-  var kid = $('#kid').value.trim();
+  var kid = kidName();
+  V.lvColor = l.color; V.lvInk = ink(l.color); V.who = kid ? kid + ' 도전!' : ''; V.clName = kid ? kid + ', 완주 성공!' : '완주 성공!';
   document.documentElement.style.setProperty('--lv', l.color);
   $('#stage').style.setProperty('--lv', l.color);
   $('#wBadge').style.color = ink(l.color); $('#hLv').style.color = ink(l.color);
@@ -317,19 +394,32 @@ function start() {
   $('#wWho').textContent = kid ? kid + ' 도전!' : '';
   $('#clName').textContent = kid ? kid + ', 완주 성공!' : '완주 성공!';
   $('#clSub').textContent = 'Level ' + l.id + ' · Vol.' + sel.vol + (opt.unit ? ' Unit ' + opt.unit : '') + ' · ' + cards.length + '문장을 영어로 말했어요';
+  V.badge = $('#wBadge').textContent; V.hud = $('#hLv').textContent; V.clSub = $('#clSub').textContent; V.bubble = null; V.page = '';
+  $('#over').hidden = true; $('#recTag').hidden = true; $('#face').hidden = true;
   $('#home').hidden = true; $('#play').hidden = false; fit(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
   try { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {}
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(function () {}); } catch (e) {}
   preload(cards[0]); preload(cards[1]);
-  intro(++run);
+  var r = ++run;
+  SES = { startedAt: Date.now(), logged: false, mode: opt.mode };
+  if (opt.mode === 'real') {
+    try { await recBegin(); }
+    catch (e) {
+      recCleanup();
+      overlay('카메라를 쓸 수 없어요', '카메라·마이크 사용을 허용해 주세요. 주소창 옆 🔒(또는 설정)에서 허용한 뒤 다시 시작하면 됩니다.', [['처음 화면으로', exit]]);
+      return;
+    }
+    if (!alive(r)) return;
+  }
+  intro(r);
 }
 async function intro(r) {
   show('scTitle'); sfx('intro'); await sleep(3200, r); if (!alive(r)) return;
   show('scWelcome'); await speak('voice/welcome.mp3', 'Welcome to Sentence Bank Survival!', r); await sleep(1600, r); if (!alive(r)) return;
-  show('scCount'); $('#rdy').hidden = false; var c = $('#cnt'); c.className = 'count'; c.textContent = '';
+  show('scCount'); $('#rdy').hidden = false; V.ready = true; V.count = ''; var c = $('#cnt'); c.className = 'count'; c.textContent = '';
   await speak('voice/ready.mp3', "Are you ready? Let's go!", r); if (!alive(r)) return;
-  for (var n = 3; n >= 1; n--) { c.textContent = n; c.className = 'count'; void c.offsetWidth; c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; sfx('tick'); await sleep(850, r); if (!alive(r)) return; }
-  $('#rdy').hidden = true; c.textContent = 'GO!'; c.className = 'count go'; sfx('go'); await sleep(900, r); if (!alive(r)) return;
+  for (var n = 3; n >= 1; n--) { c.textContent = n; V.count = String(n); V.countT = performance.now(); c.className = 'count'; void c.offsetWidth; c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; sfx('tick'); await sleep(850, r); if (!alive(r)) return; }
+  $('#rdy').hidden = true; V.ready = false; V.count = 'GO!'; V.countT = performance.now(); c.textContent = 'GO!'; c.className = 'count go'; sfx('go'); await sleep(900, r); if (!alive(r)) return;
   idx = 0; playCards(r);
 }
 async function playCards(r) {
@@ -337,9 +427,9 @@ async function playCards(r) {
   while (idx < cards.length) {
     if (!alive(r)) return;
     var c = cards[idx], my = idx; preload(cards[idx + 1]); preload(cards[idx + 2]);
-    $('#hPg').textContent = (idx + 1) + ' / ' + cards.length;
-    var p = $('#paper'); p.classList.remove('cardin'); void p.offsetWidth; $('#cImg').src = 'img/' + sel.lv + '/' + c.no + '.webp'; p.classList.add('cardin');
-    $('#say').classList.add('hide'); sfx('card');
+    $('#hPg').textContent = (idx + 1) + ' / ' + cards.length; V.page = $('#hPg').textContent; SES.done = Math.max(SES.done || 0, idx + 1);
+    var p = $('#paper'); p.classList.remove('cardin'); void p.offsetWidth; $('#cImg').src = 'img/' + sel.lv + '/' + c.no + '.webp'; p.classList.add('cardin'); V.img = $('#cImg'); V.cardT = performance.now();
+    $('#say').classList.add('hide'); V.bubble = null; sfx('card');
     await sleep(650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 1) 선생님 대사
     if (c.qLang === 'ko') { bubble('q', 'Say it in English!'); await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); }
@@ -361,16 +451,20 @@ var confRun = 0;
 async function finish(r) {
   show('scClear'); sfx('clear'); confetti(++confRun);
   await sleep(1200, r); await speak('voice/great.mp3', 'Mission clear! Great job!', r); await sleep(3300, r); if (!alive(r)) return;
-  show('scOutro'); sfx('outro'); await sleep(3500, r);
+  show('scOutro'); sfx('outro'); await sleep(3500, r); if (!alive(r)) return;
+  SES.complete = true;
+  if (SES.mode === 'real') afterRecording(r);
+  else { logPractice(); overlay('연습 완료! 👏', kidName() ? kidName() + '의 연습 기록을 선생님께 남겼어요.' : '수고했어요! 학생을 고르면 기록이 남아요.', [['한 번 더', function () { start(); }], ['처음 화면으로', exit, 'sec']]); }
 }
 function confetti(id) {
-  var cv = $('#confetti'), x = cv.getContext('2d'), cols = ['#ffd21f', '#ff6b4a', '#7ee0a1', '#8fb3ff', '#ffffff'], ps = [], f = 0;
+  var cv = $('#confetti'), x = cv.getContext('2d'), cols = ['#ffd21f', '#ff6b4a', '#7ee0a1', '#8fb3ff', '#ffffff'], ps = [], f = 0; V.ps = ps;
   for (var i = 0; i < 170; i++) ps.push({ x: 640 + (Math.random() - .5) * 200, y: 380, vx: (Math.random() - .5) * 24, vy: -6 - Math.random() * 18, s: 7 + Math.random() * 10, r: Math.random() * 6, c: cols[Math.random() * 5 | 0] });
   (function loop() { if (id !== confRun) return; x.clearRect(0, 0, 1280, 720); ps.forEach(function (p) { p.vy += .42; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += .12; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }); if (++f < 260) requestAnimationFrame(loop); })();
 }
 function togglePause() {
   if ($('#play').hidden) return;
   paused = !paused; $('#pz').hidden = !paused; $('#bPause').textContent = paused ? '▶ 계속' : '⏸ 멈춤';
+  if (REC.mr) { try { if (paused && REC.mr.state === 'recording') REC.mr.pause(); else if (!paused && REC.mr.state === 'paused') REC.mr.resume(); } catch (e) {} }
   if (paused) { try { voice.pause(); } catch (e) {} try { speechSynthesis.pause(); } catch (e) {} if (sleep.pauseHook) sleep.pauseHook(); }
   else { try { if (voice.src && !voice.ended && voice.currentTime > 0) voice.play().catch(function () {}); } catch (e) {} try { speechSynthesis.resume(); } catch (e) {} if (resumeFn) { var f = resumeFn; resumeFn = null; f(); } }
 }
@@ -379,11 +473,11 @@ function jump(d) {
   hush(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
   idx = Math.max(0, Math.min(cards.length - 1, idx + d)); var r = ++run; playCards(r);
 }
-function exit() { run++; confRun++; hush(); $('#play').hidden = true; $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
+function exit() { if (SES && !SES.complete && SES.mode === 'practice') logPractice(); run++; confRun++; hush(); recCleanup(); $('#over').hidden = true; $('#play').hidden = true; $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
 function fs() { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {} }
 $('#goBtn').onclick = start;
 $('#bPause').onclick = togglePause; $('#bPrev').onclick = function () { jump(-1); }; $('#bNext').onclick = function () { jump(1); };
-$('#bFs').onclick = fs; $('#bExit').onclick = exit; $('#bRe').onclick = function () { hush(); start(); };
+$('#bFs').onclick = fs; $('#bExit').onclick = exit; $('#bRe').onclick = function () { hush(); recCleanup(); start(); };
 addEventListener('keydown', function (e) {
   if ($('#play').hidden) return;
   if (e.code === 'Space') { e.preventDefault(); togglePause(); }
@@ -393,6 +487,226 @@ addEventListener('keydown', function (e) {
 var hideT = 0;
 function wake() { $('#ctl').classList.remove('off'); $('#play').classList.remove('nocursor'); clearTimeout(hideT); hideT = setTimeout(function () { $('#ctl').classList.add('off'); $('#play').classList.add('nocursor'); }, 2000); }
 $('#play').addEventListener('mousemove', wake); $('#play').addEventListener('touchstart', wake, { passive: true });
+/* ── 화면 상태 (녹화용 그림이 이것을 보고 그립니다) ── */
+var V = { scene: 'scTitle', sceneT: 0, bubble: null, ring: 0, ringNum: '', count: '', ready: false, img: null, cardT: 0, page: '', ps: null };
+var SES = null;
+
+/* ── 기록 남기기 ── */
+function baseRec() {
+  return { name: kidName(), code: (me && me.code) || '', level: sel.lv, vol: sel.vol, unit: opt.unit, cards: cards.length, total: cards.length,
+    done: SES ? Math.min(SES.done || 0, cards.length) : 0, durationSec: SES ? Math.round((Date.now() - SES.startedAt) / 1000) : 0, answer: opt.ans };
+}
+function logPractice() {
+  if (!SES || SES.logged || !kidName() || (SES.done || 0) < 3) return;
+  SES.logged = true;
+  var b = baseRec(); b.mode = 'practice';
+  fetch(HW_API + '/log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b), keepalive: true }).catch(function () {});
+}
+
+/* ── 실전 녹화: 화면을 캔버스에 그리고, 얼굴 카메라와 목소리를 합쳐 한 영상으로 ── */
+var REC = { on: false, cam: null, actx: null, dest: null, mr: null, chunks: [], canvas: null, raf: 0, routed: [] };
+function route(el) {
+  if (!REC.actx || el._routed) return;
+  try { var s = REC.actx.createMediaElementSource(el); s.connect(REC.actx.destination); s.connect(REC.dest); el._routed = true; } catch (e) {}
+}
+function pickMime() {
+  var list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  for (var i = 0; i < list.length; i++) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
+  return '';
+}
+async function recBegin() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) throw new Error('unsupported');
+  REC.cam = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
+  try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
+  var AC = window.AudioContext || window.webkitAudioContext;
+  REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
+  REC.dest = REC.actx.createMediaStreamDestination();
+  var mic = REC.actx.createMediaStreamSource(REC.cam); var g = REC.actx.createGain(); g.gain.value = 1.15; mic.connect(g); g.connect(REC.dest);
+  route(voice);
+  REC.canvas = document.createElement('canvas'); REC.canvas.width = 960; REC.canvas.height = 540;
+  var stream = REC.canvas.captureStream(30);
+  REC.dest.stream.getAudioTracks().forEach(function (t) { stream.addTrack(t); });
+  var mime = pickMime();
+  REC.mr = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 1500000, audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
+  REC.chunks = [];
+  REC.mr.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
+  REC.on = true;
+  var ctx = REC.canvas.getContext('2d');
+  (function loop() { if (!REC.on) return; try { drawFrame(ctx); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  REC.mr.start(1000);
+  $('#recTag').hidden = false;
+}
+function recStop() {
+  return new Promise(function (res) {
+    if (!REC.mr || REC.mr.state === 'inactive') return res(null);
+    REC.mr.onstop = function () { var type = (REC.mr.mimeType || 'video/webm'); res(new Blob(REC.chunks, { type: type })); };
+    try { REC.mr.stop(); } catch (e) { res(null); }
+  });
+}
+function recCleanup() {
+  REC.on = false; cancelAnimationFrame(REC.raf);
+  try { if (REC.mr && REC.mr.state !== 'inactive') { REC.mr.onstop = null; REC.mr.stop(); } } catch (e) {}
+  try { REC.cam && REC.cam.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+  try { REC.actx && REC.actx.close(); } catch (e) {}
+  voice = new Audio(); // 오디오 연결을 끊은 새 재생기로 바꿉니다
+  REC = { on: false, cam: null, actx: null, dest: null, mr: null, chunks: [], canvas: null, raf: 0 };
+  $('#face').hidden = true; $('#face').srcObject = null; $('#recTag').hidden = true;
+}
+
+/* 녹화 화면 그리기 (1280×720 기준 좌표를 960×540 으로 줄여 그림) */
+var LOGO = new Image(); LOGO.src = 'logo.png';
+function rr(x, cx, cy, w, h, r) { x.beginPath(); x.moveTo(cx + r, cy); x.arcTo(cx + w, cy, cx + w, cy + h, r); x.arcTo(cx + w, cy + h, cx, cy + h, r); x.arcTo(cx, cy + h, cx, cy, r); x.arcTo(cx, cy, cx + w, cy, r); x.closePath(); }
+function T(x, text, px, y, font, color, opts) {
+  opts = opts || {}; x.font = font.replace('#', px + 'px'); x.fillStyle = color; x.textAlign = opts.align || 'center'; x.textBaseline = 'middle';
+  var maxW = opts.max || 1200, w = x.measureText(text).width;
+  if (w > maxW) { px = Math.floor(px * maxW / w); x.font = font.replace('#', px + 'px'); }
+  x.fillText(text, opts.x != null ? opts.x : 640, y);
+}
+var F_D = '# "Black Han Sans","Noto Sans KR",sans-serif', F_E = '# "Archivo Black","Arial Black",sans-serif', F_B9 = '900 # "Noto Sans KR",sans-serif', F_B7 = '700 # "Noto Sans KR",sans-serif';
+function ease(t) { t = Math.max(0, Math.min(1, t)); return 1 - Math.pow(1 - t, 3); }
+function drawFrame(x) {
+  var now = performance.now();
+  x.setTransform(0.75, 0, 0, 0.75, 0, 0);
+  var outro = V.scene === 'scOutro';
+  if (outro) { x.fillStyle = '#fff'; x.fillRect(0, 0, 1280, 720); }
+  else { var g = x.createRadialGradient(640, 288, 0, 640, 288, 900); g.addColorStop(0, '#1b3a9a'); g.addColorStop(.55, '#132f86'); g.addColorStop(1, '#0b1f5e'); x.fillStyle = g; x.fillRect(0, 0, 1280, 720); }
+  var words = outro ? ['WHALE', 'ENGLISH'] : ['SENTENCE', 'BANK', 'SURVIVAL'];
+  words.forEach(function (w, i) { T(x, w, 176, 360 + (i - (words.length - 1) / 2) * 158, F_E, outro ? '#e9effb' : 'rgba(255,255,255,.06)', { max: 1400 }); });
+  var a = ease((now - V.sceneT) / 550); x.globalAlpha = a; var dy = (1 - a) * 18;
+  if (V.scene === 'scTitle') {
+    T(x, '큰 목소리로, 자신 있게, 끝까지 도전하는', 40, 300 + dy, F_B7, '#fff');
+    T(x, '센텐스뱅크 서바이벌', 124, 400 + dy, F_D, '#fff');
+  } else if (V.scene === 'scWelcome') {
+    T(x, '고래영어', 36, 205 + dy, F_B7, '#fff');
+    T(x, 'SENTENCE BANK SURVIVAL에 오신 것을', 44, 262 + dy, F_E, '#fff');
+    T(x, '환영합니다', 120, 352 + dy, F_D, '#fff');
+    x.font = F_E.replace('#', '30px'); var bw = x.measureText(V.badge || '').width + 60;
+    x.fillStyle = V.lvColor || '#ffd21f'; rr(x, 640 - bw / 2, 432 + dy, bw, 56, 28); x.fill();
+    T(x, V.badge || '', 30, 461 + dy, F_E, V.lvInk || '#003C70');
+    if (V.who) T(x, V.who, 70, 548 + dy, F_D, '#ffd21f');
+  } else if (V.scene === 'scCount') {
+    if (V.ready) T(x, 'Are you ready?', 64, 190, F_E, '#fff');
+    var ct = (now - (V.countT || 0)) / 900, sc = ct < .25 ? 1.7 - .7 * (ct / .25) : 1 - .07 * Math.min(1, (ct - .25) / .75);
+    x.save(); x.translate(640, 410); x.scale(sc, sc); x.globalAlpha = Math.min(1, ct / .25 + .05) * a;
+    T(x, V.count || '', V.count === 'GO!' ? 220 : 300, 0, F_E, V.count === 'GO!' ? '#fff' : '#ffd21f', { x: 0 }); x.restore();
+  } else if (V.scene === 'scCard') {
+    x.globalAlpha = 1;
+    x.font = F_E.replace('#', '22px'); var lw = x.measureText(V.hud || '').width + 36;
+    x.fillStyle = V.lvColor || '#ffed04'; rr(x, 30, 22, lw, 36, 18); x.fill(); T(x, V.hud || '', 22, 41, F_E, V.lvInk || '#003C70', { x: 30 + lw / 2 });
+    T(x, V.page || '', 22, 41, F_E, 'rgba(255,255,255,.85)', { align: 'right', x: 1250 });
+    x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, 273, 68, 734, 524, 18); x.fill();
+    x.fillStyle = '#b8bdc7'; rr(x, 273, 58, 734, 524, 18); x.fill();
+    x.strokeStyle = '#8f959f'; x.lineWidth = 7; rr(x, 276.5, 61.5, 727, 517, 15); x.stroke();
+    x.save(); rr(x, 287, 72, 706, 496, 8); x.clip(); x.fillStyle = '#fff'; x.fillRect(287, 72, 706, 496); x.fillStyle = '#ffd21f';
+    for (var k = -500; k < 1300; k += 30) { x.beginPath(); x.moveTo(287 + k, 568); x.lineTo(287 + k + 16, 568); x.lineTo(287 + k + 16 + 496, 72); x.lineTo(287 + k + 496, 72); x.closePath(); x.fill(); }
+    x.restore();
+    var ct2 = ease((now - V.cardT) / 450), ox = (1 - ct2) * 70;
+    x.save(); x.globalAlpha = ct2; x.translate(ox, 0);
+    x.fillStyle = '#fff'; x.fillRect(300, 85, 680, 470);
+    if (V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight, s2 = Math.min(680 / iw, 470 / ih); x.drawImage(V.img, 300 + (680 - iw * s2) / 2, 85 + (470 - ih * s2) / 2, iw * s2, ih * s2); }
+    x.restore();
+    x.fillStyle = '#b8bdc7'; rr(x, 240, 578, 800, 22, 6); x.fill(); x.fillStyle = '#8f959f'; x.fillRect(240, 595, 800, 5);
+    [[280, 76, '#222'], [370, 76, '#2b41b0'], [914, 86, '#ff5a2a']].forEach(function (m) { x.fillStyle = m[2]; rr(x, m[0], 567, m[1], 14, 4); x.fill(); });
+    if (V.bubble) {
+      var bt = ease((now - V.bubble.t) / 300), ans = V.bubble.kind === 'a';
+      var fpx = V.bubble.text.length > 52 ? 27 : V.bubble.text.length > 38 ? 33 : 40;
+      x.font = F_E.replace('#', fpx + 'px'); var tw = Math.min(x.measureText(V.bubble.text).width, 1000);
+      var w = 14 + 58 + 14 + tw + 26 + (ans ? 0 : 64), h = 86, bx = 640 - w / 2, by = 612 + (1 - bt) * 14;
+      x.globalAlpha = bt; x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 8, w, h, 43); x.fill();
+      x.fillStyle = '#fff'; rr(x, bx, by, w, h, 43); x.fill();
+      x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx + 14 + 29, by + 43, 29, 0, Math.PI * 2); x.fill();
+      T(x, ans ? 'A' : 'Q', 26, by + 44, F_E, '#fff', { x: bx + 43 });
+      T(x, V.bubble.text, fpx, by + 44, F_E, '#003C70', { align: 'left', x: bx + 86, max: 1000 });
+      if (!ans) {
+        var rx = bx + w - 26 - 29, ry = by + 43;
+        x.lineWidth = 6; x.strokeStyle = '#e8edf6'; x.beginPath(); x.arc(rx, ry, 24, 0, Math.PI * 2); x.stroke();
+        if (V.ring > 0) { x.strokeStyle = '#ffd21f'; x.lineCap = 'round'; x.beginPath(); x.arc(rx, ry, 24, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - V.ring), false); x.stroke(); x.lineCap = 'butt'; }
+        if (V.ringNum) T(x, V.ringNum, 22, ry + 1, F_E, '#003C70', { x: rx });
+      }
+      x.globalAlpha = 1;
+    }
+  } else if (V.scene === 'scClear') {
+    if (V.ps) V.ps.forEach(function (p) { x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); });
+    T(x, 'MISSION CLEAR!', 124, 250 + dy, F_E, '#ffd21f');
+    T(x, V.clName || '', 74, 370 + dy, F_D, '#fff');
+    T(x, V.clSub || '', 30, 450 + dy, F_B7, 'rgba(255,255,255,.92)');
+  } else if (outro) {
+    if (LOGO.complete && LOGO.naturalWidth) { var lh = 420 * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, 430, 340 - lh / 2 - 20 + dy, 420, lh); }
+    T(x, 'SENTENCE BANK SURVIVAL', 30, 340 + 120 + dy, F_E, '#5d6b90');
+  }
+  x.globalAlpha = 1;
+  // 얼굴 동그라미
+  var face = $('#face');
+  if (REC.cam && face.readyState >= 2 && !outro) {
+    var cx = 1148, cy = V.scene === 'scCard' ? 330 : 590, R = 108, vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh);
+    x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(cx, cy + 8, R + 6, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#fff'; x.beginPath(); x.arc(cx, cy, R + 6, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
+    x.translate(cx, cy); x.scale(-1, 1); x.drawImage(face, (vw - sq) / 2, (vh - sq) / 2, sq, sq, -R, -R, R * 2, R * 2);
+    x.restore();
+    if (V.who && V.scene === 'scCard') { var nm = kidName(); x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 6, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 12, F_B9, V.lvInk || '#003C70', { x: cx }); }
+  }
+}
+
+/* ── 영상 올리기 ── */
+function overlay(title, text, buttons, progress) {
+  $('#over').hidden = false; $('#ovT').textContent = title; $('#ovP').textContent = text || '';
+  $('#ovBar').hidden = progress == null; if (progress != null) $('#ovFill').style.width = Math.round(progress * 100) + '%';
+  var b = $('#ovBtns'); b.innerHTML = '';
+  (buttons || []).forEach(function (it) {
+    var el = document.createElement(it[3] ? 'a' : 'button'); el.textContent = it[0]; if (it[2]) el.className = it[2];
+    if (it[3]) { el.href = it[3]; el.download = it[4] || ''; } else el.onclick = it[1];
+    b.appendChild(el);
+  });
+}
+async function postJson(url, body) {
+  var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  var j = await r.json().catch(function () { return {}; });
+  if (!r.ok || !j.ok) throw new Error(j.error || ('업로드 오류 ' + r.status));
+  return j;
+}
+async function uploadVideo(blob, meta, onProg) {
+  var type = String(blob.type || 'video/webm').split(';')[0];
+  var st = await postJson(HW_API + '/start', Object.assign({}, meta, { size: blob.size, type: type }));
+  var parts = [], n = Math.ceil(blob.size / st.partSize);
+  for (var i = 0; i < n; i++) {
+    var chunk = blob.slice(i * st.partSize, Math.min(blob.size, (i + 1) * st.partSize));
+    var ok = null;
+    for (var tryN = 0; tryN < 3 && !ok; tryN++) {
+      try {
+        var r = await fetch(HW_API + '/part?key=' + encodeURIComponent(st.key) + '&uploadId=' + encodeURIComponent(st.uploadId) + '&n=' + (i + 1), { method: 'PUT', body: chunk });
+        var j = await r.json(); if (r.ok && j.ok) ok = j;
+      } catch (e) {}
+    }
+    if (!ok) throw new Error('영상 조각을 올리지 못했어요.');
+    parts.push({ partNumber: ok.partNumber, etag: ok.etag });
+    onProg((i + 1) / n);
+  }
+  await postJson(HW_API + '/complete', { id: st.id, key: st.key, uploadId: st.uploadId, parts: parts });
+  return st.id;
+}
+async function afterRecording(r) {
+  overlay('녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
+  var blob = await recStop();
+  var meta = baseRec(); meta.mode = 'real';
+  recCleanup();
+  if (!blob || blob.size < 1000) { overlay('녹화가 안 됐어요', '이 기기에서 녹화가 되지 않았어요. 크롬(안드로이드)이나 사파리(아이패드)로 다시 해 주세요.', [['처음 화면으로', exit]]); return; }
+  var ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
+  var file = URL.createObjectURL(blob), fname = meta.name + '_센텐스뱅크_' + meta.level + '_Vol' + meta.vol + '.' + ext;
+  async function go() {
+    overlay('선생님께 보내는 중…', meta.name + ' · ' + meta.level + ' Vol.' + meta.vol + ' 영상 (' + (blob.size / 1048576).toFixed(0) + 'MB)', [], 0);
+    try {
+      await uploadVideo(blob, meta, function (p) { $('#ovFill').style.width = Math.round(p * 100) + '%'; });
+      SES.logged = true;
+      overlay('선생님께 보냈어요! 🎉', '멋지게 해냈어요. 선생님이 확인하고 부모님께 보내 드릴 거예요.', [['처음 화면으로', exit], ['영상 저장', null, 'sec', file, fname]]);
+    } catch (e) {
+      overlay('보내지 못했어요', (e && e.message ? e.message + ' ' : '') + '인터넷 연결을 확인하고 다시 보내 주세요.', [['다시 보내기', go], ['이 기기에 저장', null, 'sec', file, fname], ['그만두기', exit, 'sec']]);
+    }
+  }
+  go();
+}
+
 renderHome();
 
 /* ── 학습패드 앱 설치 ── */
