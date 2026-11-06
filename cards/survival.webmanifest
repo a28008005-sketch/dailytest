@@ -1,0 +1,20 @@
+{
+  "id": "./survival.html",
+  "name": "센텐스뱅크 서바이벌 · 고래영어",
+  "short_name": "센텐스 서바이벌",
+  "description": "고래영어 센텐스뱅크 카드를 교재 순서대로 영어로 말해 보는 서바이벌 영상 앱",
+  "lang": "ko",
+  "start_url": "./survival.html?app=1",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#0b1f5e",
+  "theme_color": "#132f86",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
