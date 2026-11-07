@@ -1,0 +1,41 @@
+{
+  "id": "./phonics.html",
+  "name": "파닉스 서바이벌 · 고래영어",
+  "short_name": "파닉스 서바이벌",
+  "description": "웨일 파닉스 레슨 단어를 그림 카드로 영어로 말해 보는 서바이벌 앱",
+  "lang": "ko",
+  "start_url": "./phonics.html?app=1",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "landscape",
+  "background_color": "#0b1f5e",
+  "theme_color": "#132f86",
+  "categories": [
+    "education",
+    "kids"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
