@@ -431,7 +431,7 @@ async function start() {
 }
 async function intro(r) {
   show('scTitle'); sfx('intro'); await sleep(3200, r); if (!alive(r)) return;
-  show('scWelcome'); await speak('', 'Welcome to Phonics Survival!', r); await sleep(1600, r); if (!alive(r)) return;
+  show('scWelcome'); await sleep(1200, r); await sleep(1600, r); if (!alive(r)) return;
   show('scCount'); $('#rdy').hidden = false; V.ready = true; V.count = ''; var c = $('#cnt'); c.className = 'count'; c.textContent = '';
   await speak('voice/ready.mp3', "Are you ready? Let's go!", r); if (!alive(r)) return;
   for (var n = 3; n >= 1; n--) { c.textContent = n; V.count = String(n); V.countT = performance.now(); c.className = 'count'; void c.offsetWidth; c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; sfx('tick'); await sleep(850, r); if (!alive(r)) return; }
