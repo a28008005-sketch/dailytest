@@ -43,6 +43,10 @@ h1 em{font-style:normal;color:var(--gold)}
 .lead{margin:6px 0 0;opacity:.82;line-height:1.65;font-size:15px;max-width:62ch}
 .lab{font-size:12px;font-weight:900;letter-spacing:.12em;opacity:.6;margin-bottom:8px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.picksum{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 16px}
+.picksum b{font-size:22px;font-weight:900}
+.picksum span{opacity:.7;font-size:14px}
+.picksum button{margin-left:auto;border:2px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:12px;padding:8px 14px;font-weight:800;font-size:14px}
 .chip{border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:10px 18px;font-weight:900;font-size:18px}
 .chip .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--c);margin-right:8px;vertical-align:1px}
 .chip[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff}
@@ -81,7 +85,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .whomsg{font-size:13px;color:#c0392b;min-height:0}
 .whomsg.ok{color:var(--muted)}
 .recnote{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-2px}
-#face{position:absolute;width:216px;height:216px;border-radius:50%;object-fit:cover;transform:scaleX(-1);border:6px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#000;left:1040px;top:222px;z-index:3}
+#face{position:absolute;width:216px;height:216px;border-radius:50%;object-fit:cover;transform:scaleX(-1);filter:brightness(1.12) contrast(1.03) saturate(1.12);border:6px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#000;left:1040px;top:222px;z-index:3}
 #face.low{top:482px}
 .rec{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.45);color:#fff;font-weight:900;font-size:18px;padding:6px 14px;border-radius:999px;z-index:4}
 .rec i{width:12px;height:12px;border-radius:50%;background:#ff3b30;animation:blink 1s steps(1) infinite}
@@ -173,8 +177,11 @@ h1 em{font-style:normal;color:var(--gold)}
       <h1>센텐스뱅크 <em>서바이벌</em> 영상</h1>
       <p class="lead">교재 한 권을 끝낸 날, 이 화면을 띄우고 도전하세요. 카드가 교재 순서대로 나오고 선생님 목소리가 영어로 물어봅니다. 학생이 대답하면 정답이 뜨고 원어민 음성이 다시 읽어 줘요. 화면 녹화나 촬영을 하면 그대로 부모님께 보낼 영상이 됩니다.</p>
     </div>
+    <div class="picksum" id="pickSum" hidden><b id="pickName"></b><span>선생님이 정해 준 레벨이에요</span><button type="button" id="pickMore">다른 레벨 · 권 고르기</button></div>
+    <div id="pickRows" style="display:grid;gap:18px">
     <div><div class="lab">LEVEL</div><div class="chips" id="lvChips"></div></div>
     <div><div class="lab">VOLUME</div><div class="chips" id="volChips"></div></div>
+    </div>
     <div class="panel">
       <div>
         <h2 id="pTitle">240 · Vol.1</h2>
@@ -242,6 +249,9 @@ var q = new URLSearchParams(location.search);
 var last = LS.get('sel', null); if (last && !q.get('lv')) { sel.lv = last.lv; sel.vol = last.vol; }
 if (q.get('lv') && D.levels.some(function (l) { return l.id === q.get('lv'); })) sel.lv = q.get('lv');
 if (+q.get('v') >= 1 && +q.get('v') <= 6) sel.vol = +q.get('v');
+if (+q.get('u') >= 1 && +q.get('u') <= 4) opt.unit = +q.get('u');
+// 현황판 등에서 레벨을 정해서 열면 고르는 줄은 접어 둡니다. 필요할 때만 '다른 레벨 · 권 고르기'
+var PRESET = !!(q.get('lv') && sel.lv === q.get('lv'));
 function level() { return D.levels.filter(function (l) { return l.id === sel.lv; })[0]; }
 function volCards() { return level().cards.filter(function (c) { return c.vol === sel.vol && (!opt.unit || c.unit === opt.unit); }); }
 function thinkSec() { return opt.think || THINK_DEF[sel.lv]; }
@@ -269,6 +279,9 @@ function renderHome() {
     var b = document.createElement('button'); b.className = 'chip'; b.textContent = 'Vol.' + v; b.setAttribute('aria-pressed', String(v === sel.vol));
     b.onclick = function () { sel.vol = v; opt.unit = 0; sync(); renderHome(); }; vc.appendChild(b);
   })(v);
+  $('#pickSum').hidden = !PRESET; $('#pickRows').hidden = PRESET;
+  $('#pickName').textContent = (sel.lv === 'Phonics' ? 'Whale Phonics' : sel.lv) + ' · Vol.' + sel.vol;
+  $('#pickMore').onclick = function () { PRESET = false; renderHome(); };
   seg('#oUnit', [[0, 'Vol 전체'], [1, 'Unit 1'], [2, 'Unit 2'], [3, 'Unit 3'], [4, 'Unit 4']], 'unit', renderPanel);
   seg('#oThink', [[0, '레벨 기본(' + THINK_DEF[sel.lv] + '초)'], [3, '3초'], [5, '5초'], [8, '8초']], 'think', renderPanel);
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
@@ -530,15 +543,55 @@ function pickMime() {
   for (var i = 0; i < list.length; i++) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
   return '';
 }
+/* 얼굴을 밝게: 노출·화이트밸런스 자동 + 노출 살짝 올리기 (되는 기기만) */
+function camBright(stream) {
+  try {
+    var t = stream.getVideoTracks()[0], c = t.getCapabilities ? t.getCapabilities() : {}, adv = {};
+    if (c.exposureMode && c.exposureMode.indexOf('continuous') >= 0) adv.exposureMode = 'continuous';
+    if (c.whiteBalanceMode && c.whiteBalanceMode.indexOf('continuous') >= 0) adv.whiteBalanceMode = 'continuous';
+    if (c.exposureCompensation && c.exposureCompensation.max > 0) adv.exposureCompensation = Math.min(c.exposureCompensation.max, Math.max(c.exposureCompensation.step || 0, c.exposureCompensation.max / 3));
+    if (Object.keys(adv).length) t.applyConstraints({ advanced: [adv] }).catch(function () {});
+  } catch (e) {}
+}
+/* 아이 목소리만 또렷하게:
+   낮은 웅웅거림(100Hz 아래)·높은 쉿 소리(7.5kHz 위) 자르기 → 말소리 대역 살짝 올리기
+   → 말 안 할 때 주변 소리 줄이기(노이즈 게이트) → 크고 작은 소리 고르게(컴프레서) */
+var GATE_SRC = "class G extends AudioWorkletProcessor{constructor(){super();this.e=0;this.g=.15;this.h=0}" +
+  "process(i,o){var a=i[0],b=o[0];if(!a||!a[0])return true;var th=Math.pow(10,-44/20),fl=.15,sr=sampleRate,hn=sr*.3," +
+  "at=1-Math.exp(-1/(sr*.005)),rl=1-Math.exp(-1/(sr*.15)),x=a[0];for(var n=0;n<x.length;n++){var s=Math.abs(x[n]);" +
+  "this.e=s>this.e?this.e+(s-this.e)*.05:this.e*.9997;if(this.e>th)this.h=hn;else if(this.h>0)this.h--;" +
+  "var tg=this.h>0?1:fl;this.g+=(tg-this.g)*(tg>this.g?at:rl);for(var c=0;c<b.length;c++)b[c][n]=(a[c]||x)[n]*this.g}return true}}" +
+  "registerProcessor('voice-gate',G);";
+async function voiceChain(mic, dest) {
+  var ac = mic.context, chain = [];
+  var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 100; hp.Q.value = .7; chain.push(hp);
+  var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7500; lp.Q.value = .7; chain.push(lp);
+  var pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 3000; pk.Q.value = 1; pk.gain.value = 3; chain.push(pk);
+  try {
+    if (ac.audioWorklet && window.AudioWorkletNode) {
+      if (!ac._gate) { var u = URL.createObjectURL(new Blob([GATE_SRC], { type: 'application/javascript' })); await ac.audioWorklet.addModule(u); ac._gate = true; }
+      chain.push(new AudioWorkletNode(ac, 'voice-gate', { channelCount: 1, channelCountMode: 'explicit', outputChannelCount: [1] }));
+    }
+  } catch (e) {}   // 게이트가 안 되는 기기는 필터 · 컴프레서만 씁니다
+  var cp = ac.createDynamicsCompressor(); cp.threshold.value = -26; cp.knee.value = 10; cp.ratio.value = 3.5; cp.attack.value = .005; cp.release.value = .2; chain.push(cp);
+  var g = ac.createGain(); g.gain.value = 1.4; chain.push(g);
+  var prev = mic; chain.forEach(function (n) { prev.connect(n); prev = n; }); prev.connect(dest);
+  REC.voiceNodes = chain;
+}
 async function recBegin() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) throw new Error('unsupported');
-  REC.cam = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  REC.cam = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+    // 아이 목소리만: 잡음 제거 · 울림 제거 · 음량 자동 + (지원 기기) 음성 분리
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
+  });
+  camBright(REC.cam);
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
-  var mic = REC.actx.createMediaStreamSource(REC.cam); var g = REC.actx.createGain(); g.gain.value = 1.15; mic.connect(g); g.connect(REC.dest);
+  await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
   route(voice);
   REC.canvas = document.createElement('canvas'); REC.canvas.width = 960; REC.canvas.height = 540;
   var stream = REC.canvas.captureStream(30);
@@ -659,10 +712,28 @@ function drawFrame(x) {
     x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(cx, cy + 8, R + 6, 0, Math.PI * 2); x.fill();
     x.fillStyle = '#fff'; x.beginPath(); x.arc(cx, cy, R + 6, 0, Math.PI * 2); x.fill();
     x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
-    x.translate(cx, cy); x.scale(-1, 1); x.drawImage(face, (vw - sq) / 2, (vh - sq) / 2, sq, sq, -R, -R, R * 2, R * 2);
+    x.translate(cx, cy); x.scale(-1, 1); drawFace(x, face, (vw - sq) / 2, (vh - sq) / 2, sq, R);
     x.restore();
     if (V.who && V.scene === 'scCard') { var nm = kidName(); x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 6, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 12, F_B9, V.lvInk || '#003C70', { x: cx }); }
   }
+}
+
+/* 얼굴 보정: 밝기 · 대비 · 혈색 + 살짝 뽀얀 빛 + 따뜻한 톤 */
+var CANVAS_FILTER = null;
+function drawFace(x, face, sx, sy, sq, R) {
+  if (CANVAS_FILTER === null) { try { x.filter = 'brightness(1.1)'; CANVAS_FILTER = x.filter === 'brightness(1.1)'; x.filter = 'none'; } catch (e) { CANVAS_FILTER = false; } }
+  if (CANVAS_FILTER) x.filter = 'brightness(1.12) contrast(1.03) saturate(1.12)';
+  x.drawImage(face, sx, sy, sq, sq, -R, -R, R * 2, R * 2);
+  if (CANVAS_FILTER) {
+    x.filter = 'blur(5px) brightness(1.15)'; x.globalAlpha = .22; x.globalCompositeOperation = 'screen';
+    x.drawImage(face, sx, sy, sq, sq, -R, -R, R * 2, R * 2);
+    x.filter = 'none'; x.globalAlpha = 1;
+    x.globalCompositeOperation = 'soft-light'; x.fillStyle = 'rgba(255,196,160,.22)';
+  } else {
+    x.globalCompositeOperation = 'screen'; x.fillStyle = 'rgba(255,232,214,.14)';
+  }
+  x.fillRect(-R, -R, R * 2, R * 2);
+  x.globalCompositeOperation = 'source-over';
 }
 
 /* ── 영상 올리기 ── */
