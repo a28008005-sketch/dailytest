@@ -46,7 +46,9 @@ assert.deepEqual(r, { success: true, result: 'almost', reply: '거의 맞았어�
 assert.equal(sent.length, 1);
 const req = sent[0];
 assert.equal(req.headers['x-api-key'], 'test-key');
-assert.equal(req.body.model, 'claude-opus-5-5');
+assert.equal(req.body.model, 'claude-haiku-5-5');
+assert.equal(req.body.output_config.effort, 'low');
+assert.equal(req.body.fallbacks, undefined); // Haiku에는 다른 모델로 넘기는 기능이 없다
 assert.equal(req.body.output_config.format.type, 'json_schema');
 assert.match(req.body.messages[0].content, /목표 문장: It's a pen\./);
 assert.match(req.body.messages[0].content, /아이가 말한 것\(음성 인식\): "it is pen"/);

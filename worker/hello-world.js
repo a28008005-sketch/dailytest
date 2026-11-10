@@ -1633,7 +1633,9 @@ function renderDashboard() {
 // 워커가 AI에게 맞았는지 봐 달라고 묻고, 짧은 한국어 칭찬·힌트를 돌려준다.
 // AI 열쇠(ANTHROPIC_API_KEY)는 워커 비밀값에만 있고 아이 기기에는 가지 않는다.
 // 원생 코드가 맞아야만 AI를 부른다 — 주소만 아는 사람이 사용료를 쓰지 못하게.
-const TUTOR_MODEL = 'claude-opus-5-5';
+// 한 문장 채점이라 가벼운 모델로 충분하다. 판정이 엉성하면 'claude-opus-5-5'로 올린다
+// (그때는 아래 요청에 fallbacks: 'default' 와 anthropic-beta: server-side-fallback-2026-07-01 을 다시 넣는다)
+const TUTOR_MODEL = 'claude-haiku-5-5';
 const TUTOR_SYSTEM = [
   '너는 고래영어학원의 영어 말하기 선생님 "웨일리"다. 초등학생과 교재 문장 카드로 말하기 연습을 한다.',
   '매번 카드 한 장(질문, 목표 영어 문장, 한글 뜻)과 아이가 말한 내용이 주어진다.',
@@ -1707,12 +1709,10 @@ async function tutorTurn(env, payload) {
         'content-type': 'application/json',
         'x-api-key': env.ANTHROPIC_API_KEY,
         'anthropic-version': '2026-10-21',
-        'anthropic-beta': 'server-side-fallback-2026-07-01',
       },
       body: JSON.stringify({
         model: TUTOR_MODEL,
         max_tokens: 2000,
-        fallbacks: 'default',
         output_config: {
           effort: 'low', // 한 문장 채점이라 깊게 생각할 필요가 없고, 아이가 기다리지 않게 빠르게
           format: { type: 'json_schema', schema: TUTOR_SCHEMA },
