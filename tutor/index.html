@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1f5e">
+<link rel="icon" type="image/png" sizes="32x32" href="../cards/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../cards/icons/apple-touch-icon.png">
+<title>웨일리 AI 튜터 · 고래영어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Archivo+Black&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#132f86; --navy-d:#0b1f5e; --ink:#003C70; --gold:#ffd21f; --coral:#ff6b4a; --mint:#2fd39a;
+  --muted:#66708a; --line:#e3e8f2; --lv:#ffed04;
+  --f-d:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
+  --f-e:"Archivo Black","Arial Black",system-ui,sans-serif;
+  --f-b:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%;overflow-x:hidden}
+html{-webkit-text-size-adjust:100%}
+body{background:radial-gradient(1100px 480px at 50% -8%,#24439f 0%,transparent 70%),var(--navy-d);background-attachment:fixed;color:#fff;font-family:var(--f-b);word-break:keep-all}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left)) 48px;display:flex;flex-direction:column;gap:18px}
+
+/* 공통 */
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:34px;background:#fff;border-radius:10px;padding:4px 8px}
+.brand b{font-family:var(--f-e);letter-spacing:.05em;font-size:13px;opacity:.85}
+h1{font-family:var(--f-d);font-weight:400;font-size:clamp(32px,7vw,52px);line-height:1.1;margin:0}
+h1 em{font-style:normal;color:var(--gold)}
+.lead{margin:0;opacity:.85;line-height:1.7;font-size:15px}
+.box{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.13);border-radius:18px;padding:16px}
+.lab{font-size:12px;font-weight:900;letter-spacing:.12em;opacity:.65;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:9px 16px;font-weight:900;font-size:17px}
+.chip .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:1px}
+.chip[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff}
+.go{border:0;border-radius:18px;background:var(--gold);color:var(--ink);font-weight:900;font-size:21px;padding:17px;box-shadow:0 6px 0 #c9a400}
+.go:active{transform:translateY(3px);box-shadow:0 3px 0 #c9a400}
+.go:disabled{opacity:.45;box-shadow:none}
+.ghost{border:2px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:12px;padding:9px 14px;font-weight:800;font-size:14px}
+.note{font-size:13px;opacity:.7;line-height:1.6;margin:0}
+
+/* 로그인 */
+.row4{display:flex;gap:8px}
+.row4 input{flex:1;min-width:0;border:0;border-radius:12px;padding:12px 14px;font-size:20px;font-weight:800;letter-spacing:.2em;color:var(--ink)}
+.row4 button{border:0;border-radius:12px;background:#fff;color:var(--ink);font-weight:900;padding:0 18px}
+.me{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:900}
+.me button{margin-left:auto}
+.whomsg{font-size:14px;margin-top:8px;color:#ffb4a3}
+.whomsg:empty,#whoChoices:empty{display:none}
+.whomsg.ok{color:#cfe0ff}
+#whoChoices{margin-top:8px}
+
+/* 학습 화면 */
+.top{display:flex;align-items:center;gap:10px}
+.top .bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.top .bar i{display:block;height:100%;width:0;background:var(--mint);transition:width .4s}
+.top b{font-family:var(--f-e);font-size:14px;opacity:.85;min-width:56px;text-align:right}
+.card{background:#fff;border-radius:22px;overflow:hidden;color:#1b2440;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card .pic{background:#f3f6fb;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;border-bottom:6px solid var(--lv)}
+.card .pic img{max-width:100%;max-height:100%;object-fit:contain}
+.card .txt{padding:16px 18px 18px}
+.task{font-size:13px;font-weight:900;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.qline{font-size:clamp(20px,5vw,26px);font-weight:900;line-height:1.4;color:var(--ink);display:flex;align-items:flex-start;gap:8px}
+.qline button{flex:none;border:0;background:#eef2fb;border-radius:10px;padding:4px 9px;font-size:18px}
+.answer{margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff8d6;font-size:20px;font-weight:900;color:var(--ink);font-family:var(--f-b)}
+.answer small{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-top:2px}
+
+.tutor{display:flex;gap:12px;align-items:flex-start}
+.tutor img{width:56px;height:56px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.bubble{background:#fff;color:#1b2440;border-radius:4px 18px 18px 18px;padding:12px 15px;font-size:17px;font-weight:700;line-height:1.55;min-height:48px;flex:1}
+.bubble .hint{display:inline-block;margin-top:6px;background:#ffe9e3;color:#c23b1c;border-radius:8px;padding:2px 8px;font-weight:900}
+.bubble.think{color:var(--muted)}
+.kid{align-self:flex-end;max-width:85%;background:rgba(255,255,255,.12);border-radius:18px 4px 18px 18px;padding:10px 14px;font-size:17px;font-weight:700}
+.kid.ok{background:rgba(47,211,154,.25)}
+
+.mic{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:4px}
+.micbtn{width:96px;height:96px;border-radius:50%;border:0;background:var(--coral);color:#fff;font-size:40px;box-shadow:0 8px 0 #c94a2f,0 0 0 0 rgba(255,107,74,.6)}
+.micbtn:disabled{opacity:.4}
+.micbtn.on{animation:pulse 1.1s infinite;background:#ff3d2e}
+@keyframes pulse{0%{box-shadow:0 8px 0 #c94a2f,0 0 0 0 rgba(255,107,74,.6)}100%{box-shadow:0 8px 0 #c94a2f,0 0 0 26px rgba(255,107,74,0)}}
+.miclab{font-size:15px;font-weight:800;opacity:.85;text-align:center}
+.typerow{display:flex;gap:8px;width:100%}
+.typerow input{flex:1;min-width:0;border:0;border-radius:12px;padding:12px 14px;font-size:17px;color:var(--ink)}
+.typerow button{border:0;border-radius:12px;background:#fff;color:var(--ink);font-weight:900;padding:0 16px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+
+/* 결과 */
+.score{font-family:var(--f-d);font-size:64px;line-height:1;color:var(--gold)}
+.stars{font-size:38px;letter-spacing:4px}
+.miss{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.miss li{background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-weight:800}
+.miss li small{display:block;color:var(--muted);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ① 고르기 화면 -->
+<section id="home"><div class="wrap">
+  <div class="brand"><img src="../cards/logo.png" alt="고래영어"><b>WHALEY AI TUTOR</b></div>
+  <div>
+    <h1>웨일리와 <em>말하기</em> 연습</h1>
+    <p class="lead" style="margin-top:8px">교재 문장 카드를 보고 영어로 말해 보세요. 웨일리가 듣고 맞았는지, 무엇을 고치면 좋을지 알려 줘요.</p>
+  </div>
+
+  <div class="box">
+    <div class="lab">누구인가요?</div>
+    <div class="me" id="me" hidden><span id="meName"></span><button type="button" class="ghost" id="meOut">바꾸기</button></div>
+    <div class="row4" id="ph4Row"><input id="ph4" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="학부모 휴대폰 뒤 4자리" autocomplete="off"><button type="button" id="ph4Go">확인</button></div>
+    <div class="chips" id="whoChoices"></div>
+    <div class="whomsg ok" id="whoMsg">고래영어 원생만 쓸 수 있어요.</div>
+  </div>
+
+  <div class="box">
+    <div class="lab">레벨</div><div class="chips" id="lvChips"></div>
+    <div class="lab" style="margin-top:16px">권</div><div class="chips" id="volChips"></div>
+    <div class="lab" style="margin-top:16px">유닛</div><div class="chips" id="unitChips"></div>
+    <p class="note" id="pickMeta" style="margin-top:12px"></p>
+  </div>
+
+  <button class="go" id="goBtn" type="button">🎙️ 웨일리와 시작하기</button>
+  <p class="note" id="micNote"></p>
+</div></section>
+
+<!-- ② 학습 화면 -->
+<section id="lesson" hidden><div class="wrap">
+  <div class="top"><button class="ghost" id="bExit" type="button">✕</button><div class="bar"><i id="barFill"></i></div><b id="count">1/10</b></div>
+
+  <div class="card">
+    <div class="pic"><img id="cImg" alt=""></div>
+    <div class="txt">
+      <div class="task" id="cTask"></div>
+      <div class="qline"><span id="cQ"></span><button type="button" id="bListenQ" aria-label="질문 다시 듣기" hidden>🔊</button></div>
+      <div class="answer" id="cAns" hidden><span id="cAnsEn"></span><small id="cAnsKo"></small></div>
+    </div>
+  </div>
+
+  <div class="tutor"><img src="../voca/icons/icon-192.png" alt="웨일리"><div class="bubble" id="bubble"></div></div>
+  <div class="kid" id="kid" hidden></div>
+
+  <div class="mic">
+    <button class="micbtn" id="micBtn" type="button" aria-label="말하기">🎤</button>
+    <div class="miclab" id="micLab">버튼을 누르고 영어로 말해 보세요</div>
+    <div class="typerow" id="typeRow" hidden><input id="typeIn" placeholder="영어로 써 보세요" autocomplete="off" autocapitalize="off"><button type="button" id="typeGo">보내기</button></div>
+    <div class="acts">
+      <button class="ghost" type="button" id="bType">⌨️ 글자로 쓰기</button>
+      <button class="ghost" type="button" id="bShow">💡 정답 보기</button>
+      <button class="ghost" type="button" id="bNext" hidden>다음 ▶</button>
+    </div>
+  </div>
+</div></section>
+
+<!-- ③ 결과 화면 -->
+<section id="done" hidden><div class="wrap" style="text-align:center;align-items:center">
+  <div class="brand"><img src="../cards/logo.png" alt="고래영어"><b>WHALEY AI TUTOR</b></div>
+  <div class="stars" id="rStars"></div>
+  <div class="score" id="rScore"></div>
+  <p class="lead" id="rMsg"></p>
+  <div class="box" id="rMissBox" style="width:100%;text-align:left">
+    <div class="lab">한 번에 못 말한 문장</div>
+    <ul class="miss" id="rMiss"></ul>
+  </div>
+  <div class="acts">
+    <button class="go" type="button" id="bRetryMiss">틀린 문장 다시 하기</button>
+    <button class="ghost" type="button" id="bHome">처음으로</button>
+  </div>
+</div></section>
+
+<script src="../cards/cards.js"></script>
+<script>
+var D = window.CARD_DATA, $ = function (s) { return document.querySelector(s); };
+var API = 'https://hello-world.a28008005.workers.dev';
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem('tutor.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem('tutor.' + k, JSON.stringify(v)); } catch (e) {} }
+};
+// 서바이벌 카드에서 이미 로그인했으면 그대로 이어 쓴다 (같은 주소 아래라 기기 저장소가 같다)
+var me = LS.get('me', null);
+if (!me) { try { me = JSON.parse(localStorage.getItem('sbs.me') || 'null'); } catch (e) { me = null; } }
+var sel = LS.get('sel', { lv: '240', vol: 1, unit: 1 });
+var q = new URLSearchParams(location.search);
+if (q.get('lv') && D.levels.some(function (l) { return l.id === q.get('lv'); })) sel.lv = q.get('lv');
+if (+q.get('v') >= 1 && +q.get('v') <= 6) sel.vol = +q.get('v');
+if (+q.get('u') >= 1 && +q.get('u') <= 4) sel.unit = +q.get('u');
+
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var MAX_TRIES = 2; // 두 번 못 맞히면 정답을 보여 주고 따라 말하게 한다
+
+function level() { return D.levels.filter(function (l) { return l.id === sel.lv; })[0]; }
+function unitCards() { return level().cards.filter(function (c) { return c.vol === sel.vol && c.unit === sel.unit; }); }
+function show(id) { ['home', 'lesson', 'done'].forEach(function (s) { $('#' + s).hidden = s !== id; }); window.scrollTo(0, 0); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+/* ── 고르기 화면 ── */
+function chips(el, list, cur, pick) {
+  el.innerHTML = '';
+  list.forEach(function (it) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'chip';
+    b.innerHTML = it[1]; b.setAttribute('aria-pressed', String(it[0] === cur));
+    if (it[2]) b.style.setProperty('--c', it[2]);
+    b.onclick = function () { pick(it[0]); LS.set('sel', sel); renderHome(); };
+    el.appendChild(b);
+  });
+}
+function renderHome() {
+  chips($('#lvChips'), D.levels.map(function (l) { return [l.id, '<span class="dot"></span>' + l.id, l.color]; }), sel.lv, function (v) { sel.lv = v; });
+  chips($('#volChips'), [1, 2, 3, 4, 5, 6].map(function (v) { return [v, 'Vol.' + v]; }), sel.vol, function (v) { sel.vol = v; });
+  chips($('#unitChips'), [1, 2, 3, 4].map(function (v) { return [v, 'Unit ' + v]; }), sel.unit, function (v) { sel.unit = v; });
+  var cs = unitCards();
+  $('#pickMeta').textContent = sel.lv + ' · Vol.' + sel.vol + ' · Unit ' + sel.unit + ' — 문장 ' + cs.length + '개 · 약 ' + Math.max(3, Math.round(cs.length * 0.6)) + '분';
+  var on = !!(me && me.code);
+  $('#me').hidden = !on; $('#ph4Row').hidden = on;
+  $('#meName').textContent = on ? me.name + ' ✓' : '';
+  if (on) { $('#whoChoices').innerHTML = ''; msg(''); }
+  $('#goBtn').disabled = !on;
+  $('#micNote').textContent = SR
+    ? '처음 시작할 때 마이크 사용을 허용해 주세요. 조용한 곳에서 하면 더 잘 알아들어요.'
+    : '이 기기에서는 음성 인식이 안 돼서 글자로 써서 연습해요. 안드로이드 크롬이나 아이패드 최신 사파리에서는 말로 할 수 있어요.';
+}
+function msg(t, ok) { var m = $('#whoMsg'); m.textContent = t; m.className = 'whomsg' + (ok ? ' ok' : ''); }
+function login(extra) {
+  var p4 = $('#ph4').value.replace(/\D/g, '');
+  if (p4.length !== 4) { msg('휴대폰 번호 뒤 4자리를 넣어 주세요.'); return; }
+  msg('확인하는 중…', true); $('#whoChoices').innerHTML = '';
+  fetch(API + '/api/voca/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ phone4: p4 }, extra || {})) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.success && j.code) { me = { name: j.name, code: j.code }; LS.set('me', me); renderHome(); return; }
+      if (j && j.choices) {
+        msg('이름을 골라 주세요.', true);
+        var box = $('#whoChoices');
+        j.choices.forEach(function (c) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = c.name;
+          b.onclick = function () { login({ studentId: c.id }); }; box.appendChild(b);
+        });
+        return;
+      }
+      msg((j && j.error) || '찾지 못했어요. 선생님께 물어봐 주세요.');
+    })
+    .catch(function () { msg('인터넷 연결을 확인해 주세요.'); });
+}
+$('#ph4Go').onclick = function () { login(); };
+$('#ph4').onkeydown = function (e) { if (e.key === 'Enter') login(); };
+$('#meOut').onclick = function () { me = null; LS.set('me', null); $('#ph4').value = ''; renderHome(); msg('학부모 휴대폰 뒤 4자리를 넣어 주세요.', true); };
+
+/* ── 소리 ── */
+var cur = null; // 지금 나오는 소리
+function stopSound() {
+  if (cur && cur.pause) { try { cur.pause(); } catch (e) {} }
+  cur = null;
+  try { speechSynthesis.cancel(); } catch (e) {}
+}
+// 녹음 파일이 있으면 원어민 녹음, 없으면 기기 음성으로 읽는다
+function play(src, fallbackText, lang) {
+  stopSound();
+  return new Promise(function (done) {
+    var finished = false, end = function () { if (!finished) { finished = true; done(); } };
+    if (src) {
+      var a = new Audio(src); cur = a;
+      a.onended = end; a.onerror = function () { say(fallbackText, lang).then(end); };
+      a.play().catch(function () { say(fallbackText, lang).then(end); });
+      setTimeout(end, 9000);
+    } else say(fallbackText, lang).then(end);
+  });
+}
+var voices = {};
+function pickVoice(lang) {
+  if (voices[lang]) return voices[lang];
+  var list = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+  var pre = lang.slice(0, 2);
+  voices[lang] = list.filter(function (v) { return v.lang && v.lang.replace('_', '-').indexOf(lang) === 0; })[0]
+    || list.filter(function (v) { return v.lang && v.lang.indexOf(pre) === 0; })[0] || null;
+  return voices[lang];
+}
+function say(text, lang) {
+  return new Promise(function (done) {
+    if (!text || !window.speechSynthesis) return done();
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = lang || 'ko-KR'; var v = pickVoice(u.lang); if (v) u.voice = v;
+      u.rate = u.lang === 'ko-KR' ? 1.05 : 0.9;
+      var t = setTimeout(done, 1500 + text.length * 180);
+      u.onend = u.onerror = function () { clearTimeout(t); done(); };
+      speechSynthesis.speak(u);
+    } catch (e) { done(); }
+  });
+}
+if (window.speechSynthesis) speechSynthesis.onvoiceschanged = function () { voices = {}; };
+function audioOf(hash) { return hash ? '../cards/audio/' + hash + '.mp3' : ''; }
+
+/* ── 채점 도우미 (AI를 부르기 전에 기기에서 먼저 확인) ── */
+var CONTRACT = { "it's": 'it is', "what's": 'what is', "that's": 'that is', "he's": 'he is', "she's": 'she is', "i'm": 'i am',
+  "you're": 'you are', "we're": 'we are', "they're": 'they are', "isn't": 'is not', "aren't": 'are not', "don't": 'do not',
+  "doesn't": 'does not', "didn't": 'did not', "can't": 'can not', "cannot": 'can not', "won't": 'will not', "let's": 'let us',
+  "there's": 'there is', "where's": 'where is', "who's": 'who is', "how's": 'how is', "i'll": 'i will', "i've": 'i have',
+  "wasn't": 'was not', "weren't": 'were not', "haven't": 'have not', "hasn't": 'has not', "here's": 'here is' };
+function words(s) {
+  s = String(s || '').toLowerCase().replace(/[’‘`]/g, "'").replace(/[^a-z0-9' ]+/g, ' ');
+  return s.split(/\s+/).filter(Boolean).map(function (w) { return CONTRACT[w] || w; }).join(' ').split(' ').filter(Boolean)
+    .map(function (w) { return w.replace(/'/g, ''); });
+}
+function sim(a, b) { // 단어 단위로 얼마나 같은지 (0~1)
+  var x = words(a), y = words(b); if (!x.length || !y.length) return 0;
+  var m = []; for (var i = 0; i <= x.length; i++) { m[i] = []; for (var j = 0; j <= y.length; j++) m[i][j] = 0; }
+  for (i = 1; i <= x.length; i++) for (j = 1; j <= y.length; j++) m[i][j] = x[i - 1] === y[j - 1] ? m[i - 1][j - 1] + 1 : Math.max(m[i - 1][j], m[i][j - 1]);
+  return 2 * m[x.length][y.length] / (x.length + y.length);
+}
+var PRAISE = ['완벽해요! 발음도 또렷했어요.', '정확해요! 아주 자연스러웠어요.', '맞았어요! 문장을 끝까지 잘 말했어요.', '좋아요! 그대로 한 번 더 들어 봐요.', '훌륭해요! 이 문장은 이제 내 거예요.'];
+
+/* ── 학습 진행 ── */
+var L = null; // { cards, i, tries, okFirst, missed, busy, revealed }
+var run = 0;   // 나가기·다시 시작 후 남은 소리·대기가 새 화면을 건드리지 않게
+function alive(my) { return my === run; }
+function start(list) {
+  run++;
+  L = { cards: list, i: 0, tries: 0, okFirst: 0, missed: [], busy: false, revealed: false };
+  show('lesson'); document.documentElement.style.setProperty('--lv', level().color);
+  // 아이폰은 사용자가 누른 순간에 소리를 한 번 열어 둬야 이후에 소리가 난다
+  try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) {}
+  openCard();
+}
+function card() { return L.cards[L.i]; }
+function bubble(html, thinking) { var b = $('#bubble'); b.innerHTML = html; b.className = 'bubble' + (thinking ? ' think' : ''); }
+function kid(text, ok) { var k = $('#kid'); k.hidden = !text; k.textContent = text ? '🗣️ ' + text : ''; k.className = 'kid' + (ok ? ' ok' : ''); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function micReady(on, label) {
+  $('#micBtn').disabled = !on || !SR; $('#micLab').textContent = label || (SR ? '버튼을 누르고 영어로 말해 보세요' : '아래 칸에 영어로 써 보세요');
+  if (!SR) $('#typeRow').hidden = false;
+}
+
+async function openCard() {
+  var my = run, c = card(); L.tries = 0; L.revealed = false; L.busy = true;
+  $('#count').textContent = (L.i + 1) + '/' + L.cards.length;
+  $('#barFill').style.width = (L.i / L.cards.length * 100) + '%';
+  $('#cImg').src = '../cards/img/' + sel.lv + '/' + c.no + '.webp';
+  $('#cAns').hidden = true; $('#bNext').hidden = true; $('#bShow').hidden = false; kid('');
+  $('#cAnsEn').textContent = c.a; $('#cAnsKo').textContent = c.ko;
+  $('#cQ').textContent = c.q; $('#typeIn').value = '';
+  var nx = L.cards[L.i + 1]; if (nx) { new Image().src = '../cards/img/' + sel.lv + '/' + nx.no + '.webp'; }
+  micReady(false, '웨일리가 말하는 중…');
+  if (c.qLang === 'ko') {
+    $('#cTask').textContent = '영어로 말해 보세요'; $('#bListenQ').hidden = true;
+    bubble('이 문장을 <b>영어로</b> 말해 볼까요?');
+    await play('../cards/voice/say.mp3', 'Say it in English!', 'en-US');
+  } else {
+    $('#cTask').textContent = '질문에 영어로 대답해 보세요'; $('#bListenQ').hidden = false;
+    bubble('질문을 잘 듣고 <b>영어로 대답</b>해 보세요.');
+    await play(audioOf(c.qa), c.q, 'en-US');
+  }
+  if (!alive(my)) return;
+  L.busy = false; micReady(true);
+}
+$('#bListenQ').onclick = function () { var c = card(); play(audioOf(c.qa), c.q, 'en-US'); };
+
+/* 음성 인식 */
+var rec = null;
+$('#micBtn').onclick = function () {
+  if (rec) { try { rec.stop(); } catch (e) {} return; }
+  if (L.busy) return;
+  stopSound();
+  var r = new SR(); rec = r;
+  r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
+  var finalAlts = [], interim = '';
+  $('#micBtn').classList.add('on'); $('#micLab').textContent = '듣고 있어요… 다 말하면 버튼을 한 번 더 눌러도 돼요';
+  r.onresult = function (e) {
+    interim = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      var res = e.results[i];
+      if (res.isFinal) { finalAlts = []; for (var k = 0; k < res.length; k++) finalAlts.push(res[k].transcript); }
+      else interim += res[0].transcript;
+    }
+    kid(finalAlts[0] || interim);
+  };
+  r.onerror = function (e) {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      bubble('마이크를 쓸 수 없어요. 주소창의 자물쇠를 눌러 마이크를 허용하거나, 아래 칸에 글자로 써 보세요.');
+      $('#typeRow').hidden = false;
+    }
+  };
+  r.onend = function () {
+    rec = null; $('#micBtn').classList.remove('on');
+    var alts = finalAlts.length ? finalAlts : (interim ? [interim] : []);
+    if (!alts.length) { micReady(true, '잘 못 들었어요. 버튼을 누르고 다시 말해 볼까요?'); return; }
+    check(alts);
+  };
+  try { r.start(); } catch (e) { rec = null; $('#micBtn').classList.remove('on'); }
+};
+$('#bType').onclick = function () { $('#typeRow').hidden = !$('#typeRow').hidden; if (!$('#typeRow').hidden) $('#typeIn').focus(); };
+$('#typeGo').onclick = function () { var t = $('#typeIn').value.trim(); if (t && !L.busy) { kid(t); check([t]); } };
+$('#typeIn').onkeydown = function (e) { if (e.key === 'Enter') $('#typeGo').onclick(); };
+
+async function check(alts) {
+  var my = run, c = card(); L.busy = true; micReady(false, '웨일리가 생각하는 중…');
+  var said = alts[0];
+  // 정답을 보여 준 뒤 따라 말하기는 기기에서만 확인한다
+  if (L.revealed) {
+    var good = alts.some(function (a) { return sim(a, c.a) >= 0.75; });
+    kid(said, good);
+    bubble(good ? '잘 따라 했어요! 다음 문장으로 가 볼까요?' : '괜찮아요. 한 번 더 들어 보고 다음으로 가요.');
+    await say(good ? '잘 따라 했어요!' : '괜찮아요. 한 번 더 들어 봐요.', 'ko-KR');
+    if (!good) await play(audioOf(c.aa), c.a, 'en-US');
+    if (alive(my)) finishCard(); return;
+  }
+  L.tries++;
+  // 인식된 후보 중 하나라도 정답과 똑같으면 바로 칭찬 (AI를 부르지 않아 빠르고 사용료가 들지 않는다)
+  var exact = alts.filter(function (a) { return sim(a, c.a) === 1; })[0];
+  var result, reply, hint = '';
+  if (exact) {
+    said = exact; result = 'correct'; reply = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+  } else {
+    kid(said); bubble('음… 들어 볼게요', true);
+    var j = await askTutor(c, said);
+    if (!alive(my)) return;
+    if (j && j.success) { result = j.result; reply = j.reply; hint = j.hint; }
+    else { // AI가 안 될 때도 공부는 이어지게 기기에서 대신 판단
+      var s = sim(said, c.a);
+      result = s >= 0.9 ? 'correct' : s >= 0.6 ? 'almost' : 'retry';
+      reply = result === 'correct' ? '맞았어요! 잘했어요.' : result === 'almost' ? '거의 다 왔어요! 빠진 단어가 있는지 다시 들어 봐요.' : '한 번 더 해 볼까요? 천천히 말해 봐요.';
+    }
+  }
+  kid(said, result === 'correct');
+  bubble(esc(reply) + (hint && result !== 'correct' ? '<br><span class="hint">' + esc(hint) + '</span>' : ''));
+  if (result === 'correct') {
+    if (L.tries === 1) L.okFirst++; else L.missed.push(c);
+    $('#cAns').hidden = false;
+    await say(reply, 'ko-KR');
+    await play(audioOf(c.aa), c.a, 'en-US');
+    if (alive(my)) finishCard(); return;
+  }
+  await say(reply, 'ko-KR');
+  if (!alive(my)) return;
+  if (L.tries >= MAX_TRIES) { reveal(true); return; }
+  L.busy = false; micReady(true, '한 번 더! 버튼을 누르고 말해 보세요');
+}
+
+function askTutor(c, said) {
+  var ctrl = window.AbortController ? new AbortController() : null;
+  var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
+  return fetch(API + '/api/tutor/turn', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl ? ctrl.signal : undefined,
+    body: JSON.stringify({ code: me && me.code, said: said, tries: L.tries,
+      card: { level: sel.lv, q: c.q, qLang: c.qLang, a: c.a, ko: c.ko } })
+  }).then(function (r) { return r.json(); }).catch(function () { return null; }).finally(function () { clearTimeout(t); });
+}
+
+async function reveal(auto) {
+  var my = run, c = card(); if (L.revealed) return;
+  stopSound(); if (rec) { try { rec.abort(); } catch (e) {} rec = null; $('#micBtn').classList.remove('on'); }
+  L.revealed = true; L.busy = true; if (L.missed.indexOf(c) < 0) L.missed.push(c);
+  $('#cAns').hidden = false; $('#bShow').hidden = true; $('#bNext').hidden = false;
+  bubble((auto ? '괜찮아요, 같이 해 봐요. ' : '') + '정답을 잘 듣고 <b>따라 말해</b> 보세요.');
+  micReady(false, '웨일리가 말하는 중…');
+  await say((auto ? '괜찮아요. ' : '') + '잘 듣고 따라 말해 보세요.', 'ko-KR');
+  await play(audioOf(c.aa), c.a, 'en-US');
+  if (!alive(my)) return;
+  L.busy = false; micReady(true, '버튼을 누르고 따라 말해 보세요 (건너뛰려면 다음 ▶)');
+}
+$('#bShow').onclick = function () { if (!L.busy) reveal(false); };
+$('#bNext').onclick = function () { stopSound(); finishCard(); };
+
+async function finishCard() {
+  var my = run;
+  L.busy = true; micReady(false, '');
+  await sleep(500);
+  if (!alive(my)) return;
+  L.i++;
+  if (L.i >= L.cards.length) return finish();
+  openCard();
+}
+
+function finish() {
+  stopSound(); $('#barFill').style.width = '100%';
+  var n = L.cards.length, ok = L.okFirst, pct = Math.round(ok / n * 100);
+  $('#rScore').textContent = pct + '%';
+  $('#rStars').textContent = pct >= 90 ? '⭐⭐⭐' : pct >= 70 ? '⭐⭐' : '⭐';
+  $('#rMsg').textContent = (me ? me.name + ' 학생, ' : '') + n + '문장 중 ' + ok + '문장을 한 번에 말했어요. ' +
+    (pct >= 90 ? '이 유닛은 완벽해요!' : pct >= 70 ? '조금만 더 하면 완벽해요.' : '틀린 문장만 한 번 더 해 봐요.');
+  $('#rMissBox').hidden = !L.missed.length; $('#bRetryMiss').hidden = !L.missed.length;
+  $('#rMiss').innerHTML = L.missed.map(function (c) { return '<li>' + esc(c.a) + '<small>' + esc(c.ko) + '</small></li>'; }).join('');
+  show('done');
+  say(pct >= 90 ? '오늘 정말 잘했어요!' : '수고했어요! 다음에 또 만나요.', 'ko-KR');
+}
+$('#bRetryMiss').onclick = function () { start(L.missed.slice()); };
+$('#bHome').onclick = function () { run++; stopSound(); renderHome(); show('home'); };
+$('#bExit').onclick = function () { if (confirm('그만할까요?')) { run++; stopSound(); if (rec) { try { rec.abort(); } catch (e) {} rec = null; } renderHome(); show('home'); } };
+$('#goBtn').onclick = function () { if (me && me.code) start(unitCards()); };
+
+renderHome();
+</script>
+</body>
+</html>

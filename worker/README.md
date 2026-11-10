@@ -59,9 +59,32 @@
 - 원생관리 명부에 같은 이름이 하나만 있어야 포인트가 쌓입니다 (성적 전달과 같은 조건).
 - 숫자를 바꾸려면 `hello-world.js` 의 `POINT_RULES` 와 원생관리 `assets/js/store.js` 의 `POINT_RULES` 를 **같이** 바꿉니다.
 
+## AI 튜터 (문장 카드 말하기) — `/api/tutor/turn`
+
+학생 화면: `https://a28008005-sketch.github.io/dailytest/tutor/` (레벨을 정해서 열기: `?lv=240&v=1&u=1`)
+
+- 아이가 카드 문장을 말하면 앱이 음성 인식 글자를 보내고, 워커가 AI에게 채점을 맡겨
+  `correct`(맞음) · `almost`(거의) · `retry`(다시)와 짧은 한국어 한마디를 돌려줍니다.
+- **원생 코드가 맞아야만** AI를 부릅니다. 코드가 없거나 퇴원생이면 사용료가 나가지 않습니다.
+- 정답과 똑같이 말하면 앱이 기기에서 바로 칭찬하고 **AI를 부르지 않습니다**(빠르고 무료).
+  틀렸거나 애매할 때만 AI를 부릅니다. 정답을 보여 준 뒤 따라 말하기도 기기에서만 확인합니다.
+- AI가 안 되면(열쇠 없음·인터넷 끊김) 앱이 단어 비교로 대신 채점해서 공부는 그대로 이어집니다.
+- 쓰는 AI: `TUTOR_MODEL` (지금 `claude-opus-5-5`, 생각 깊이 `low`). 바꾸려면 이 한 줄만 고치면 됩니다.
+
+### 처음 한 번 — AI 열쇠 넣기
+
+1. console.anthropic.com → API Keys → **Create Key** 로 열쇠를 만들고 복사합니다.
+   (Billing에서 결제 수단을 등록하고, **Limits에서 월 사용 한도**를 꼭 정해 두세요)
+2. dash.cloudflare.com → Workers & Pages → hello-world → Settings → Variables and Secrets
+   → Add → 종류 **Secret**, 이름 `ANTHROPIC_API_KEY`, 값에 붙여 넣고 Deploy.
+3. 아래 '바꾸는 법'대로 새 `hello-world.js` 를 올립니다.
+4. `https://hello-world.a28008005.workers.dev/api/health` 에서 `"hasTutorKey":true` 가 보이면 끝입니다.
+
+이 열쇠도 워커 비밀값에만 넣고, 앱 코드·카톡·문서에는 절대 붙이지 마세요.
+
 ## 바꾸는 법
 
 1. dash.cloudflare.com → Workers & Pages → hello-world → Edit code
 2. 코드를 모두 지우고 `hello-world.js` 내용을 붙여 넣은 뒤 **Deploy**
 
-확인: `node worker/hello-world.test.mjs` (가짜 노션·가짜 클라우드로 로그인·진도·대시보드·성적 전달을 확인합니다)
+확인: `node worker/hello-world.test.mjs` · `node worker/tutor.test.mjs` (가짜 노션·가짜 클라우드로 로그인·진도·대시보드·성적 전달을 확인합니다)

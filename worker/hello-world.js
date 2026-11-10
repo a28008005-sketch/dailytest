@@ -1628,6 +1628,125 @@ function renderDashboard() {
     .replace('<!--EXTRA_PANELS-->', panels);
 }
 
+// ── AI 튜터 (문장 카드로 말하기 연습) ──
+// 아이가 카드 문장을 말하면, 앱이 그 말(음성 인식 글자)을 여기로 보낸다.
+// 워커가 AI에게 맞았는지 봐 달라고 묻고, 짧은 한국어 칭찬·힌트를 돌려준다.
+// AI 열쇠(ANTHROPIC_API_KEY)는 워커 비밀값에만 있고 아이 기기에는 가지 않는다.
+// 원생 코드가 맞아야만 AI를 부른다 — 주소만 아는 사람이 사용료를 쓰지 못하게.
+const TUTOR_MODEL = 'claude-opus-5-5';
+const TUTOR_SYSTEM = [
+  '너는 고래영어학원의 영어 말하기 선생님 "웨일리"다. 초등학생과 교재 문장 카드로 말하기 연습을 한다.',
+  '매번 카드 한 장(질문, 목표 영어 문장, 한글 뜻)과 아이가 말한 내용이 주어진다.',
+  '아이가 말한 내용은 휴대폰 음성 인식이 받아 적은 글자라서 철자·대소문자·문장부호가 틀리거나 비슷한 소리의 다른 단어로 적힐 수 있다. 그 정도는 감안해서 판단한다.',
+  '',
+  '판정 기준:',
+  '- correct: 목표 문장과 뜻·구조가 같다. 축약형(It\'s / It is), 음성 인식의 사소한 오류, 이름·물건만 자연스럽게 바꾼 경우도 맞음으로 본다.',
+  '- almost: 거의 맞았지만 단어 하나가 빠졌거나(a/the, be동사 등), 순서·형태가 하나 틀렸다.',
+  '- retry: 많이 다르거나, 한국어로 말했거나, 아무 말도 알아들을 수 없다.',
+  '',
+  'reply_ko 쓰는 법:',
+  '- 아이에게 소리 내어 읽어 줄 말이다. 한국어 반말이 아닌 다정한 존댓말("~해요")로 1~2문장, 60자 안쪽.',
+  '- correct면 구체적으로 짧게 칭찬한다(무엇을 잘했는지). 매번 같은 말을 반복하지 않는다.',
+  '- almost/retry면 무엇이 빠졌거나 틀렸는지 딱 하나만 짚는다. 정답 문장 전체를 말해 주지는 않는다(앱이 원어민 녹음으로 들려준다).',
+  '- 아이가 질문을 하거나 엉뚱한 말을 하면 짧게 받아 주고 카드 문장으로 돌아오게 한다.',
+  '- 영어 단어를 짚을 때는 영어 철자 그대로 쓴다(예: "a를 빼먹었어요").',
+  '',
+  'hint_en: almost/retry일 때 아이가 놓친 부분(단어 1~3개, 예: "a pen"). correct면 빈 문자열.',
+].join('\n');
+
+const TUTOR_SCHEMA = {
+  type: 'object',
+  properties: {
+    result: { type: 'string', enum: ['correct', 'almost', 'retry'] },
+    reply_ko: { type: 'string' },
+    hint_en: { type: 'string' },
+  },
+  required: ['result', 'reply_ko', 'hint_en'],
+  additionalProperties: false,
+};
+
+// 같은 아이가 문장마다 노션을 다시 뒤지지 않게, 확인된 코드는 잠깐 기억해 둔다.
+const tutorCodeCache = new Map();
+async function tutorStudent(env, code) {
+  const key = String(code || '').trim().toUpperCase();
+  const hit = tutorCodeCache.get(key);
+  if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.student;
+  const student = await findStudentByCode(env, key);
+  if (!student.error) tutorCodeCache.set(key, { at: Date.now(), student });
+  return student;
+}
+
+function clip(s, n) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n); }
+
+async function tutorTurn(env, payload) {
+  try {
+    if (!env.ANTHROPIC_API_KEY) return { success: false, error: 'AI 열쇠(ANTHROPIC_API_KEY)가 워커에 등록되지 않았습니다' };
+    const student = await tutorStudent(env, payload && payload.code);
+    if (student.error) return { success: false, error: student.error };
+
+    const card = (payload && payload.card) || {};
+    const target = clip(card.a, 200);
+    if (!target) return { success: false, error: '카드 정보가 없습니다' };
+    const said = clip(payload.said, 200);
+    const tries = Math.max(1, Math.min(5, Number(payload.tries) || 1));
+
+    const lines = [
+      '레벨: ' + clip(card.level, 10),
+      card.qLang === 'ko'
+        ? '과제: 한글 뜻을 보고 영어로 말하기 → "' + clip(card.q, 200) + '"'
+        : '과제: 영어 질문에 대답하기 → 질문 "' + clip(card.q, 200) + '"',
+      '목표 문장: ' + target,
+      '한글 뜻: ' + clip(card.ko, 200),
+      '이번이 ' + tries + '번째 시도',
+      '아이가 말한 것(음성 인식): ' + (said ? '"' + said + '"' : '(아무 말도 인식되지 않음)'),
+    ];
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2026-10-21',
+        'anthropic-beta': 'server-side-fallback-2026-07-01',
+      },
+      body: JSON.stringify({
+        model: TUTOR_MODEL,
+        max_tokens: 2000,
+        fallbacks: 'default',
+        output_config: {
+          effort: 'low', // 한 문장 채점이라 깊게 생각할 필요가 없고, 아이가 기다리지 않게 빠르게
+          format: { type: 'json_schema', schema: TUTOR_SCHEMA },
+        },
+        system: TUTOR_SYSTEM,
+        messages: [{ role: 'user', content: lines.join('\n') }],
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return { success: false, error: 'AI 응답 오류 ' + res.status, detail: text.slice(0, 300) };
+    }
+    const data = await res.json();
+    if (data.stop_reason === 'refusal' || data.stop_reason === 'max_tokens') {
+      return { success: false, error: 'AI가 답을 만들지 못했습니다 (' + data.stop_reason + ')' };
+    }
+    const textBlock = (data.content || []).filter(b => b.type === 'text').pop();
+    let out;
+    try { out = JSON.parse(textBlock ? textBlock.text : ''); } catch (e) { out = null; }
+    if (!out || !['correct', 'almost', 'retry'].includes(out.result)) {
+      return { success: false, error: 'AI 답을 읽지 못했습니다' };
+    }
+    return {
+      success: true,
+      result: out.result,
+      reply: clip(out.reply_ko, 160),
+      hint: clip(out.hint_en, 60),
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -1653,6 +1772,7 @@ async function handleRequest(request, env) {
         hasNotionKey: Boolean(env.NOTION_API_KEY),
         hasPassword: Boolean(env.DASHBOARD_PASSWORD),
         hasStaffCloud: Boolean(env.SUPABASE_SERVICE_KEY),
+        hasTutorKey: Boolean(env.ANTHROPIC_API_KEY),
         today: seoulToday(),
       });
     }
@@ -1668,6 +1788,9 @@ async function handleRequest(request, env) {
     }
     if (path === '/api/voca/points' && request.method === 'POST') {
       return json(await vocaPoints(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/tutor/turn' && request.method === 'POST') {
+      return json(await tutorTurn(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/voca/save' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
