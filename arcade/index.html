@@ -22,7 +22,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 .logo{font-size:30px;color:var(--navy);margin:4px 0 0;text-shadow:0 3px 0 #fff}
 .logo b{color:#e8a400}
 .sub{font-size:15px;color:#3b5a85;margin:4px 0 6px}
-#mascot{width:220px;height:170px}
+#mascot{width:100%;max-width:400px;height:auto;aspect-ratio:720/340}
 .lvrow{display:flex;gap:10px;width:100%;margin:6px 0}
 .lvbtn{flex:1;padding:12px 6px;border-radius:18px;font-size:20px;background:#fff;color:var(--navy);box-shadow:0 5px 0 #9cc7ee}
 .lvbtn.on{background:var(--navy);color:#fff;box-shadow:0 5px 0 #05213f}
@@ -30,6 +30,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 .pick select{flex:1;font-family:inherit;font-size:17px;padding:10px 8px;border-radius:14px;border:3px solid #cfe5fb;background:#fff;color:var(--ink)}
 .games{display:grid;gap:12px;width:100%;margin-top:10px}
 .gcard{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px;color:#fff;text-align:left;box-shadow:0 6px 0 rgba(0,0,0,.18);position:relative}
+.gcard .ic img{width:52px;height:52px;object-fit:contain}
 .gcard .ic{font-size:40px;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex:none}
 .gcard h3{margin:0;font-size:21px;font-weight:400}
 .gcard p{margin:2px 0 0;font-size:13.5px;opacity:.92;font-family:system-ui,sans-serif}
@@ -38,6 +39,15 @@ button{font-family:inherit;cursor:pointer;border:0}
 .g2{background:linear-gradient(135deg,#29b6f6,#3d6ef0)}
 .g3{background:linear-gradient(135deg,#9b5cff,#5b3bd1)}
 .gcard:active,.lvbtn:active,.choice:active,.pbtn:active{transform:translateY(3px)}
+.friends{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;width:100%;margin:2px 0 4px}
+.fr{background:#fff;border-radius:14px;padding:5px 2px 4px;text-align:center;font-size:12.5px;color:var(--navy);box-shadow:0 3px 0 #9cc7ee;position:relative;line-height:1.1}
+.fr img{width:100%;height:44px;object-fit:contain;display:block;margin-bottom:2px}
+.fr.on{background:#fff6d6;box-shadow:0 0 0 3px var(--gold),0 3px 0 #e0b22c}
+.fr.lock img{filter:grayscale(1) brightness(.75);opacity:.55}
+.fr .lk{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:10.5px;color:#fff;background:rgba(20,40,80,.72);border-radius:9px;padding:1px 6px;white-space:nowrap;font-family:system-ui,sans-serif}
+.starbar{font-size:15px;color:#3b5a85;margin:2px 0 0}
+.unlock{font-size:16px;color:#fff;background:linear-gradient(135deg,#29b6f6,#3d6ef0);padding:6px 14px;border-radius:14px;margin-top:8px;display:flex;align-items:center;gap:8px}
+.unlock img{width:40px;height:40px;object-fit:contain}
 .foot{font-size:12px;color:#6b84a6;margin-top:12px;font-family:system-ui,sans-serif;text-align:center}
 /* 게임 */
 #game{background:#000}
@@ -53,7 +63,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 #built{position:absolute;left:12px;right:12px;top:calc(150px + env(safe-area-inset-top));z-index:3;text-align:center;color:#fff;font-size:19px;text-shadow:0 2px 0 rgba(0,0,0,.4);pointer-events:none;min-height:24px}
 #built span{color:var(--gold)}
 #ctrl{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:3}
-.choice{flex:1;min-height:76px;border-radius:22px;font-size:24px;background:#fff;color:var(--navy);box-shadow:0 6px 0 #9cc7ee;padding:6px;word-break:break-word;line-height:1.1}
+.choice{flex:1;min-width:0;min-height:76px;border-radius:22px;font-size:24px;word-break:keep-all;overflow-wrap:anywhere;background:#fff;color:var(--navy);box-shadow:0 6px 0 #9cc7ee;padding:6px;word-break:break-word;line-height:1.1}
 .choice.ok{background:var(--mint);color:#fff;box-shadow:0 6px 0 #1f9e72}
 .choice.bad{background:var(--red);color:#fff;box-shadow:0 6px 0 #b8333a;animation:shake .3s}
 .choice .arr{display:block;font-size:14px;opacity:.55}
@@ -91,8 +101,10 @@ button{font-family:inherit;cursor:pointer;border:0}
   <!-- 홈 -->
   <section id="home" class="screen on">
     <div class="logo">웨일리 <b>아케이드</b></div>
-    <div class="sub">단어로 달리고, 오르고, 점프하자!</div>
-    <canvas id="mascot" width="440" height="340"></canvas>
+    <div class="sub">바다 친구들과 단어로 달리고, 오르고, 점프하자!</div>
+    <canvas id="mascot" width="720" height="340"></canvas>
+    <div class="starbar" id="starbar"></div>
+    <div class="friends" id="friends"></div>
     <div class="lvrow">
       <button class="lvbtn" data-lv="lv520">Level 520</button>
       <button class="lvbtn" data-lv="lv860">Level 860</button>
@@ -103,9 +115,9 @@ button{font-family:inherit;cursor:pointer;border:0}
       <select id="selDay" aria-label="데이"></select>
     </div>
     <div class="games">
-      <button class="gcard g1" data-game="stairs"><span class="ic">🪜</span><span><h3>무한 계단</h3><p>뜻에 맞는 단어 쪽으로 한 칸씩! 멈추면 떨어져요</p></span><span class="best" id="best-stairs"></span></button>
-      <button class="gcard g2" data-game="run"><span class="ic">🐳</span><span><h3>웨일리 런</h3><p>바다를 달리며 정답 문으로 쏙! 별 젤리도 냠냠</p></span><span class="best" id="best-run"></span></button>
-      <button class="gcard g3" data-game="obby"><span class="ic">🌋</span><span><h3>문장 오비</h3><p>단어 발판을 순서대로 밟고 용암을 건너요</p></span><span class="best" id="best-obby"></span></button>
+      <button class="gcard g1" data-game="stairs"><span class="ic"><img src="img/whale_happy.webp" alt=""></span><span><h3>무한 계단</h3><p>뜻에 맞는 단어 쪽으로 한 칸씩! 멈추면 떨어져요</p></span><span class="best" id="best-stairs"></span></button>
+      <button class="gcard g2" data-game="run"><span class="ic"><img src="img/whale_swim.webp" alt=""></span><span><h3>웨일리 런</h3><p>바다를 달리며 정답 문으로 쏙! 별 젤리도 냠냠</p></span><span class="best" id="best-run"></span></button>
+      <button class="gcard g3" data-game="obby"><span class="ic"><img src="img/turtle.webp" alt=""></span><span><h3>문장 오비</h3><p>단어 발판을 순서대로 밟고 용암을 건너요</p></span><span class="best" id="best-obby"></span></button>
     </div>
     <div class="foot">소리를 켜면 영어 발음이 나와요 🔊</div>
   </section>
@@ -134,6 +146,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <h2 id="resTitle"></h2>
     <div class="stars" id="resStars"></div>
     <div class="score" id="resScore"></div>
+    <div id="resUnlock"></div>
     <div id="resBest"></div>
     <div class="wrongbox" id="resWrong"></div>
     <div class="rbtns"><button id="toHome">🏠 처음으로</button><button class="again" id="again">🔁 한 번 더</button></div>
@@ -252,6 +265,41 @@ function star(c, x, y, R, r) { c.beginPath(); for (let i = 0; i < 10; i++) { con
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 function fitText(c, txt, maxW, size, font) { let s = size; c.font = `${s}px ${font || "Jua, sans-serif"}`; while (c.measureText(txt).width > maxW && s > 10) { s -= 1; c.font = `${s}px ${font || "Jua, sans-serif"}`; } return s; }
 
+/* ───────── 바다 친구들 (제미나이로 만든 3D 캐릭터 이미지) ───────── */
+const CHARS = [
+  { k: 'whale', name: '웨일리', need: 0 },
+  { k: 'octo', name: '무니', need: 3 },
+  { k: 'turtle', name: '토토', need: 8 },
+  { k: 'clown', name: '코랄', need: 15 },
+  { k: 'seal', name: '보리', need: 25 },
+  { k: 'crab', name: '크랩이', need: 40 }
+];
+const IMG = {};
+['whale', 'whale_happy', 'whale_sad', 'whale_swim', 'whale_wow', 'octo', 'turtle', 'clown', 'seal', 'crab'].forEach((n) => { const i = new Image(); i.src = 'img/' + n + '.webp'; IMG[n] = i; });
+const SCALE = { whale_happy: 1.32 };
+let curChar = store.get('char', 'whale');
+const charName = (k) => (CHARS.find((c) => c.k === k) || CHARS[0]).name;
+const otherChars = () => CHARS.map((c) => c.k).filter((k) => k !== curChar);
+/* (x,y) = 발밑 가운데, h = 몸 높이(px). o: { k, mood: idle|happy|sad|fall|swim, squash, flip, rot, t } */
+function drawChar(c, x, y, h, o) {
+  o = o || {}; const k = o.k || curChar, mood = o.mood || 'idle';
+  let key = k;
+  if (k === 'whale') key = { happy: 'whale_happy', sad: 'whale_sad', fall: 'whale_wow', swim: 'whale_swim' }[mood] || 'whale';
+  const im = IMG[key];
+  if (!im || !im.complete || !im.naturalWidth) { drawWhaley(c, x, y, h / 60, o); return; }
+  const hh = h * (SCALE[key] || 1), ww = hh * im.naturalWidth / im.naturalHeight, sq = o.squash || 0, t = o.t || 0;
+  c.save(); c.translate(x, y);
+  if (o.rot) { c.translate(0, -hh / 2); c.rotate(o.rot); c.translate(0, hh / 2); }
+  if (k !== 'whale' && mood === 'sad') c.rotate(Math.sin(t * 3) * .05 - .08);
+  c.scale((1 + sq * .14) * (o.flip ? -1 : 1), 1 - sq * .14);
+  c.drawImage(im, -ww / 2, -hh, ww, hh);
+  c.restore();
+  if (k !== 'whale') { // 고래 말고는 표정 이미지가 없어서 효과로 감정 표현
+    if (mood === 'happy') { c.fillStyle = '#ffc83d'; for (let i = 0; i < 3; i++) { const a = t * 4 + i * 2.1; star(c, x + Math.cos(a) * hh * .55, y - hh * .6 + Math.sin(a) * hh * .45, 6, 2.6); c.fill(); } }
+    if (mood === 'sad' || mood === 'fall') { c.fillStyle = '#6cc6ff'; const dy = (t * 40) % 16; c.beginPath(); c.ellipse(x + ww * .22, y - hh * .52 + dy, 3.2, 4.6, 0, 0, Math.PI * 2); c.fill(); }
+  }
+}
+
 /* 홈 화면 마스코트 */
 function mascotLoop(cv, getMood) {
   const c = cv.getContext('2d'); let t0 = performance.now();
@@ -261,8 +309,9 @@ function mascotLoop(cv, getMood) {
     const W = cv.width, H = cv.height, by = H * .78 - Math.abs(Math.sin(t * 2.4)) * 18;
     c.fillStyle = 'rgba(11,58,115,.12)'; c.beginPath(); c.ellipse(W / 2, H * .8, 70 - Math.abs(Math.sin(t * 2.4)) * 12, 10, 0, 0, Math.PI * 2); c.fill();
     for (let i = 0; i < 6; i++) { const bx = W * (.15 + i * .14), byy = H - ((t * 40 + i * 57) % H); c.strokeStyle = 'rgba(47,140,240,.35)'; c.lineWidth = 2; c.beginPath(); c.arc(bx, byy, 5 + i % 3 * 3, 0, Math.PI * 2); c.stroke(); }
-    const mood = getMood ? getMood() : 'happy';
-    drawWhaley(c, W / 2 - 6, by, 2.9, { t, mood, squash: Math.sin(t * 4.8) * .25, spout: mood === 'happy' ? (Math.sin(t * 1.6) * .5 + .5) : 0 });
+    const mood = getMood ? getMood() : (Math.floor(t / 2.5) % 3 === 1 ? 'happy' : 'idle');
+    if (!getMood) { const others = otherChars(); others.forEach((k, i) => { const side = i % 2 ? 1 : -1, row = Math.floor(i / 2); const fx = W / 2 + side * (140 + row * 95), fy = H * .8 - row * 6 - Math.abs(Math.sin(t * 2.4 + i)) * 8; c.globalAlpha = .9; drawChar(c, fx, fy, 74 - row * 8, { k, t: t + i }); c.globalAlpha = 1; }); }
+    drawChar(c, W / 2, by, getMood ? 180 : 200, { t, mood, squash: Math.sin(t * 4.8) * .18 });
     requestAnimationFrame(f);
   })(t0);
 }
@@ -405,11 +454,15 @@ function StairsGame() {
       c.fillStyle = `hsl(${hue} 90% 78%)`; rr(c, s.x - 30, s.y - 2, 60, 8, 6); c.fill();
       if (k > 0 && k % 10 === 0) { c.fillStyle = '#fff'; c.font = '14px Jua'; c.textAlign = 'center'; c.fillText(k + '층', s.x, s.y + 14); }
     }
+    for (let k = 10; k < g.stairs.length; k += 10) { // 10층마다 바다 친구가 기다려요
+      const s = g.stairs[k], fk = otherChars()[(k / 10 - 1) % 5], side = (k / 10) % 2 ? 1 : -1;
+      drawChar(c, s.x + side * 50, s.y - 2 - Math.abs(Math.sin(g.t * 3 + k)) * 6, 40, { k: fk, t: g.t + k, mood: g.i >= k ? 'happy' : 'idle' });
+    }
     // 웨일리
     const cur = g.stairs[g.i], e = easeOut(g.hop);
     const px = lerp(g.from.x, cur.x, e), py = lerp(g.from.y, cur.y, e) - Math.sin(e * Math.PI) * 30 + g.fallY;
     c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(cur.x, cur.y + 1, 22, 5, 0, 0, Math.PI * 2); c.fill();
-    drawWhaley(c, px, py, .72, { t: g.t, mood: g.over ? 'fall' : g.mood, squash: g.hop < 1 ? (g.hop < .5 ? -.4 : .3) : Math.sin(g.t * 5) * .08, flip: g.dir < 0, spout: g.mood === 'happy' ? g.moodT * 2 : 0, rot: g.falling ? g.t * 6 : 0 });
+    drawChar(c, px, py, 64, { t: g.t, mood: g.over ? 'fall' : g.mood, squash: g.hop < 1 ? (g.hop < .5 ? -.4 : .3) : Math.sin(g.t * 5) * .08, flip: g.dir < 0, rot: g.falling ? g.t * 6 : 0 });
     drawParts(c);
     c.restore();
   };
@@ -475,6 +528,7 @@ function RunGame() {
     c.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 4; i++) cloud(c, ((i * 190 - g.dist * .15) % (W + 200) + W + 200) % (W + 200) - 100, 50 + i * 26 + (i % 2) * 30, .9);
     // 섬 실루엣
     c.fillStyle = '#5cc9a7'; for (let i = 0; i < 3; i++) { const ix = ((i * 300 - g.dist * .3) % (W + 300) + W + 300) % (W + 300) - 150; c.beginPath(); c.ellipse(ix, H * .31, 90, 26, 0, Math.PI, 0); c.fill(); c.fillStyle = '#3fae8a'; c.fillRect(ix - 2, H * .31 - 50, 5, 30); c.fillStyle = '#5cc9a7'; }
+    otherChars().forEach((fk, i) => { const fx = ((i * 330 - g.dist * .45) % (W + 330 * 2) + W + 660) % (W + 660) - 120; c.globalAlpha = .85; drawChar(c, fx, H * .345 + Math.sin(g.t * 2 + i) * 4, 30, { k: fk, t: g.t + i }); c.globalAlpha = 1; });
     // 물결 줄
     for (let l = 0; l < 3; l++) {
       const y = laneY(l) + 8; c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.beginPath();
@@ -501,7 +555,7 @@ function RunGame() {
     // 웨일리
     const px = W * .2, py = laneY(0) + g.ly * H * .16;
     c.fillStyle = 'rgba(0,30,80,.25)'; c.beginPath(); c.ellipse(px + 4, py + 6, 26, 5, 0, 0, Math.PI * 2); c.fill();
-    drawWhaley(c, px, py + Math.sin(g.t * 9) * 3, .78, { t: g.t * 1.6, mood: g.mood, squash: Math.sin(g.t * 9) * .12, spout: g.spout });
+    drawChar(c, px, py + Math.sin(g.t * 9) * 3, 66, { t: g.t * 1.6, mood: g.mood === 'idle' ? 'swim' : g.mood, squash: Math.sin(g.t * 9) * .1 });
     drawParts(c);
     c.restore();
     c.textBaseline = 'alphabetic';
@@ -533,7 +587,8 @@ function ObbyGame() {
     const pool = shuffle(poolSents().flatMap((s) => tok(s.en))); const near = g.tokens.slice(g.k + 1);
     const cand = [...shuffle(near), ...pool].filter((w) => { const k = norm(w); if (!k || seen.has(k)) return false; seen.add(k); return true; });
     const opts = shuffle([right, ...cand.slice(0, 2)]);
-    $('#ctrl').innerHTML = opts.map((o) => `<button class="choice" style="font-size:21px">${o}</button>`).join('');
+    const fs = (o) => o.length > 11 ? 16 : o.length > 8 ? 19 : 22;
+    $('#ctrl').innerHTML = opts.map((o) => `<button class="choice" style="font-size:${fs(o)}px">${o}</button>`).join('');
     $('#ctrl').querySelectorAll('.choice').forEach((b, i) => b.onpointerdown = (e) => { e.preventDefault(); answer(opts[i], b); });
     g.locked = false;
   }
@@ -590,6 +645,7 @@ function ObbyGame() {
       c.fillStyle = col; c.fillRect(x, y, w, 12);
       c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x, y, w, 4);
       if (s > .8) { c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; fitText(c, p.word, w - 8, 16); c.fillText(p.word, p.x, y + 22); }
+      if (p.kind === 'goal' && s > .8) drawChar(c, p.x - w / 2 + 22, y, 40, { k: otherChars()[idx % 5], t: g.t + idx, mood: 'happy' });
       if (p.kind !== 'plat') { // 깃발
         c.strokeStyle = '#fff'; c.lineWidth = 3; c.beginPath(); c.moveTo(p.x + w / 2 - 10, y); c.lineTo(p.x + w / 2 - 10, y - 44); c.stroke();
         c.fillStyle = p.kind === 'goal' ? '#ff5a5f' : '#3ed6a0'; c.beginPath(); c.moveTo(p.x + w / 2 - 10, y - 44); c.lineTo(p.x + w / 2 + 14 + Math.sin(g.t * 6) * 3, y - 37); c.lineTo(p.x + w / 2 - 10, y - 30); c.fill();
@@ -600,7 +656,7 @@ function ObbyGame() {
     let px, py;
     if (g.falling) { px = lerp(g.from.x, g.fx, Math.min(1, g.hop * 1.3)); py = g.from.y + g.fallY; }
     else { px = lerp(g.from ? g.from.x : cur.x, cur.x, e); py = lerp(g.from ? g.from.y : cur.y, cur.y, e) - Math.sin(e * Math.PI) * 50; }
-    if (py < H * .42) drawWhaley(c, px, py, .62, { t: g.t, mood: g.mood, squash: g.hop < 1 ? -.3 : Math.sin(g.t * 5) * .08, spout: g.mood === 'happy' ? g.moodT * 2 : 0, rot: g.falling ? g.t * 7 : 0 });
+    if (py < H * .42) drawChar(c, px, py, 58, { t: g.t, mood: g.mood, squash: g.hop < 1 ? -.3 : Math.sin(g.t * 5) * .08, rot: g.falling ? g.t * 7 : 0 });
     if (g.falling && py > H * .36 && !g._spl) { g._spl = true; burst(px, H * .4, 26, ['#ff5a2a', '#ffb02e', '#ffe08a'], 300); }
     if (!g.falling) g._spl = false;
     drawParts(c);
@@ -659,7 +715,7 @@ window.addEventListener('keydown', (e) => {
   if (G.name === 'run') { if (e.key === 'ArrowUp') G.move(-1); if (e.key === 'ArrowDown') G.move(1); }
   if (G.name === 'stairs') { const b = $('#ctrl').querySelectorAll('.choice'); if (e.key === 'ArrowLeft' && b[0]) b[0].dispatchEvent(new Event('pointerdown')); if (e.key === 'ArrowRight' && b[1]) b[1].dispatchEvent(new Event('pointerdown')); }
 });
-$('#quit').onclick = () => { running = false; G = null; if (window.speechSynthesis) speechSynthesis.cancel(); show('home'); showBest(); };
+$('#quit').onclick = () => { running = false; G = null; if (window.speechSynthesis) speechSynthesis.cancel(); show('home'); showBest(); renderFriends(); };
 
 /* ───────── 결과 ───────── */
 let resultMood = 'happy';
@@ -671,6 +727,10 @@ function endGame(g) {
   else stars = g.cleared ? (acc >= .9 ? 3 : acc >= .7 ? 2 : 1) : (g.score >= 60 ? 1 : 0);
   const key = 'best:' + g.name + ':' + selKey(), prev = store.get(key, 0), isNew = g.score > prev;
   if (isNew) store.set(key, g.score);
+  const before = totalStars(), skey = 'stars:' + g.name + ':' + selKey();
+  if (stars > store.get(skey, 0)) store.set(skey, stars);
+  const after = totalStars(), opened = CHARS.filter((c) => c.need > before && c.need <= after);
+  $('#resUnlock').innerHTML = opened.map((c) => `<div class="unlock"><img src="img/${c.k}.webp" alt="">새 친구 ${c.name} 등장! 홈에서 골라 보세요</div>`).join('');
   resultMood = stars >= 2 ? 'happy' : stars === 1 ? 'idle' : 'sad';
   $('#resTitle').textContent = g.cleared ? '클리어! 대단해요 🎉' : stars >= 2 ? '멋져요! 🎉' : stars === 1 ? '잘했어요! 👍' : '다시 도전해 볼까요? 💪';
   $('#resStars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? '' : 'off'}">⭐</span>`).join('');
@@ -686,9 +746,21 @@ function endGame(g) {
   show('result');
 }
 $('#again').onclick = () => startGame(curGame);
-$('#toHome').onclick = () => { show('home'); showBest(); };
+$('#toHome').onclick = () => { show('home'); showBest(); renderFriends(); };
 
 /* ───────── 홈 ───────── */
+function totalStars() { let n = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('whaley-arcade:stars:') === 0) n += +JSON.parse(localStorage.getItem(k)) || 0; } } catch (e) {} return n; }
+function renderFriends() {
+  const tot = totalStars();
+  if (!CHARS.find((c) => c.k === curChar && c.need <= tot)) curChar = 'whale';
+  $('#starbar').textContent = `⭐ 모은 별 ${tot}개 · 같이 놀 친구를 골라요`;
+  $('#friends').innerHTML = CHARS.map((c) => { const lock = c.need > tot; return `<button class="fr ${c.k === curChar ? 'on' : ''} ${lock ? 'lock' : ''}" data-k="${c.k}"><img src="img/${c.k}.webp" alt="">${c.name}${lock ? `<span class="lk">🔒 ⭐${c.need}</span>` : ''}</button>`; }).join('');
+  $('#friends').querySelectorAll('.fr').forEach((b) => b.onclick = () => {
+    const c = CHARS.find((x) => x.k === b.dataset.k);
+    if (c.need > totalStars()) { b.animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }], 250); return; }
+    curChar = c.k; store.set('char', curChar); renderFriends();
+  });
+}
 document.querySelectorAll('.lvbtn').forEach((b) => b.onclick = () => { sel.lv = b.dataset.lv; sel.v = null; sel.u = null; sel.d = 'all'; fillSelects(); });
 $('#selVol').onchange = (e) => { sel.v = +e.target.value; sel.u = null; sel.d = 'all'; fillSelects(); };
 $('#selUnit').onchange = (e) => { sel.u = +e.target.value; sel.d = 'all'; fillSelects(); };
@@ -697,6 +769,7 @@ document.querySelectorAll('.gcard').forEach((b) => b.onclick = () => startGame(b
 // 주소로 레벨 지정: ?lv=520 또는 ?lv=860
 const qlv = new URLSearchParams(location.search).get('lv'); if (qlv === '520' || qlv === '860') sel.lv = 'lv' + qlv;
 fillSelects();
+renderFriends();
 mascotLoop($('#mascot'));
 mascotLoop($('#mascot2'), () => resultMood);
 </script>
