@@ -97,6 +97,32 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 
 /* ── 버블팡 ── */
 .g-bubble{background:url(../arcade/img/bgSea.jpg) center/cover}
+/* ── 바다 계단 ── */
+.g-stairs{background:url(../arcade/img/bgSky.jpg) center/cover}
+.stw{position:absolute; left:0; top:0; width:100%; height:100%; will-change:transform}
+.step{position:absolute; height:20px; border-radius:12px; background:linear-gradient(#fff,#cfe9ff); box-shadow:0 6px 0 #8fc1ec, 0 12px 18px rgba(0,40,90,.18)}
+.step.on{background:linear-gradient(#fff6c8,#ffd35a); box-shadow:0 6px 0 #e3a92a, 0 12px 18px rgba(120,80,0,.2)}
+.stc{position:absolute; z-index:3; filter:drop-shadow(0 8px 8px rgba(0,30,70,.25)); pointer-events:none}
+.stc.hop{animation:sthop .42s ease-out}
+@keyframes sthop{40%{translate:0 -38px}}
+.stc.oops{animation:stoops .45s}
+@keyframes stoops{25%{rotate:-12deg}75%{rotate:12deg}}
+.stfl{position:absolute; left:50%; top:10px; transform:translateX(-50%); z-index:4; background:rgba(255,255,255,.8); color:var(--navy); font-family:'Jua'; font-size:20px; padding:4px 16px; border-radius:999px; box-shadow:0 6px 14px rgba(0,30,70,.15)}
+.stbtns{position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:12px; z-index:5}
+.stb{flex:1; height:min(34vw,30vh,190px); border-radius:26px; background:rgba(255,255,255,.92); border:2px solid #fff; padding:10px; display:grid; place-items:center; position:relative; box-shadow:0 12px 26px rgba(0,30,70,.22); transition:transform .12s}
+.stb:active{transform:scale(.96)}
+.stb .arr{position:absolute; top:6px; font-size:15px; color:#7fa3c8; font-family:'Jua'}
+.stb.l .arr{left:12px} .stb.r .arr{right:12px}
+.stb.shake{animation:shake .35s}
+.stb.glow{box-shadow:0 0 0 5px var(--yellow), 0 12px 26px rgba(0,30,70,.22)}
+/* ── 게임 고르기 ── */
+.gpick{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.gp{display:flex; align-items:center; gap:8px; padding:10px; border-radius:18px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.22); text-align:left; color:#fff; font-weight:800; font-size:15px; line-height:1.2}
+.gp img{width:46px; height:46px; object-fit:contain; flex:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.gp small{display:block; font-weight:500; font-size:11.5px; opacity:.8; margin-top:2px}
+.gp.on{background:rgba(255,255,255,.95); color:var(--navy); box-shadow:0 0 0 3px var(--yellow), 0 10px 22px rgba(0,20,50,.25)}
+.gp.wide{grid-column:1 / -1}
+.gp.wide .imgs{display:flex; flex:none} .gp.wide .imgs img{width:38px; height:38px; margin-right:-6px}
 .bub{position:absolute; width:var(--bs); height:var(--bs); border-radius:50%; will-change:transform;
   background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 8%, rgba(255,255,255,.35) 9% 18%, rgba(255,255,255,.12) 40%, rgba(160,230,255,.35) 75%, rgba(255,255,255,.7) 100%);
   border:3px solid rgba(255,255,255,.75); box-shadow:inset 0 0 18px rgba(255,255,255,.5), 0 6px 18px rgba(0,40,80,.25)}
@@ -224,8 +250,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
       <div class="sel"><select id="volSel"></select><select id="unitSel"></select><select id="daySel"></select></div>
     </div>
     <div class="panel">
-      <h2 id="courseH">오늘의 코스</h2>
-      <div class="course" id="course"></div>
+      <h2 id="courseH">게임 고르기</h2>
+      <div class="gpick" id="gpick"></div>
+      <div class="course" id="course" style="margin-top:10px"></div>
     </div>
     <div class="panel">
       <h2 id="prevH">숨어 있는 바다 친구</h2>
@@ -277,7 +304,9 @@ const GAMES = {
   bubble: { icon: '🫧', img: 'whale_happy', name: '버블팡', how: '소리를 듣고 맞는 방울을 팡! 터뜨려요' },
   mole: { icon: '🦦', img: 'otter', name: '모래 구멍 콩!', how: '맞는 그림을 든 바다 친구를 콩! 눌러요' },
   fish: { icon: '🎣', img: 'clown_swim', name: '물고기 낚시', how: '맞는 그림을 든 물고기를 눌러서 낚아요' },
+  stairs: { icon: '🪜', img: 'turtle_happy', name: '바다 계단', how: '소리를 듣고 맞는 그림 쪽 계단으로 폴짝! 높이 올라가요' },
 };
+const PICK_DESC = { bubble: '방울 팡팡', mole: '구멍에서 콩!', fish: '낚싯대로 쏙', stairs: '무한 계단처럼 쑥쑥' };
 // 교재 Day 1~5 = 월~금. 요일마다 게임 순서가 바뀐다.
 const COURSE = {
   1: { day: '월요일', games: ['bubble', 'mole', 'fish'] },
@@ -483,8 +512,13 @@ function renderHome() {
   });
   const fill = (el, n, v, pre) => { el.innerHTML = ''; for (let i = 1; i <= n; i++) { const o = document.createElement('option'); o.value = i; o.textContent = pre + i; if (i === v) o.selected = true; el.append(o); } };
   fill($('#volSel'), 6, sel.vol, 'Vol.'); fill($('#unitSel'), 4, sel.unit, 'Unit '); fill($('#daySel'), 5, sel.day, 'Day ');
-  const c = COURSE[sel.day];
-  $('#courseH').textContent = `Day ${sel.day} · ${c.day} 코스`;
+  const c = COURSE[sel.day], mode = store.get('mode', 'course');
+  $('#courseH').textContent = '게임 고르기';
+  $('#gpick').innerHTML = `<button class="gp wide ${mode === 'course' ? 'on' : ''}" data-mode="course"><span class="imgs">${c.games.map((g) => `<img src="${SEA}${GAMES[g].img}.webp" alt="">`).join('')}</span><span>🏆 ${c.day} 모험 코스<small>게임 3개를 차례로! 바다 친구를 가장 많이 잡을 수 있어요</small></span></button>`
+    + Object.keys(GAMES).map((g) => `<button class="gp ${mode === g ? 'on' : ''}" data-mode="${g}"><img src="${SEA}${GAMES[g].img}.webp" alt=""><span>${GAMES[g].name}<small>${PICK_DESC[g]}</small></span></button>`).join('');
+  $('#gpick').querySelectorAll('.gp').forEach((b) => b.onclick = () => { store.set('mode', b.dataset.mode); renderHome(); });
+  $('#startBtn').textContent = mode === 'course' ? '🎮 모험 시작!' : `🎮 ${GAMES[mode].name} 시작!`;
+  $('#course').style.display = mode === 'course' ? '' : 'none';
   $('#course').innerHTML = c.games.map((g, i) => `${i ? '<span class="arr">▶</span>' : ''}<span class="g"><img class="gico" src="${SEA}${GAMES[g].img}.webp" alt="">${GAMES[g].name}</span>`).join('') + `<span class="arr">▶</span><span class="g"><img class="gico" src="${SEA}crab_happy.webp" alt="">친구 잡기</span>`
     + (c.bonus ? `<div style="flex-basis:100%;font-family:'Noto Sans KR';font-size:13px;color:var(--yellow);margin-top:4px">✨ ${c.bonus}</div>` : '');
   const d = dayOf();
@@ -517,6 +551,12 @@ document.addEventListener('click', (e) => { const b = e.target.closest('[data-k]
 let S = null;
 function show(id) { ['home', 'play', 'result', 'dex'].forEach((x) => $('#' + x).classList.toggle('hidden', x !== id)); }
 
+// 한 가지 게임만 고르면 그 게임을 두 판 (바다 친구는 1~2번 맞히면 잡혀요)
+function courseFor() {
+  const mode = store.get('mode', 'course'), c = COURSE[sel.day];
+  if (mode === 'course' || !GAMES[mode]) return c;
+  return { day: GAMES[mode].name, games: [mode, mode], bonus: c.bonus };
+}
 function startSession() {
   const d = dayOf();
   const L = levelOf(sel.lv);
@@ -525,11 +565,12 @@ function startSession() {
   const near = [];
   for (let k = -6; k <= 6; k++) { const dd = L.days[idx + k]; if (dd && k) dd.words.forEach((w) => near.push(w)); }
   S = {
-    lv: sel.lv, day: d, course: COURSE[sel.day], round: 0, coins: 0,
+    lv: sel.lv, day: d, course: courseFor(), round: 0, coins: 0, st: null,
     mons: d.words.map((w) => ({ w, gauge: 0, need: 3, miss: false, caught: false, shiny: false })),
     pool: near, queue: [], cur: -1, wrong: 0, game: null, busy: false, pending: [],
   };
-  shuffle(S.mons.map((_, i) => i)).forEach((i, k) => { S.mons[i].need = 1 + (k % 3); });
+  const nn = S.course.games.length;
+  shuffle(S.mons.map((_, i) => i)).forEach((i, k) => { S.mons[i].need = 1 + (k % nn); });
   show('play');
   renderBar();
   nextRound();
@@ -577,7 +618,7 @@ async function nextTarget() {
   const w = S.mons[S.cur].w;
   $('#sayTxt').textContent = pick(['잘 듣고 찾아요!', '어떤 걸까?', '귀를 쫑긋!', '찾을 수 있어!']);
   const g = S.course.games[S.round];
-  S.game = (g === 'bubble' ? Bubble : g === 'mole' ? Mole : Fish)($('#stage'), w, options(w), answer);
+  S.game = (g === 'bubble' ? Bubble : g === 'mole' ? Mole : g === 'stairs' ? Stairs : Fish)($('#stage'), w, options(w), answer);
   setTimeout(() => say(w), 350);
 }
 $('#sayBtn').onclick = () => { if (S && S.cur >= 0) say(S.mons[S.cur].w); };
@@ -710,6 +751,60 @@ function Bubble(stage, target, list, cb) {
   return {
     stop() { alive = false; cancelAnimationFrame(raf); },
     hint() { B.forEach((b) => { if (key(b.w) === key(target)) { b.el.classList.add('glow'); b.sp *= .5; } }); },
+  };
+}
+
+/* ═════════════ 게임 4: 바다 계단 (무한 계단) ═════════════ */
+// 소리를 듣고 맞는 그림이 있는 쪽 계단으로 한 칸씩 올라간다. 계단은 한 판 동안 계속 이어진다.
+function Stairs(stage, target, list, cb) {
+  stage.className = 'stage g-stairs';
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const sw = Math.min(W * .3, 150), sh = Math.min(H * .1, 70), ch = Math.min(H * .16, 96);
+  if (!S.st) S.st = { steps: [{ x: 0, y: 0 }], i: 0, floor: 0 };
+  const st = S.st, cur = st.steps[st.i];
+  // 다음 계단 방향: 화면 밖으로 나가지 않게
+  let dir = Math.random() < .5 ? -1 : 1;
+  if (cur.x + dir * sw * .7 > W / 2 - sw * .6 || cur.x + dir * sw * .7 < -W / 2 + sw * .6) dir = -dir;
+  st.steps = st.steps.slice(0, st.i + 1); st.steps.push({ x: cur.x + dir * sw * .7, y: cur.y + sh });
+  const other = list.find((w) => key(w) !== key(target)) || target;
+  const sideL = dir < 0 ? target : other, sideR = dir < 0 ? other : target;
+  const baseY = H * .56;
+  const camOf = (i) => -(st.steps[i].y);
+  stage.innerHTML = `<div class="stfl">🪜 <span>${st.floor}</span>층</div><div class="stw"></div>
+    <div class="stbtns"><button class="stb l"><span class="arr">◀</span>${face(sideL)}</button><button class="stb r"><span class="arr">▶</span>${face(sideR)}</button></div>`;
+  const world = stage.querySelector('.stw');
+  const from = Math.max(0, st.i - 9);
+  st.steps.forEach((p, i) => {
+    if (i < from || i > st.i) return; // 다음 계단은 미리 보여 주지 않아요(정답 쪽이 들키니까)
+    const e = document.createElement('div'); e.className = 'step' + (i === st.i ? ' on' : '');
+    e.style.cssText = `left:${W / 2 + p.x - sw / 2}px;top:${baseY - p.y}px;width:${sw}px`;
+    world.append(e);
+  });
+  const kid = document.createElement('img'); kid.className = 'stc'; kid.src = SEA + 'whale_happy.webp';
+  const place = (p, flip) => { kid.style.cssText = `left:${W / 2 + p.x - ch / 2}px;top:${baseY - p.y - ch + 6}px;width:${ch}px;transform:scaleX(${flip ? -1 : 1})`; };
+  place(cur, dir < 0); world.append(kid);
+  world.style.transform = `translateY(${-camOf(st.i)}px)`;
+  let alive = true;
+  const btns = stage.querySelectorAll('.stb');
+  btns.forEach((b, bi) => {
+    const w = bi ? sideR : sideL;
+    b.onpointerdown = (e) => {
+      e.preventDefault(); if (!alive) return;
+      if (key(w) === key(target)) {
+        alive = false; st.i++; st.floor++;
+        kid.style.transition = 'left .38s ease-out, top .38s ease-out'; place(st.steps[st.i], dir < 0);
+        kid.classList.add('hop'); SFX.pop();
+        world.style.transition = 'transform .45s ease-out'; world.style.transform = `translateY(${-camOf(st.i)}px)`;
+        stage.querySelector('.stfl span').textContent = st.floor;
+        const ne = document.createElement('div'); ne.className = 'step on'; const np = st.steps[st.i];
+        ne.style.cssText = `left:${W / 2 + np.x - sw / 2}px;top:${baseY - np.y}px;width:${sw}px;animation:appear .25s`; world.insertBefore(ne, kid);
+        setTimeout(() => cb(true), 480);
+      } else { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); kid.classList.remove('oops'); void kid.offsetWidth; kid.classList.add('oops'); cb(false); }
+    };
+  });
+  return {
+    stop() { alive = false; },
+    hint() { btns[dir < 0 ? 0 : 1].classList.add('glow'); },
   };
 }
 

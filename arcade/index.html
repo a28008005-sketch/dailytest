@@ -157,6 +157,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 </div>
 
 <script src="data.js"></script>
+<script src="audio.js"></script>
 <script>
 'use strict';
 /* ───────── 기본 도구 ───────── */
@@ -195,14 +196,24 @@ const SFX = (() => {
   };
 })();
 const VOICE = (() => {
+  // 1순위: 교재 원어민 녹음(데일리 듣기 음원에서 자른 조각) · 없으면 기기에서 가장 자연스러운 영어 음성
   let v = null;
-  const load = () => { const vs = (window.speechSynthesis && speechSynthesis.getVoices()) || []; v = vs.find((x) => /en-US/i.test(x.lang) && /female|samantha|google/i.test(x.name)) || vs.find((x) => /en-US/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang)) || null; };
+  const GOOD = /natural|neural|enhanced|premium|siri|samantha|ava|allison|aria|jenny|google us english|zira/i;
+  const load = () => { const vs = ((window.speechSynthesis && speechSynthesis.getVoices()) || []).filter((x) => /^en[-_]?(US|GB)?/i.test(x.lang)); v = vs.find((x) => /en[-_]US/i.test(x.lang) && GOOD.test(x.name)) || vs.find((x) => /en[-_]US/i.test(x.lang)) || vs[0] || null; };
   if (window.speechSynthesis) { load(); speechSynthesis.onvoiceschanged = load; }
+  const AUD = window.ARCADE_AUD || {}, au = new Audio(); au.preload = 'auto';
+  function tts(text, rate) {
+    if (!window.speechSynthesis) return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; if (v) u.voice = v; u.rate = rate || .9; speechSynthesis.speak(u); } catch (e) {}
+  }
   return {
     say(text, rate) {
-      if (!window.speechSynthesis || !text) return;
-      try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; if (v) u.voice = v; u.rate = rate || .9; speechSynthesis.speak(u); } catch (e) {}
-    }
+      if (!text) return;
+      const k = AUD[text];
+      if (k) { try { speechSynthesis.cancel(); } catch (e) {} au.pause(); au.src = 'audio/' + k + '.mp3'; au.playbackRate = 1; au.play().catch(() => tts(text, rate)); return; }
+      tts(text, rate);
+    },
+    prime() { try { au.muted = true; au.play().catch(() => {}); au.pause(); au.muted = false; } catch (e) {} }
   };
 })();
 
@@ -698,7 +709,7 @@ const INFO = {
   obby: ['🌋 문장 오비', '한국어 문장을 보고 영어 단어 발판을 순서대로 골라 건너요.<br>틀리면 용암에 풍덩, 체크포인트부터 다시! 문장 5개를 건너면 클리어.']
 };
 function startGame(name) {
-  curGame = name; SFX.unlock(); show('game'); resize(); parts = [];
+  curGame = name; SFX.unlock(); VOICE.prime(); show('game'); resize(); parts = [];
   $('#ctrl').innerHTML = ''; UI.prompt(''); UI.built(''); UI.energy(null); UI.combo(0); UI.score(0);
   G = name === 'stairs' ? StairsGame() : name === 'run' ? RunGame() : ObbyGame();
   UI.hearts(G.hearts, G.maxH);
