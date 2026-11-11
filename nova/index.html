@@ -276,6 +276,14 @@ $('lockForm').addEventListener('submit', async e => {
 });
 
 (async function boot() {
+  // 배포용 QR(?k=비밀번호)로 들어오면 비밀번호를 입력하지 않아도 바로 열린다.
+  // 주소창에 비밀번호가 남지 않도록 열자마자 지운다.
+  const qs = new URLSearchParams(location.search);
+  const fromQR = qs.get('k');
+  if (fromQR) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    try { if (await tryUnlock(fromQR)) { store.set('pw', fromQR); return start(); } } catch (e) {}
+  }
   const saved = store.get('pw', null);
   if (saved) {
     try { if (await tryUnlock(saved)) return start(); } catch (e) {}
