@@ -128,8 +128,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 /* ── 낚시 ── */
 .g-fish{background:linear-gradient(180deg,#d8f3ff 0 14%, transparent 14%),url(../arcade/img/bgSea.jpg) center/cover}
 .wave{position:absolute; left:0; right:0; top:12%; height:16px; background:radial-gradient(circle at 10px -4px, transparent 12px, #a9e2fb 13px) repeat-x; background-size:20px 16px}
-.boat{position:absolute; top:1%; width:120px; left:50%; transform:translateX(-50%); z-index:3}
-.line{position:absolute; width:3px; background:#fff; top:9%; z-index:2; transform-origin:top}
+.boat{position:absolute; z-index:3; height:auto; filter:drop-shadow(0 8px 10px rgba(0,40,80,.25)); animation:rock 3s ease-in-out infinite; transform-origin:50% 90%}
+@keyframes rock{50%{transform:rotate(-2.5deg) translateY(2px)}}
+.line{position:absolute; width:2px; background:rgba(255,255,255,.9); top:9%; z-index:2; transform-origin:top}
 .hook{position:absolute; width:26px; height:26px; margin-left:-11px; z-index:3; transition:top .35s ease-in, left .25s}
 .fish{position:absolute; width:var(--fs); will-change:transform}
 .fish .fb{display:block; width:100%; height:auto; transform:scaleX(var(--b,1)); filter:drop-shadow(0 6px 8px rgba(0,30,70,.25))}
@@ -788,12 +789,16 @@ function fishSVG(col) {
 function Fish(stage, target, list, cb) {
   stage.className = 'stage g-fish';
   stage.innerHTML = `<div class="wave"></div><div class="bubbles-bg">${Array.from({ length: 10 }, () => `<i style="left:${rnd(0, 100)}%;animation-duration:${rnd(5, 10)}s;animation-delay:${rnd(0, 6)}s"></i>`).join('')}</div>
-    <svg class="boat" viewBox="0 0 120 60"><path d="M6 30 L114 30 L96 54 L24 54Z" fill="#FF8A3D"/><rect x="56" y="2" width="5" height="30" fill="#8B5A2B"/><path d="M61 4 L90 26 L61 26Z" fill="#fff"/><circle cx="40" cy="22" r="10" fill="#0FC3F4"/><circle cx="37" cy="20" r="2" fill="#1E2430"/><circle cx="44" cy="20" r="2" fill="#1E2430"/></svg>
+    <img class="boat" src="../arcade/img/kidboat.webp" alt="">
     <div class="line"></div><svg class="hook" viewBox="0 0 26 26"><path d="M13 0 V14 a6 6 0 1 1 -6 -6" stroke="#E8EEF3" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`;
   const W = stage.clientWidth, Hh = stage.clientHeight;
   const fs = Math.min(W / 3.4, Hh / 3.3, 210);
   const line = stage.querySelector('.line'), hook = stage.querySelector('.hook');
-  const boatX = W / 2 - 30, rodY = Hh * .09;
+  // 낚시하는 아이 보트: 낚싯대 끝(그림의 98%, 11% 지점)에서 줄이 내려가요
+  const boatEl = stage.querySelector('.boat'), BW = Math.min(W * .44, 180), BH = BW * 271 / 360;
+  const boatL = W / 2 - BW * .62, boatT = Math.max(4, Hh * .15 - BH);
+  Object.assign(boatEl.style, { width: BW + 'px', left: boatL + 'px', top: boatT + 'px' });
+  const boatX = boatL + BW * .975, rodY = boatT + BH * .11;
   let hookX = boatX, hookY = rodY + 10;
   function setHook(x, y, ms) {
     hook.style.transition = `top ${ms}ms ease-in-out, left ${ms}ms ease-in-out`;
