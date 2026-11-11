@@ -8,92 +8,95 @@
 <link rel="icon" href="../voca/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../voca/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root{--navy:#0b3a73;--blue:#2f8cf0;--sky:#bfe6ff;--gold:#ffc83d;--pink:#ff7aa8;--mint:#3ed6a0;--red:#ff5a5f;--ink:#1d2a44;--card:#ffffff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#0b3a73;font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{margin:0;height:100%;background:#0b3a73;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;color:var(--ink);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 button{font-family:inherit;cursor:pointer;border:0}
-#app{position:fixed;inset:0;max-width:560px;margin:0 auto;overflow:hidden;background:linear-gradient(#8fd3ff,#e8f7ff 60%,#fff6d8)}
+#app{position:fixed;inset:0;max-width:560px;margin:0 auto;overflow:hidden;background:#bfe6ff url(img/bgSea.jpg) center/cover}
+.glass{background:rgba(255,255,255,.68);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid rgba(255,255,255,.75);box-shadow:0 10px 30px rgba(20,70,130,.16)}
 .screen{position:absolute;inset:0;display:none;flex-direction:column}
 .screen.on{display:flex}
 /* 홈 */
 #home{align-items:center;padding:calc(18px + env(safe-area-inset-top)) 16px 16px;overflow-y:auto}
-.logo{font-size:30px;color:var(--navy);margin:4px 0 0;text-shadow:0 3px 0 #fff}
-.logo b{color:#e8a400}
-.sub{font-size:15px;color:#3b5a85;margin:4px 0 6px}
+.logo{font-size:30px;font-weight:900;color:var(--navy);margin:4px 0 0;letter-spacing:-.03em;text-shadow:0 2px 12px rgba(255,255,255,.9)}
+.logo b{background:linear-gradient(90deg,#ff9a3c,#ff5f7e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:14px;font-weight:600;color:#2c4f7c;margin:4px 0 6px}
 #mascot{width:100%;max-width:400px;height:auto;aspect-ratio:720/340}
 .lvrow{display:flex;gap:10px;width:100%;margin:6px 0}
-.lvbtn{flex:1;padding:12px 6px;border-radius:18px;font-size:20px;background:#fff;color:var(--navy);box-shadow:0 5px 0 #9cc7ee}
-.lvbtn.on{background:var(--navy);color:#fff;box-shadow:0 5px 0 #05213f}
+.lvbtn{flex:1;padding:13px 6px;border-radius:18px;font-size:18px;font-weight:800;background:rgba(255,255,255,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--navy);border:1px solid rgba(255,255,255,.8);box-shadow:0 8px 20px rgba(20,70,130,.14);transition:transform .15s}
+.lvbtn.on{background:linear-gradient(135deg,#1456a0,#0b3a73);color:#fff;border-color:transparent;box-shadow:0 10px 24px rgba(11,58,115,.35)}
 .pick{display:flex;gap:8px;width:100%;margin:6px 0}
-.pick select{flex:1;font-family:inherit;font-size:17px;padding:10px 8px;border-radius:14px;border:3px solid #cfe5fb;background:#fff;color:var(--ink)}
+.pick select{flex:1;min-width:0;font-family:inherit;font-weight:700;font-size:16px;padding:11px 8px;border-radius:14px;border:1px solid rgba(255,255,255,.85);background:rgba(255,255,255,.75);backdrop-filter:blur(12px);color:var(--ink);box-shadow:0 6px 16px rgba(20,70,130,.1)}
 .games{display:grid;gap:12px;width:100%;margin-top:10px}
-.gcard{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px;color:#fff;text-align:left;box-shadow:0 6px 0 rgba(0,0,0,.18);position:relative}
-.gcard .ic img{width:52px;height:52px;object-fit:contain}
-.gcard .ic{font-size:40px;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex:none}
-.gcard h3{margin:0;font-size:21px;font-weight:400}
-.gcard p{margin:2px 0 0;font-size:13.5px;opacity:.92;font-family:system-ui,sans-serif}
-.gcard .best{position:absolute;right:12px;top:10px;font-size:13px;background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px}
-.g1{background:linear-gradient(135deg,#ff9a3c,#ff5f7e)}
-.g2{background:linear-gradient(135deg,#29b6f6,#3d6ef0)}
-.g3{background:linear-gradient(135deg,#9b5cff,#5b3bd1)}
-.gcard:active,.lvbtn:active,.choice:active,.pbtn:active{transform:translateY(3px)}
+.gcard{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:24px;color:#fff;text-align:left;box-shadow:0 14px 30px rgba(20,50,110,.22),inset 0 1px 0 rgba(255,255,255,.35);position:relative;overflow:visible;transition:transform .15s}
+.gcard .ic img{width:70px;height:74px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.2))}
+.gcard .ic{width:66px;height:62px;display:flex;align-items:flex-end;justify-content:center;flex:none;margin-top:-18px}
+.gcard h3{margin:0;font-size:20px;font-weight:900;letter-spacing:-.02em}
+.gcard p{margin:3px 0 0;font-size:13px;font-weight:500;opacity:.92}
+.gcard .best{position:absolute;right:12px;top:10px;font-size:12px;font-weight:800;background:rgba(255,255,255,.25);padding:3px 9px;border-radius:10px}
+.g1{background:linear-gradient(135deg,#ffb35c,#ff6f8e)}
+.g2{background:linear-gradient(135deg,#3cc6f7,#4a7cf2)}
+.g3{background:linear-gradient(135deg,#ff8a5c,#8a54e8)}
+.gcard:active,.lvbtn:active,.choice:active,.pbtn:active,.fr:active{transform:scale(.97)}
 .friends{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;width:100%;margin:2px 0 4px}
-.fr{background:#fff;border-radius:14px;padding:5px 2px 4px;text-align:center;font-size:12.5px;color:var(--navy);box-shadow:0 3px 0 #9cc7ee;position:relative;line-height:1.1}
+.fr{background:rgba(255,255,255,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.85);border-radius:16px;padding:6px 2px 5px;text-align:center;font-size:12px;font-weight:800;color:var(--navy);box-shadow:0 6px 16px rgba(20,70,130,.12);position:relative;line-height:1.1;transition:transform .15s}
 .fr img{width:100%;height:44px;object-fit:contain;display:block;margin-bottom:2px}
-.fr.on{background:#fff6d6;box-shadow:0 0 0 3px var(--gold),0 3px 0 #e0b22c}
+.fr.on{background:#fff;box-shadow:0 0 0 3px #ffc83d,0 8px 18px rgba(255,170,30,.3)}
 .fr.lock img{filter:grayscale(1) brightness(.75);opacity:.55}
 .fr .lk{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:10.5px;color:#fff;background:rgba(20,40,80,.72);border-radius:9px;padding:1px 6px;white-space:nowrap;font-family:system-ui,sans-serif}
-.starbar{font-size:15px;color:#3b5a85;margin:2px 0 0}
-.unlock{font-size:16px;color:#fff;background:linear-gradient(135deg,#29b6f6,#3d6ef0);padding:6px 14px;border-radius:14px;margin-top:8px;display:flex;align-items:center;gap:8px}
+.starbar{font-size:13px;font-weight:700;color:#2c4f7c;margin:4px 0 2px;background:rgba(255,255,255,.6);padding:4px 12px;border-radius:999px}
+.unlock{font-size:15px;font-weight:800;color:#fff;background:linear-gradient(135deg,#3cc6f7,#4a7cf2);padding:6px 14px 6px 8px;border-radius:16px;margin-top:10px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(60,120,240,.3)}
 .unlock img{width:40px;height:40px;object-fit:contain}
-.foot{font-size:12px;color:#6b84a6;margin-top:12px;font-family:system-ui,sans-serif;text-align:center}
+.foot{font-size:12px;font-weight:600;color:#3d5f88;margin-top:14px;text-align:center}
 /* 게임 */
 #game{background:#000}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .hud{position:absolute;left:0;right:0;top:0;padding:calc(8px + env(safe-area-inset-top)) 10px 0;display:flex;align-items:center;gap:8px;pointer-events:none;z-index:3}
-.hud .pill{white-space:nowrap;background:rgba(255,255,255,.92);border-radius:16px;padding:5px 10px;font-size:17px;color:var(--navy);box-shadow:0 3px 0 rgba(0,0,0,.15)}
-.hud .x{pointer-events:auto;background:rgba(255,255,255,.92);border-radius:14px;width:38px;height:36px;font-size:18px;color:var(--navy)}
+.hud .pill{white-space:nowrap;background:rgba(255,255,255,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:5px 11px;font-size:16px;font-weight:800;color:var(--navy);box-shadow:0 6px 14px rgba(0,30,70,.12)}
+.hud .x{pointer-events:auto;background:rgba(255,255,255,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);border-radius:14px;width:38px;height:36px;font-size:17px;font-weight:800;color:var(--navy)}
 .hud .sp{flex:1}
 #energy{position:absolute;left:12px;right:12px;top:calc(52px + env(safe-area-inset-top));height:12px;border-radius:8px;background:rgba(0,0,0,.25);overflow:hidden;z-index:3;display:none}
 #energy i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5a5f,#ffc83d,#3ed6a0);border-radius:8px;transition:width .1s linear}
-#prompt{position:absolute;left:50%;top:calc(72px + env(safe-area-inset-top));transform:translateX(-50%);z-index:3;background:#fff;border-radius:20px;padding:8px 16px;font-size:24px;color:var(--navy);box-shadow:0 5px 0 rgba(0,0,0,.18);max-width:92%;text-align:center;line-height:1.25;pointer-events:none}
-#prompt small{display:block;font-size:13px;color:#8aa0bd;font-family:system-ui,sans-serif}
-#built{position:absolute;left:12px;right:12px;top:calc(150px + env(safe-area-inset-top));z-index:3;text-align:center;color:#fff;font-size:19px;text-shadow:0 2px 0 rgba(0,0,0,.4);pointer-events:none;min-height:24px}
+#prompt{position:absolute;left:50%;top:calc(74px + env(safe-area-inset-top));transform:translateX(-50%);z-index:3;background:rgba(255,255,255,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);border-radius:22px;padding:9px 20px;font-size:24px;font-weight:900;letter-spacing:-.02em;color:var(--navy);box-shadow:0 12px 30px rgba(0,30,70,.18);max-width:92%;text-align:center;line-height:1.25;pointer-events:none}
+#prompt small{display:block;font-size:12px;font-weight:600;color:#6c84a6;margin-top:2px}
+#built{position:absolute;left:12px;right:12px;top:calc(150px + env(safe-area-inset-top));z-index:3;text-align:center;color:#fff;font-size:19px;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.45);pointer-events:none;min-height:24px}
 #built span{color:var(--gold)}
 #ctrl{position:absolute;left:0;right:0;bottom:0;padding:10px 10px calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:3}
-.choice{flex:1;min-width:0;min-height:76px;border-radius:22px;font-size:24px;word-break:keep-all;overflow-wrap:anywhere;background:#fff;color:var(--navy);box-shadow:0 6px 0 #9cc7ee;padding:6px;word-break:break-word;line-height:1.1}
-.choice.ok{background:var(--mint);color:#fff;box-shadow:0 6px 0 #1f9e72}
-.choice.bad{background:var(--red);color:#fff;box-shadow:0 6px 0 #b8333a;animation:shake .3s}
-.choice .arr{display:block;font-size:14px;opacity:.55}
-.pbtn{width:84px;min-height:76px;border-radius:22px;font-size:32px;background:rgba(255,255,255,.92);color:var(--navy);box-shadow:0 6px 0 rgba(0,0,0,.2)}
-#runhint{flex:1;align-self:center;color:#fff;text-align:center;font-size:15px;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.choice{flex:1;min-width:0;min-height:76px;border-radius:22px;font-size:24px;font-weight:800;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.95);color:var(--navy);box-shadow:0 12px 26px rgba(0,30,70,.18);padding:6px;line-height:1.1;transition:transform .12s,background .15s}
+.choice.ok{background:linear-gradient(135deg,#4fe0ad,#22c08a);color:#fff;border-color:transparent;box-shadow:0 12px 26px rgba(34,192,138,.35)}
+.choice.bad{background:linear-gradient(135deg,#ff7a7e,#f2475b);color:#fff;border-color:transparent;box-shadow:0 12px 26px rgba(242,71,91,.35);animation:shake .3s}
+.choice .arr{display:block;font-size:12px;font-weight:700;opacity:.5;margin-bottom:2px}
+.pbtn{width:84px;min-height:76px;border-radius:22px;font-size:28px;background:rgba(255,255,255,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);color:var(--navy);box-shadow:0 12px 26px rgba(0,30,70,.2)}
+#runhint{flex:1;align-self:center;color:#fff;text-align:center;font-size:14px;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.4)}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-#toast{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);z-index:6;font-size:38px;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 18px rgba(255,200,61,.8);opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}
+#toast{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);z-index:6;font-size:36px;font-weight:900;color:#fff;text-shadow:0 4px 18px rgba(0,0,0,.35),0 0 24px rgba(255,200,61,.8);opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}
 #toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-#ready{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(5,25,55,.55);color:#fff;text-align:center;padding:24px}
+#ready{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(5,25,55,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:var(--navy);text-align:center;padding:24px}
+#ready .rc{background:rgba(255,255,255,.88);border:1px solid #fff;border-radius:30px;padding:22px 22px 24px;max-width:340px;box-shadow:0 24px 60px rgba(0,20,60,.35);display:flex;flex-direction:column;align-items:center}
+#ready .rc img{width:110px;height:110px;object-fit:contain;margin-top:-70px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.2))}
 #ready.on{display:flex}
-#ready h2{font-size:34px;margin:0 0 8px;font-weight:400}
-#ready p{font-size:16px;margin:0 0 18px;font-family:system-ui,sans-serif;line-height:1.5;max-width:340px}
-.big{font-size:24px;padding:14px 34px;border-radius:22px;background:var(--gold);color:var(--navy);box-shadow:0 6px 0 #c9910d}
+#ready h2{font-size:28px;margin:4px 0 8px;font-weight:900;letter-spacing:-.02em}
+#ready p{font-size:15px;font-weight:500;color:#40597d;margin:0 0 18px;line-height:1.55}
+.big{font-size:20px;font-weight:900;padding:14px 44px;border-radius:999px;background:linear-gradient(180deg,#ffd76a,#ffb627);color:#5a3500;box-shadow:0 12px 26px rgba(255,170,30,.4),inset 0 -3px 0 rgba(0,0,0,.08)}
 /* 결과 */
-#result{align-items:center;justify-content:flex-start;padding:calc(26px + env(safe-area-inset-top)) 18px 18px;overflow-y:auto;background:linear-gradient(#ffe7a3,#fff6dc)}
-#result h2{font-size:32px;color:var(--navy);margin:6px 0 0;font-weight:400}
+#result{align-items:center;justify-content:flex-start;padding:calc(26px + env(safe-area-inset-top)) 18px 18px;overflow-y:auto;background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.55)),url(img/bgSky.jpg) center/cover}
+#result h2{font-size:28px;color:var(--navy);margin:6px 0 0;font-weight:900;letter-spacing:-.02em}
 .stars{font-size:46px;letter-spacing:6px;margin:4px 0}
 .stars .off{filter:grayscale(1);opacity:.3}
-.score{font-size:22px;color:#a35f00}
-.newbest{font-size:15px;color:#fff;background:var(--pink);padding:3px 12px;border-radius:12px;margin-top:6px}
-.wrongbox{width:100%;background:#fff;border-radius:20px;padding:12px 14px;margin-top:14px;box-shadow:0 4px 0 #f0d58e}
-.wrongbox h4{margin:0 0 6px;font-weight:400;color:var(--navy);font-size:18px}
-.wrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed #eee;font-size:17px}
+.score{font-size:17px;font-weight:800;color:#2c4f7c;background:rgba(255,255,255,.7);padding:5px 14px;border-radius:999px}
+.newbest{font-size:14px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff8ab4,#ff5f7e);padding:4px 14px;border-radius:999px;margin-top:8px}
+.wrongbox{width:100%;background:rgba(255,255,255,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #fff;border-radius:22px;padding:12px 16px;margin-top:14px;box-shadow:0 12px 30px rgba(20,70,130,.15)}
+.wrongbox h4{margin:0 0 6px;font-weight:900;color:var(--navy);font-size:16px}
+.wrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid rgba(11,58,115,.08);font-size:16px}
 .wrow:first-of-type{border-top:0}
-.wrow b{font-weight:400;color:var(--navy)}
-.wrow span{flex:1;color:#7a8aa3;font-family:system-ui,sans-serif;font-size:14px}
+.wrow b{font-weight:800;color:var(--navy)}
+.wrow span{flex:1;color:#6c84a6;font-weight:500;font-size:13px}
 .wrow button{background:#e8f4ff;border-radius:10px;padding:5px 9px;font-size:16px}
 .rbtns{display:flex;gap:10px;width:100%;margin-top:16px}
-.rbtns button{flex:1;font-size:20px;padding:13px;border-radius:18px;background:#fff;color:var(--navy);box-shadow:0 5px 0 #e0c27a}
-.rbtns .again{background:var(--navy);color:#fff;box-shadow:0 5px 0 #05213f}
+.rbtns button{flex:1;font-size:17px;font-weight:800;padding:14px;border-radius:18px;background:rgba(255,255,255,.85);border:1px solid #fff;color:var(--navy);box-shadow:0 10px 24px rgba(20,70,130,.15)}
+.rbtns .again{background:linear-gradient(135deg,#1456a0,#0b3a73);color:#fff;border-color:transparent;box-shadow:0 12px 26px rgba(11,58,115,.35)}
 </style>
 </head>
 <body>
@@ -137,12 +140,12 @@ button{font-family:inherit;cursor:pointer;border:0}
     <div id="built"></div>
     <div id="ctrl"></div>
     <div id="toast"></div>
-    <div id="ready"><h2 id="rTitle"></h2><p id="rDesc"></p><button class="big" id="go">시작!</button></div>
+    <div id="ready"><div class="rc"><img id="rImg" alt=""><h2 id="rTitle"></h2><p id="rDesc"></p><button class="big" id="go">시작!</button></div></div>
   </section>
 
   <!-- 결과 -->
   <section id="result" class="screen">
-    <canvas id="mascot2" width="360" height="260" style="width:180px;height:130px"></canvas>
+    <canvas id="mascot2" width="400" height="300" style="width:200px;height:150px"></canvas>
     <h2 id="resTitle"></h2>
     <div class="stars" id="resStars"></div>
     <div class="score" id="resScore"></div>
@@ -263,7 +266,7 @@ function drawWhaley(c, x, y, s, o) {
 }
 function star(c, x, y, R, r) { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? r : R; c.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d); } c.closePath(); }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-function fitText(c, txt, maxW, size, font) { let s = size; c.font = `${s}px ${font || "Jua, sans-serif"}`; while (c.measureText(txt).width > maxW && s > 10) { s -= 1; c.font = `${s}px ${font || "Jua, sans-serif"}`; } return s; }
+function fitText(c, txt, maxW, size, font) { const f = font || "Pretendard, sans-serif"; let s = size; c.font = `800 ${s}px ${f}`; while (c.measureText(txt).width > maxW && s > 10) { s -= 1; c.font = `800 ${s}px ${f}`; } return s; }
 
 /* ───────── 바다 친구들 (제미나이로 만든 3D 캐릭터 이미지) ───────── */
 const CHARS = [
@@ -275,29 +278,38 @@ const CHARS = [
   { k: 'crab', name: '크랩이', need: 40 }
 ];
 const IMG = {};
-['whale', 'whale_happy', 'whale_sad', 'whale_swim', 'whale_wow', 'octo', 'turtle', 'clown', 'seal', 'crab'].forEach((n) => { const i = new Image(); i.src = 'img/' + n + '.webp'; IMG[n] = i; });
-const SCALE = { whale_happy: 1.32 };
+const FRIEND_KEYS = ['whale', 'octo', 'turtle', 'clown', 'seal', 'crab'];
+FRIEND_KEYS.forEach((k) => ['', '_happy', '_sad', '_swim', '_wow'].forEach((m) => { const n = k + m, i = new Image(); i.src = 'img/' + n + '.webp'; IMG[n] = i; }));
+['bgSky', 'bgSea', 'bgLava'].forEach((n) => { const i = new Image(); i.src = 'img/' + n + '.jpg'; IMG[n] = i; });
+const SCALE = { whale_happy: 1.32, octo_happy: 1.12, turtle_happy: 1.12, clown_happy: 1.12, seal_happy: 1.12, crab_happy: 1.12 };
+const SWIM_RIGHT = { whale: 1, clown: 1 }; // 헤엄 그림이 오른쪽을 보는 친구들 (나머지는 뒤집어서 오른쪽으로)
+/* 배경 이미지를 화면에 꽉 차게(cover) 그리기. px/py = 패럴랙스 이동(px), 이미지가 부족하면 반복 */
+function drawBg(c, key, px, py, zoom) {
+  const im = IMG[key]; if (!im || !im.complete || !im.naturalWidth) return false;
+  const sc = Math.max(W / im.naturalWidth, H / im.naturalHeight) * (zoom || 1.08), iw = im.naturalWidth * sc, ih = im.naturalHeight * sc;
+  const ox = (W - iw) / 2, oy = (H - ih) / 2;
+  if (px) { const P = iw * 2, x0 = ((ox - px) % P + P) % P - P; for (let x = x0, n = 0; x < W; x += iw, n++) { const flip = n % 2; c.save(); if (flip) { c.translate(x + iw, 0); c.scale(-1, 1); c.drawImage(im, 0, oy + (py || 0), iw, ih); } else c.drawImage(im, x, oy + (py || 0), iw, ih); c.restore(); } }
+  else c.drawImage(im, ox, oy + clamp(py || 0, -(ih - H) / 2, (ih - H) / 2), iw, ih);
+  return true;
+}
 let curChar = store.get('char', 'whale');
 const charName = (k) => (CHARS.find((c) => c.k === k) || CHARS[0]).name;
 const otherChars = () => CHARS.map((c) => c.k).filter((k) => k !== curChar);
 /* (x,y) = 발밑 가운데, h = 몸 높이(px). o: { k, mood: idle|happy|sad|fall|swim, squash, flip, rot, t } */
 function drawChar(c, x, y, h, o) {
   o = o || {}; const k = o.k || curChar, mood = o.mood || 'idle';
-  let key = k;
-  if (k === 'whale') key = { happy: 'whale_happy', sad: 'whale_sad', fall: 'whale_wow', swim: 'whale_swim' }[mood] || 'whale';
-  const im = IMG[key];
+  let key = { happy: k + '_happy', sad: k + '_sad', fall: k + '_wow', swim: k + '_swim' }[mood] || k;
+  let im = IMG[key];
+  if (!im || !im.complete || !im.naturalWidth) { key = k; im = IMG[k]; }
+  const flip = (mood === 'swim' && !SWIM_RIGHT[k]) ? !o.flip : o.flip;
   if (!im || !im.complete || !im.naturalWidth) { drawWhaley(c, x, y, h / 60, o); return; }
   const hh = h * (SCALE[key] || 1), ww = hh * im.naturalWidth / im.naturalHeight, sq = o.squash || 0, t = o.t || 0;
   c.save(); c.translate(x, y);
   if (o.rot) { c.translate(0, -hh / 2); c.rotate(o.rot); c.translate(0, hh / 2); }
-  if (k !== 'whale' && mood === 'sad') c.rotate(Math.sin(t * 3) * .05 - .08);
-  c.scale((1 + sq * .14) * (o.flip ? -1 : 1), 1 - sq * .14);
+  c.scale((1 + sq * .14) * (flip ? -1 : 1), 1 - sq * .14);
   c.drawImage(im, -ww / 2, -hh, ww, hh);
   c.restore();
-  if (k !== 'whale') { // 고래 말고는 표정 이미지가 없어서 효과로 감정 표현
-    if (mood === 'happy') { c.fillStyle = '#ffc83d'; for (let i = 0; i < 3; i++) { const a = t * 4 + i * 2.1; star(c, x + Math.cos(a) * hh * .55, y - hh * .6 + Math.sin(a) * hh * .45, 6, 2.6); c.fill(); } }
-    if (mood === 'sad' || mood === 'fall') { c.fillStyle = '#6cc6ff'; const dy = (t * 40) % 16; c.beginPath(); c.ellipse(x + ww * .22, y - hh * .52 + dy, 3.2, 4.6, 0, 0, Math.PI * 2); c.fill(); }
-  }
+  if (mood === 'happy' && h > 44) { c.fillStyle = 'rgba(255,214,90,.9)'; for (let i = 0; i < 2; i++) { const a = t * 3 + i * 3.1; star(c, x + Math.cos(a) * hh * .6, y - hh * .7 + Math.sin(a) * hh * .3, 5, 2.2); c.fill(); } }
 }
 
 /* 홈 화면 마스코트 */
@@ -438,10 +450,11 @@ function StairsGame() {
     const top = h < .5 ? mix('#7cc8ff', '#ff9a8a', h * 2) : mix('#ff9a8a', '#1b1550', (h - .5) * 2);
     const bot = h < .5 ? mix('#dff3ff', '#ffd59a', h * 2) : mix('#ffd59a', '#3a2a7a', (h - .5) * 2);
     const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, top); gr.addColorStop(1, bot); c.fillStyle = gr; c.fillRect(0, 0, W, H);
+    if (drawBg(c, 'bgSky', 0, -g.camY * .04 + 40, 1.15)) { c.globalAlpha = h * .75; c.fillStyle = gr; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
     if (h > .55) { c.fillStyle = 'rgba(255,255,255,' + (h - .55) * 2 + ')'; for (let i = 0; i < 40; i++) { const sx = (i * 97) % W, sy = (i * 151 + g.camY * .05) % H; c.fillRect(sx, (sy + H) % H, 2, 2); } }
     // 구름 (패럴랙스)
-    c.fillStyle = 'rgba(255,255,255,.75)';
-    for (let i = 0; i < 6; i++) { const cy0 = ((i * 170 - g.camY * .35) % (H + 200) + H + 200) % (H + 200) - 100; cloud(c, (i * 131 + 40) % W, cy0, 1 + (i % 3) * .3); }
+    c.fillStyle = 'rgba(255,255,255,.45)';
+    for (let i = 0; i < 4; i++) { const cy0 = ((i * 170 - g.camY * .35) % (H + 200) + H + 200) % (H + 200) - 100; cloud(c, (i * 131 + 40) % W, cy0, 1 + (i % 3) * .3); }
     c.save();
     const sx = g.shake > 0 ? Math.sin(g.t * 80) * 6 * g.shake : 0;
     const ox = W / 2 - g.stairs[g.i].x * .6 + sx, oy = H * .62 - g.camY;
@@ -452,7 +465,7 @@ function StairsGame() {
       c.fillStyle = 'rgba(0,0,0,.12)'; rr(c, s.x - 30, s.y + 6, 60, 20, 8); c.fill();
       c.fillStyle = `hsl(${hue} 80% 62%)`; rr(c, s.x - 30, s.y - 2, 60, 20, 8); c.fill();
       c.fillStyle = `hsl(${hue} 90% 78%)`; rr(c, s.x - 30, s.y - 2, 60, 8, 6); c.fill();
-      if (k > 0 && k % 10 === 0) { c.fillStyle = '#fff'; c.font = '14px Jua'; c.textAlign = 'center'; c.fillText(k + '층', s.x, s.y + 14); }
+      if (k > 0 && k % 10 === 0) { c.fillStyle = '#fff'; c.font = '800 13px Pretendard, sans-serif'; c.textAlign = 'center'; c.fillText(k + '층', s.x, s.y + 14); }
     }
     for (let k = 10; k < g.stairs.length; k += 10) { // 10층마다 바다 친구가 기다려요
       const s = g.stairs[k], fk = otherChars()[(k / 10 - 1) % 5], side = (k / 10) % 2 ? 1 : -1;
@@ -524,11 +537,13 @@ function RunGame() {
   };
   g.draw = (c) => {
     // 하늘 + 바다
-    let gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#7fd0ff'); gr.addColorStop(.3, '#c8ecff'); gr.addColorStop(.31, '#3fb2f0'); gr.addColorStop(1, '#0d5aa8'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
-    c.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 4; i++) cloud(c, ((i * 190 - g.dist * .15) % (W + 200) + W + 200) % (W + 200) - 100, 50 + i * 26 + (i % 2) * 30, .9);
-    // 섬 실루엣
-    c.fillStyle = '#5cc9a7'; for (let i = 0; i < 3; i++) { const ix = ((i * 300 - g.dist * .3) % (W + 300) + W + 300) % (W + 300) - 150; c.beginPath(); c.ellipse(ix, H * .31, 90, 26, 0, Math.PI, 0); c.fill(); c.fillStyle = '#3fae8a'; c.fillRect(ix - 2, H * .31 - 50, 5, 30); c.fillStyle = '#5cc9a7'; }
-    otherChars().forEach((fk, i) => { const fx = ((i * 330 - g.dist * .45) % (W + 330 * 2) + W + 660) % (W + 660) - 120; c.globalAlpha = .85; drawChar(c, fx, H * .345 + Math.sin(g.t * 2 + i) * 4, 30, { k: fk, t: g.t + i }); c.globalAlpha = 1; });
+    let gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#7fd8ff'); gr.addColorStop(1, '#1f7fd0'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
+    drawBg(c, 'bgSea', g.dist * .12, 0, 1.05);
+    // 빛줄기
+    c.save(); c.globalCompositeOperation = 'lighter'; for (let i = 0; i < 4; i++) { const bx = ((i * 170 - g.dist * .05) % (W + 200) + W + 200) % (W + 200) - 100; const lg = c.createLinearGradient(0, 0, 0, H * .7); lg.addColorStop(0, 'rgba(255,255,255,.13)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = lg; c.beginPath(); c.moveTo(bx, 0); c.lineTo(bx + 50, 0); c.lineTo(bx + 120 + Math.sin(g.t + i) * 10, H * .7); c.lineTo(bx + 40, H * .7); c.fill(); } c.restore();
+    // 뒤에서 같이 헤엄치는 친구들
+    otherChars().forEach((fk, i) => { const fx = ((i * 330 - g.dist * .45) % (W + 330 * 2) + W + 660) % (W + 660) - 120; c.globalAlpha = .8; drawChar(c, fx, H * .2 + (i % 2) * 34 + Math.sin(g.t * 2 + i) * 5, 34, { k: fk, t: g.t + i, mood: 'swim' }); c.globalAlpha = 1; });
+    { const og = c.createLinearGradient(0, laneY(0) - 90, 0, H); og.addColorStop(0, 'rgba(10,60,120,0)'); og.addColorStop(1, 'rgba(10,60,120,.18)'); c.fillStyle = og; c.fillRect(0, laneY(0) - 90, W, H); }
     // 물결 줄
     for (let l = 0; l < 3; l++) {
       const y = laneY(l) + 8; c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.beginPath();
@@ -630,9 +645,7 @@ function ObbyGame() {
   };
   g.draw = (c) => {
     let gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#2a1f6b'); gr.addColorStop(.6, '#6a3fb0'); gr.addColorStop(1, '#ff7a4a'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
-    c.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 50; i++) { const sx = ((i * 89 - g.camX * .15) % W + W) % W, sy = (i * 47) % (H * .5); c.fillRect(sx, sy, i % 3 ? 1.5 : 2.5, i % 3 ? 1.5 : 2.5); }
-    // 멀리 떠 있는 블록들
-    for (let i = 0; i < 6; i++) { const bx = ((i * 160 - g.camX * .4) % (W + 160) + W + 160) % (W + 160) - 80, by = H * .25 + (i % 3) * 50; c.fillStyle = 'rgba(155,92,255,.35)'; c.fillRect(bx, by, 40, 40); c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(bx, by, 40, 8); }
+    if (!drawBg(c, 'bgLava', g.camX * .15, 0, 1.05)) { c.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 50; i++) { const sx = ((i * 89 - g.camX * .15) % W + W) % W, sy = (i * 47) % (H * .5); c.fillRect(sx, sy, 2, 2); } }
     c.save();
     const ox = W * .36 - g.camX, oy = baseY();
     c.translate(ox, oy);
@@ -662,7 +675,7 @@ function ObbyGame() {
     drawParts(c);
     c.restore();
     // 용암
-    const ly = H * .98 - 30; c.fillStyle = '#ff4b1f'; c.beginPath(); c.moveTo(0, H);
+    const ly = H * .98 - 30; c.fillStyle = 'rgba(255,75,31,.85)'; c.beginPath(); c.moveTo(0, H);
     for (let x = 0; x <= W; x += 10) c.lineTo(x, ly + Math.sin(x / 30 + g.t * 3) * 6); c.lineTo(W, H); c.fill();
     c.fillStyle = 'rgba(255,214,90,.6)'; for (let i = 0; i < 8; i++) { const bx = (i * 67 + g.t * 20) % W; c.beginPath(); c.arc(bx, ly + 12 + Math.sin(g.t * 4 + i) * 4, 4, 0, Math.PI * 2); c.fill(); }
     c.textBaseline = 'alphabetic';
@@ -689,7 +702,7 @@ function startGame(name) {
   $('#ctrl').innerHTML = ''; UI.prompt(''); UI.built(''); UI.energy(null); UI.combo(0); UI.score(0);
   G = name === 'stairs' ? StairsGame() : name === 'run' ? RunGame() : ObbyGame();
   UI.hearts(G.hearts, G.maxH);
-  $('#rTitle').textContent = INFO[name][0]; $('#rDesc').innerHTML = INFO[name][1]; $('#ready').classList.add('on');
+  $('#rImg').src = 'img/' + curChar + (name === 'run' ? '_swim' : '_happy') + '.webp'; $('#rImg').style.transform = name === 'run' && !SWIM_RIGHT[curChar] ? 'scaleX(-1)' : ''; $('#rTitle').textContent = INFO[name][0]; $('#rDesc').innerHTML = INFO[name][1]; $('#ready').classList.add('on');
   running = true; last = performance.now(); requestAnimationFrame(loop);
 }
 $('#go').onclick = () => { $('#ready').classList.remove('on'); SFX.unlock(); G.start(); G.started = true; };

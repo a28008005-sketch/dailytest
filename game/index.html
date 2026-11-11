@@ -4,46 +4,49 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#003C70">
-<title>웨일리 몬스터 잡기</title>
+<title>웨일리 바다 친구 잡기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root{
   --navy:#003C70; --deep:#012A4F; --cyan:#0FC3F4; --yellow:#FFEE62; --flame:#FF5826; --ink:#16324F;
   --pink:#FF5C8A; --green:#2BD47D; --paper:#F4FBFF;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-html,body{margin:0; height:100%; background:var(--deep); color:#fff; font-family:'Noto Sans KR',system-ui,sans-serif; overscroll-behavior:none; -webkit-user-select:none; user-select:none}
+html,body{margin:0; height:100%; background:var(--deep); color:#fff; font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif; overscroll-behavior:none; -webkit-user-select:none; user-select:none}
 button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; padding:0}
 .hidden{display:none !important}
 .jua{font-family:'Jua','Noto Sans KR',sans-serif}
 .screen{position:fixed; inset:0; display:flex; flex-direction:column; overflow:hidden}
 
 /* ───── 홈 ───── */
-#home{background:radial-gradient(120% 70% at 50% 0%, #0d5a96 0%, var(--navy) 45%, var(--deep) 100%); overflow-y:auto}
+#home{background:linear-gradient(180deg,rgba(4,52,104,.55) 0%,rgba(2,38,80,.78) 45%,rgba(1,24,52,.95) 100%),url(../arcade/img/bgSea.jpg) center/cover fixed; overflow-y:auto}
 .home-in{max-width:720px; width:100%; margin:0 auto; padding:22px 16px 40px; display:flex; flex-direction:column; gap:16px}
 .title{display:flex; align-items:center; gap:12px}
 .title h1{margin:0; font-family:'Jua'; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.1}
 .title small{display:block; font-size:13px; color:#9FD8F5; margin-top:4px}
-.panel{background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.14); border-radius:22px; padding:14px}
-.panel h2{margin:0 0 10px; font-size:14px; color:#9FD8F5; font-weight:700}
+.panel{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.22); border-radius:22px; padding:14px; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:0 10px 30px rgba(0,20,50,.18)}
+.panel h2{margin:0 0 10px; font-size:13px; color:#BFE6FA; font-weight:700; letter-spacing:.02em}
 .chips{display:flex; gap:8px; flex-wrap:wrap}
-.chip{padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.1); border:2px solid transparent; font-weight:900; font-size:16px}
+.chip{padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); font-weight:800; font-size:16px}
 .chip.on{background:var(--yellow); color:var(--navy)}
 .sel{display:flex; gap:8px; flex-wrap:wrap}
 .sel select{font:inherit; font-weight:700; font-size:16px; padding:10px 12px; border-radius:14px; border:0; background:#fff; color:var(--navy)}
 .course{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-family:'Jua'; font-size:20px}
-.course .g{background:#fff; color:var(--navy); border-radius:16px; padding:8px 12px; display:flex; align-items:center; gap:6px; box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.course .g{background:rgba(255,255,255,.94); color:var(--navy); border-radius:16px; padding:6px 12px 6px 6px; display:flex; align-items:center; gap:6px; box-shadow:0 6px 16px rgba(0,20,50,.2)}
+.gico{width:34px; height:34px; object-fit:contain; display:inline-block; vertical-align:middle}
 .course .arr{color:var(--yellow)}
 .preview{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
 .preview .m{width:64px; height:64px}
 .big{
   font-family:'Jua'; font-size:26px; padding:16px; border-radius:22px; background:var(--yellow); color:var(--navy);
-  box-shadow:0 6px 0 #C9B21E; transition:transform .1s; width:100%;
+  box-shadow:0 10px 24px rgba(255,214,60,.35), inset 0 -4px 0 rgba(0,0,0,.12); transition:transform .1s; width:100%;
+  background:linear-gradient(180deg,#FFF27A,#FFD43B);
 }
-.big:active{transform:translateY(4px); box-shadow:0 2px 0 #C9B21E}
-.ghost{font-weight:900; font-size:16px; padding:12px; border-radius:18px; background:rgba(255,255,255,.12); width:100%}
+.big:active{transform:scale(.98)}
+.ghost{font-weight:800; font-size:16px; padding:13px; border-radius:18px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); backdrop-filter:blur(10px); width:100%}
 .row2{display:flex; gap:10px}
 .who{background:rgba(255,238,98,.12); border:2px solid rgba(255,238,98,.35); border-radius:18px; padding:10px 14px; font-size:15px}
 .who b{color:var(--yellow)}
@@ -52,8 +55,8 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 .opt input{width:20px; height:20px}
 
 /* ───── 게임 공통 ───── */
-#play{background:var(--navy)}
-.hud{display:flex; align-items:center; gap:10px; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:rgba(0,0,0,.18); z-index:5}
+#play{background:#0b4f8a url(../arcade/img/bgSea.jpg) center/cover}
+.hud{display:flex; align-items:center; gap:10px; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:rgba(0,30,70,.35); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:5}
 .hud .x{width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.15); font-size:20px; font-weight:900}
 .hud .mid{flex:1; min-width:0}
 .hud .lbl{font-family:'Jua'; font-size:20px; line-height:1.1}
@@ -73,7 +76,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 .say .spk svg{width:26px; height:26px; fill:#fff}
 @keyframes ring{0%{box-shadow:0 0 0 0 rgba(15,195,244,.6)} 70%{box-shadow:0 0 0 14px rgba(15,195,244,0)}}
 .stage{position:relative; flex:1; overflow:hidden; touch-action:none}
-.bar{display:flex; gap:6px; padding:8px 10px; padding-bottom:max(8px, env(safe-area-inset-bottom)); background:rgba(0,0,0,.25); overflow-x:auto; z-index:5}
+.bar{display:flex; gap:6px; padding:8px 10px; padding-bottom:max(8px, env(safe-area-inset-bottom)); background:rgba(0,30,70,.4); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); overflow-x:auto; z-index:5}
 .bar .slot{flex:none; width:70px; display:flex; flex-direction:column; align-items:center; gap:3px}
 .bar .slot .m{width:56px; height:56px; transition:filter .3s}
 .bar .slot:not(.caught) .m{filter:grayscale(1) brightness(.55)}
@@ -93,7 +96,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 @keyframes glow{50%{filter:drop-shadow(0 0 14px var(--yellow)) drop-shadow(0 0 4px var(--yellow))}}
 
 /* ── 버블팡 ── */
-.g-bubble{background:linear-gradient(180deg,#4FC8F2 0%,#1B8FD0 60%,#0B5E9C 100%)}
+.g-bubble{background:url(../arcade/img/bgSea.jpg) center/cover}
 .bub{position:absolute; width:var(--bs); height:var(--bs); border-radius:50%; will-change:transform;
   background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 8%, rgba(255,255,255,.35) 9% 18%, rgba(255,255,255,.12) 40%, rgba(160,230,255,.35) 75%, rgba(255,255,255,.7) 100%);
   border:3px solid rgba(255,255,255,.75); box-shadow:inset 0 0 18px rgba(255,255,255,.5), 0 6px 18px rgba(0,40,80,.25)}
@@ -106,36 +109,42 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 @keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.2); opacity:0}}
 
 /* ── 두더지 ── */
-.g-mole{background:linear-gradient(180deg,#8FE36B 0%,#5BC24A 55%,#3C9A35 100%)}
+.g-mole{background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,236,196,.55) 100%),url(../arcade/img/bgSea.jpg) center bottom/cover}
 .holes{position:absolute; inset:4% 3% 3%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:3%}
 .hole{position:relative; overflow:hidden; border-radius:0 0 50% 50% / 0 0 30% 30%}
-.hole::after{content:''; position:absolute; left:6%; right:6%; bottom:4%; height:22%; border-radius:50%; background:#3B2412; box-shadow:inset 0 6px 0 #22140A; z-index:1}
+.hole::after{content:''; position:absolute; left:6%; right:6%; bottom:4%; height:22%; border-radius:50%; background:#C99A5B; box-shadow:inset 0 8px 0 #9E733D; z-index:1}
 .mole{position:absolute; left:50%; bottom:8%; width:74%; transform:translate(-50%,105%); transition:transform .22s cubic-bezier(.3,1.4,.5,1); z-index:2}
-.hole::before{content:''; position:absolute; left:2%; right:2%; bottom:0; height:16%; background:#5BC24A; border-radius:50% 50% 0 0; z-index:3}
+.hole::before{content:''; position:absolute; left:2%; right:2%; bottom:0; height:16%; background:#F3D9A4; border-radius:50% 50% 0 0; z-index:3}
 .mole.up{transform:translate(-50%,0)}
-.mole .sign{background:#fff; border-radius:14px; border:3px solid #8B5A2B; aspect-ratio:1; width:78%; margin:0 auto -8%; position:relative; z-index:2; display:grid; place-items:center; overflow:hidden}
-.mole svg{display:block; width:100%}
-.mole.bonk svg{animation:squash .4s}
-.mole.miss svg{animation:tease .5s}
+.mole .sign{background:#fff; border-radius:14px; border:3px solid #fff; box-shadow:0 6px 14px rgba(0,30,60,.25); aspect-ratio:1; width:78%; margin:0 auto -8%; position:relative; z-index:2; display:grid; place-items:center; overflow:hidden}
+.mole .mbody{display:block; width:100%; height:auto; filter:drop-shadow(0 6px 8px rgba(0,0,0,.18))}
+.mole.bonk .mbody{animation:squash .4s}
+.mole.miss .mbody{animation:tease .5s}
 @keyframes squash{40%{transform:scale(1.2,.7)}}
 @keyframes tease{25%{transform:rotate(-12deg)} 75%{transform:rotate(12deg)}}
 .stars{position:absolute; left:50%; top:30%; font-size:28px; transform:translate(-50%,-50%); animation:stars .7s forwards; z-index:4; pointer-events:none}
 @keyframes stars{to{transform:translate(-50%,-140%) scale(1.4); opacity:0}}
 
 /* ── 낚시 ── */
-.g-fish{background:linear-gradient(180deg,#9BE7FF 0 14%, #29A9E0 14%, #1478B8 55%, #0A4B7E 100%)}
-.wave{position:absolute; left:0; right:0; top:12%; height:16px; background:radial-gradient(circle at 10px -4px, transparent 12px, #29A9E0 13px) repeat-x; background-size:20px 16px}
+.g-fish{background:linear-gradient(180deg,#d8f3ff 0 14%, transparent 14%),url(../arcade/img/bgSea.jpg) center/cover}
+.wave{position:absolute; left:0; right:0; top:12%; height:16px; background:radial-gradient(circle at 10px -4px, transparent 12px, #a9e2fb 13px) repeat-x; background-size:20px 16px}
 .boat{position:absolute; top:1%; width:120px; left:50%; transform:translateX(-50%); z-index:3}
 .line{position:absolute; width:3px; background:#fff; top:9%; z-index:2; transform-origin:top}
 .hook{position:absolute; width:26px; height:26px; margin-left:-11px; z-index:3; transition:top .35s ease-in, left .25s}
 .fish{position:absolute; width:var(--fs); will-change:transform}
-.fish svg{display:block; width:100%; overflow:visible}
+.fish .fb{display:block; width:100%; height:auto; transform:scaleX(var(--b,1)); filter:drop-shadow(0 6px 8px rgba(0,30,70,.25))}
+.fish .tag{position:absolute; left:50%; top:-46%; width:60%; transform:translateX(-50%); aspect-ratio:1; border-radius:22px; background:#fff; border:3px solid #fff; overflow:hidden; display:grid; place-items:center; box-shadow:0 6px 14px rgba(0,30,70,.25)}
 .fish .badge{position:absolute; left:28%; top:6%; width:44%; aspect-ratio:1; border-radius:50%; background:#fff; border:3px solid rgba(255,255,255,.9); overflow:hidden; display:grid; place-items:center; box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.fish.flip svg{transform:scaleX(-1)}
+.fish.flip .fb{transform:scaleX(calc(var(--b,1) * -1))}
 .bubbles-bg i{position:absolute; bottom:-20px; width:10px; height:10px; border-radius:50%; border:2px solid rgba(255,255,255,.5); animation:rise linear infinite}
 @keyframes rise{to{transform:translateY(-110vh)}}
 .splash{position:absolute; font-size:40px; transform:translate(-50%,-50%); animation:stars .8s forwards; z-index:5; pointer-events:none}
 
+/* ── 바다 친구 이미지 ── */
+.m.mi{display:block; position:relative}
+.m.mi img{width:100%; height:100%; object-fit:contain; display:block; filter:var(--f,none) drop-shadow(0 4px 6px rgba(0,30,70,.2))}
+.m.mi.sh img{filter:var(--f,none) drop-shadow(0 0 6px #FFE45C) drop-shadow(0 0 12px rgba(255,214,60,.8))}
+.m.mi .spk{position:absolute; inset:0; pointer-events:none}
 /* ───── 잡기 연출 ───── */
 #catch{position:fixed; inset:0; z-index:30; background:radial-gradient(circle at 50% 42%, rgba(30,170,230,.97) 0%, rgba(3,60,112,.98) 45%, rgba(0,20,45,.99) 80%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px}
 .cstage{position:relative; width:240px; height:240px}
@@ -170,16 +179,17 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 
 /* 라운드 안내 */
 #intro{position:fixed; inset:0; z-index:25; display:grid; place-items:center; background:rgba(0,20,45,.85)}
-#intro .card{background:#fff; color:var(--navy); border-radius:28px; padding:26px 30px; text-align:center; animation:appear .4s; min-width:280px}
+#intro .card{background:rgba(255,255,255,.96); color:var(--navy); border-radius:30px; padding:22px 30px 26px; text-align:center; animation:appear .4s; min-width:280px; box-shadow:0 20px 50px rgba(0,20,50,.35)}
+#intro .gi img{width:120px; height:120px; object-fit:contain}
 #intro .gi{font-size:72px; line-height:1}
 #intro h3{font-family:'Jua'; font-weight:400; font-size:34px; margin:8px 0 4px}
 #intro p{margin:0; color:#5B7A95; font-weight:700}
 #intro .r{font-family:'Jua'; color:var(--flame); font-size:18px}
 
 /* ───── 결과 · 도감 ───── */
-#result,#dex{background:radial-gradient(120% 70% at 50% 0%, #0d5a96 0%, var(--navy) 50%, var(--deep) 100%); overflow-y:auto}
+#result,#dex{background:linear-gradient(180deg,rgba(4,52,104,.6),rgba(1,24,52,.95)),url(../arcade/img/bgSea.jpg) center/cover fixed; overflow-y:auto}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px}
-.mon{background:rgba(255,255,255,.08); border-radius:18px; padding:8px 6px 10px; text-align:center; position:relative}
+.mon{background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); border-radius:20px; padding:8px 6px 10px; text-align:center; position:relative; backdrop-filter:blur(10px)}
 .mon .m{width:84px; height:84px; display:block; margin:0 auto}
 .mon b{display:block; font-family:'Jua'; font-weight:400; font-size:16px}
 .mon small{display:block; font-size:12px; color:#9FD8F5}
@@ -200,7 +210,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
   <div class="home-in">
     <div class="title">
       <div id="homeMon" style="width:76px;height:76px"></div>
-      <div><h1>웨일리 몬스터 잡기</h1><small id="subTitle">오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
+      <div><h1>웨일리 바다 친구 잡기</h1><small id="subTitle">오늘 배울 단어 속에 숨은 바다 친구를 모두 잡아라!</small></div>
     </div>
     <div class="who" id="who"></div>
     <a class="ghost hidden" id="backVoca" href="../voca/" style="text-align:center;text-decoration:none;display:block">← 웨일리 보카로 돌아가기</a>
@@ -217,13 +227,13 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
       <div class="course" id="course"></div>
     </div>
     <div class="panel">
-      <h2 id="prevH">숨어 있는 몬스터</h2>
+      <h2 id="prevH">숨어 있는 바다 친구</h2>
       <div class="preview" id="preview"></div>
     </div>
     <label class="opt"><input type="checkbox" id="optText"> 그림 아래 영어 글자도 보여 주기</label>
     <label class="opt"><input type="checkbox" id="optSlow" checked> 천천히 (처음 하는 친구용)</label>
     <button class="big" id="startBtn">🎮 모험 시작!</button>
-    <div class="row2"><button class="ghost" id="dexBtn">📖 몬스터 도감</button></div>
+    <div class="row2"><button class="ghost" id="dexBtn">📖 바다 친구 도감</button></div>
   </div>
 </section>
 
@@ -263,9 +273,9 @@ const store = {
   set(k, v) { try { localStorage.setItem('wmon.' + k, JSON.stringify(v)); } catch (e) {} },
 };
 const GAMES = {
-  bubble: { icon: '🫧', name: '버블팡', how: '소리를 듣고 맞는 방울을 팡! 터뜨려요' },
-  mole: { icon: '🔨', name: '두더지 잡기', how: '맞는 그림을 든 두더지를 콩! 때려요' },
-  fish: { icon: '🎣', name: '물고기 낚시', how: '맞는 그림 물고기를 눌러서 낚아요' },
+  bubble: { icon: '🫧', img: 'whale_happy', name: '버블팡', how: '소리를 듣고 맞는 방울을 팡! 터뜨려요' },
+  mole: { icon: '🦦', img: 'otter', name: '모래 구멍 콩!', how: '맞는 그림을 든 바다 친구를 콩! 눌러요' },
+  fish: { icon: '🎣', img: 'clown_swim', name: '물고기 낚시', how: '맞는 그림을 든 물고기를 눌러서 낚아요' },
 };
 // 교재 Day 1~5 = 월~금. 요일마다 게임 순서가 바뀐다.
 const COURSE = {
@@ -273,7 +283,7 @@ const COURSE = {
   2: { day: '화요일', games: ['mole', 'fish', 'bubble'] },
   3: { day: '수요일', games: ['fish', 'bubble', 'mole'] },
   4: { day: '목요일', games: ['bubble', 'fish', 'mole'] },
-  5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 몬스터가 더 잘 나와요!' },
+  5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 친구가 더 잘 나와요!' },
 };
 // 몬스터마다 잡는 데 필요한 정답 수를 1·2·3 으로 섞는다. 그래야 마지막 게임에서만 줄줄이 잡히지 않고
 // 게임마다 고르게(약 1/3씩) 잡힌다. 잡은 몬스터는 그 게임이 끝날 때 한 번에 보여 준다.
@@ -316,7 +326,18 @@ function monName(w) {
   const k = (w.ko || '').split(/[,;(/]/)[0].replace(/[^가-힣]/g, '');
   return k && k.length <= 4 ? k + '몬' : w.en.replace(/[^A-Za-z]/g, '').replace(/^./, (c) => c.toUpperCase()) + '몬';
 }
+const SEA = '../arcade/img/';
+const SPECIES = ['whale', 'octo', 'turtle', 'clown', 'seal', 'crab', 'jelly', 'puffer', 'star', 'seahorse', 'shark', 'penguin', 'squid', 'otter'];
+const TINT = ['', '', 'hue-rotate(40deg)', 'hue-rotate(-40deg)', 'hue-rotate(150deg) saturate(.9)'];
 function monSVG(w, opt) {
+  opt = opt || {};
+  const R = rng(hashStr(w.en.toLowerCase()));
+  const sp = w.en === 'whaley' ? 'whale_happy' : SPECIES[Math.floor(R() * SPECIES.length)];
+  const tint = w.en === 'whaley' ? '' : TINT[Math.floor(R() * TINT.length)];
+  const star = opt.shiny ? `<svg class="spk" viewBox="0 0 120 124"><g fill="#FFE45C"><path d="M14 18 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/><path d="M104 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path d="M98 100 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/></g></svg>` : '';
+  return `<span class="m mi${opt.shiny ? ' sh' : ''}" style="--f:${tint || 'none'}"><img src="${SEA}${sp}.webp" alt="" draggable="false">${star}</span>`;
+}
+function monSVGOld(w, opt) {
   opt = opt || {};
   const R = rng(hashStr(w.en.toLowerCase()));
   const h = Math.floor(R() * 360);
@@ -450,7 +471,7 @@ function dayOf() {
 function renderHome() {
   const own = Voca.on && DATA.levels.some((l) => l.id === Voca.profile.levelId);
   $('#lvPanel').classList.toggle('hidden', DATA.levels.length < 2 || own);
-  $('#subTitle').textContent = `${lvName[sel.lv] === '파닉스' ? 'Phonics' : 'Space Whale ' + lvName[sel.lv]} · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!`;
+  $('#subTitle').textContent = `${lvName[sel.lv] === '파닉스' ? 'Phonics' : 'Space Whale ' + lvName[sel.lv]} · 오늘 배울 단어 속에 숨은 바다 친구를 모두 잡아라!`;
   $('#backVoca').classList.toggle('hidden', QS.get('from') !== 'voca');
   $('#lvChips').innerHTML = '';
   DATA.levels.forEach((L) => {
@@ -463,18 +484,18 @@ function renderHome() {
   fill($('#volSel'), 6, sel.vol, 'Vol.'); fill($('#unitSel'), 4, sel.unit, 'Unit '); fill($('#daySel'), 5, sel.day, 'Day ');
   const c = COURSE[sel.day];
   $('#courseH').textContent = `Day ${sel.day} · ${c.day} 코스`;
-  $('#course').innerHTML = c.games.map((g, i) => `${i ? '<span class="arr">▶</span>' : ''}<span class="g">${GAMES[g].icon} ${GAMES[g].name}</span>`).join('') + `<span class="arr">▶</span><span class="g">👾 몬스터 잡기</span>`
+  $('#course').innerHTML = c.games.map((g, i) => `${i ? '<span class="arr">▶</span>' : ''}<span class="g"><img class="gico" src="${SEA}${GAMES[g].img}.webp" alt="">${GAMES[g].name}</span>`).join('') + `<span class="arr">▶</span><span class="g"><img class="gico" src="${SEA}crab_happy.webp" alt="">친구 잡기</span>`
     + (c.bonus ? `<div style="flex-basis:100%;font-family:'Noto Sans KR';font-size:13px;color:var(--yellow);margin-top:4px">✨ ${c.bonus}</div>` : '');
   const d = dayOf();
   const dex = getDex();
   $('#who').innerHTML = Voca.on
-    ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>잡은 몬스터와 코인이 웨일리 보카에 같이 쌓여요</span>`
+    ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>모은 바다 친구와 코인이 웨일리 보카에 같이 쌓여요</span>`
     : `🎮 체험 모드<span>웨일리 보카에 로그인하면 코인·도감이 내 진도에 쌓여요 (지금은 이 기기에만 저장)</span>`;
-  $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}` + (d.review ? ' · 문장만 배우는 날이라 앞에서 배운 단어로 복습해요' : '');
+  $('#prevH').textContent = `숨어 있는 바다 친구 ${d.words.length}마리 · ${d.label}` + (d.review ? ' · 문장만 배우는 날이라 앞에서 배운 단어로 복습해요' : '');
   $('#preview').innerHTML = d.words.map((w) => `<div title="${w.en}" style="${dex[key(w)] ? '' : 'filter:brightness(0) opacity(.45)'}">${monSVG(w)}</div>`).join('');
   $('#optText').checked = !!opts.text; $('#optSlow').checked = !!opts.slow;
   const total = Object.keys(dex).length;
-  $('#dexBtn').textContent = `📖 몬스터 도감 (${total}마리)`;
+  $('#dexBtn').textContent = `📖 바다 친구 도감 (${total}마리)`;
   $('#homeMon').innerHTML = monSVG({ en: 'whaley' }, { shiny: true });
 }
 function save() { store.set('sel', sel); }
@@ -517,7 +538,7 @@ async function nextRound() {
   const g = S.course.games[S.round];
   $('#gLbl').textContent = `${GAMES[g].icon} ${GAMES[g].name}`;
   $('#play').className = 'screen';
-  $('#iIcon').textContent = GAMES[g].icon; $('#iName').textContent = GAMES[g].name; $('#iHow').textContent = GAMES[g].how;
+  $('#iIcon').innerHTML = `<img src="${SEA}${GAMES[g].img}.webp" alt="">`; $('#iName').textContent = GAMES[g].name; $('#iHow').textContent = GAMES[g].how;
   $('#iRound').textContent = `${S.round + 1}번째 게임 / ${S.course.games.length}`;
   $('#intro').classList.remove('hidden'); SFX.whoosh();
   await sleep(1700);
@@ -604,7 +625,7 @@ async function catchShow(list) {
   C.innerHTML = `<div class="cstage" style="width:${Math.min(92, n * 30 + 40)}vw;max-width:${size * n + 40}px;height:${size}px">
       <div class="mm" style="position:absolute;inset:0;display:flex;justify-content:center;gap:8px;animation:bob 1s infinite">${list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w, { shiny: m.shiny })}</div>`).join('')}</div>
       <div class="ball hidden"><b></b></div></div>
-    <div id="cTxt" class="ctitle">몬스터 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
+    <div id="cTxt" class="ctitle">바다 친구 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
   C.className = '';
   const st = C.querySelector('.cstage'), mm = st.querySelector('.mm'), ball = st.querySelector('.ball');
   SFX.wob(); await sleep(900);
@@ -621,7 +642,7 @@ async function catchShow(list) {
     return `<div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${monName(w)} ${was ? '' : '<b style="font-size:13px;color:var(--flame)">NEW</b>'}${m.shiny ? ' ✨' : ''}<small>${w.en} · ${w.ko}</small></span></div>`;
   }).join('');
   C.innerHTML += `<div class="cgrid">${cards}</div>
-    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
+    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 친구! 실수 없이 잡았어요 ✨</div>' : ''}
     <button class="big" style="max-width:320px">계속하기 ▶</button>`;
   C.querySelector('.ctitle').textContent = n > 1 ? n + '마리 잡았다!' : '잡았다!';
   (async () => { for (const m of list) { if (C.classList.contains('hidden')) break; say(m.w); await sleep(1300); } })();
@@ -703,7 +724,7 @@ function Mole(stage, target, list, cb) {
   let alive = true, timers = [], sinceTarget = 0, hinted = false;
   const H = Array.from({ length: 6 }, () => {
     const h = document.createElement('div'); h.className = 'hole';
-    h.innerHTML = `<button class="mole"><div class="sign"></div>${MOLE_SVG}</button>`;
+    h.innerHTML = `<button class="mole"><div class="sign"></div><img class="mbody" src="${SEA}${pick(['otter', 'crab', 'seal', 'penguin', 'turtle', 'octo'])}.webp" alt="" draggable="false"></button>`;
     wrap.append(h);
     const o = { h, m: h.querySelector('.mole'), s: h.querySelector('.sign'), up: false, w: null };
     o.m.onpointerdown = (e) => {
@@ -785,13 +806,14 @@ function Fish(stage, target, list, cb) {
     line.style.transform = `rotate(${Math.atan2(-dx, dy)}rad)`;
   }
   setHook(boatX, rodY + 10, 0);
-  const cols = ['#FF8A3D', '#FF5C8A', '#A06BFF', '#FFC93C', '#2BD47D', '#4FA8FF'];
-  const lanesY = shuffle([.24, .42, .6, .78]).map((p) => Hh * p - fs * .32);
+  const FISH = shuffle([{ k: 'clown_swim', b: -1 }, { k: 'whale_swim', b: -1 }, { k: 'turtle_swim', b: 1 }, { k: 'octo_swim', b: 1 }, { k: 'seal_swim', b: 1 }, { k: 'puffer', b: 1 }]);
+  const lanesY = shuffle([.3, .47, .64, .81]).map((p) => Hh * p - fs * .32);
   let alive = true, busy = false, raf = 0, last = performance.now();
   const base = (opts.slow ? W / 9 : W / 6);
   const F = list.map((w, i) => {
     const el = document.createElement('button'); el.className = 'fish'; el.style.setProperty('--fs', fs + 'px');
-    el.innerHTML = `${fishSVG(cols[i % cols.length])}<div class="badge">${face(w)}</div>`;
+    const fk = FISH[i % FISH.length]; el.style.setProperty('--b', fk.b);
+    el.innerHTML = `<img class="fb" src="${SEA}${fk.k}.webp" alt="" draggable="false"><div class="tag">${face(w)}</div>`;
     const dir = i % 2 ? 1 : -1;
     const f = { w, el, x: dir > 0 ? rnd(-fs, W * .3) : rnd(W * .5, W), y: lanesY[i], dir, sp: base * rnd(.8, 1.2), dash: 0, hooked: false };
     if (dir > 0) el.classList.add('flip');
@@ -864,7 +886,7 @@ function finish() {
     <div style="text-align:center"><div style="font-size:64px">🏆</div>
       <h1 class="jua" style="font-weight:400;font-size:38px;margin:4px 0">${caught.length}마리 다 잡았다!</h1>
       <div style="color:#9FD8F5">${S.day.label} · ${S.course.day} 코스 완료</div></div>
-    <div class="stat"><div><b>${caught.length}</b><span>잡은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>+${S.coins}</b><span>${Voca.on ? '보카 코인 (총 ' + totalCoins().toLocaleString() + ')' : '코인'}</span></div></div>
+    <div class="stat"><div><b>${caught.length}</b><span>모은 친구</span></div><div><b>${shiny}</b><span>반짝 친구</span></div><div><b>+${S.coins}</b><span>${Voca.on ? '보카 코인 (총 ' + totalCoins().toLocaleString() + ')' : '코인'}</span></div></div>
     <div class="grid">${caught.map((m) => `<button class="mon" data-k="${reg(m.w)}">${m.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(m.w, { shiny: m.shiny })}<b>${monName(m.w)}</b><small>${m.w.en} · ${m.w.ko}</small></button>`).join('')}</div>
     <button class="big" id="rNext">다음 날 도전 ▶</button>
     <div class="row2"><button class="ghost" id="rAgain">다시 하기</button><button class="ghost" id="rDex">📖 도감</button><button class="ghost" id="rHome">처음으로</button></div>`;
@@ -888,9 +910,9 @@ function showDex(lv) {
   const vol = `-V${sel.vol}U`;
   const locked = all.filter((x) => !dex[key(x.w)] && x.d.id.includes(vol)).slice(0, 40);
   $('#dexIn').innerHTML = `
-    <div class="title"><div style="font-size:44px">📖</div><div><h1>몬스터 도감</h1><small>${Voca.on ? (Voca.profile.name || '') + ' 님이 ' : ''}단어를 맞혀서 잡은 몬스터들이에요. 누르면 소리가 나요.</small></div></div>
+    <div class="title"><div style="font-size:44px">📖</div><div><h1>바다 친구 도감</h1><small>${Voca.on ? (Voca.profile.name || '') + ' 님이 ' : ''}단어를 맞혀서 모은 바다 친구들이에요. 누르면 소리가 나요.</small></div></div>
     <div class="tabs">${DATA.levels.map((x) => `<button class="chip ${x.id === lv ? 'on' : ''}" data-lv="${x.id}">${lvName[x.id]}</button>`).join('')}</div>
-    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>${totalCoins().toLocaleString()}</b><span>${Voca.on ? '보카 코인' : '누적 코인'}</span></div></div>
+    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 친구</span></div><div><b>${shiny}</b><span>반짝 친구</span></div><div><b>${totalCoins().toLocaleString()}</b><span>${Voca.on ? '보카 코인' : '누적 코인'}</span></div></div>
     <div class="grid">
       ${mine.map((x) => { const r = dex[key(x.w)]; return `<button class="mon" data-k="${reg(x.w)}">${r.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(x.w, { shiny: r.shiny })}<b>${monName(x.w)}</b><small>${x.w.en} · ${x.w.ko}</small></button>`; }).join('')}
       ${locked.map((x) => `<div class="mon lock">${monSVG(x.w)}<b>???</b><small>${x.d.label.replace('Vol.', 'V')}</small></div>`).join('')}
