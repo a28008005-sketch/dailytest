@@ -97,6 +97,26 @@ button{font-family:inherit;cursor:pointer;border:0}
 .rbtns{display:flex;gap:10px;width:100%;margin-top:16px}
 .rbtns button{flex:1;font-size:17px;font-weight:800;padding:14px;border-radius:18px;background:rgba(255,255,255,.85);border:1px solid #fff;color:var(--navy);box-shadow:0 10px 24px rgba(20,70,130,.15)}
 .rbtns .again{background:linear-gradient(135deg,#1456a0,#0b3a73);color:#fff;border-color:transparent;box-shadow:0 12px 26px rgba(11,58,115,.35)}
+.rk{width:100%;margin-top:14px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #fff;border-radius:22px;padding:12px 14px;box-shadow:0 12px 30px rgba(20,70,130,.15);color:#0b3a73;text-align:left;font-family:'Pretendard',system-ui,sans-serif}
+.rk-load{font-size:14px;font-weight:700;text-align:center;color:#5a7aa3;padding:6px}
+.rk-team{font-size:13.5px;font-weight:700;background:linear-gradient(135deg,#e6f6ff,#fff3d6);border-radius:14px;padding:9px 12px;margin-bottom:10px;line-height:1.4}
+.rk-team b{white-space:nowrap;font-size:17px;font-weight:900;color:#ff7a2f}
+.rk-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.rk-h>span{font-size:16px;font-weight:900}
+.rk-tabs{display:flex;background:rgba(11,58,115,.08);border-radius:999px;padding:3px}
+.rk-tabs button{font:inherit;font-size:12.5px;font-weight:800;border:0;background:none;color:#5a7aa3;padding:5px 10px;border-radius:999px;cursor:pointer}
+.rk-tabs button.on{background:#fff;color:#0b3a73;box-shadow:0 2px 6px rgba(0,30,70,.12)}
+.rk-row{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px solid rgba(11,58,115,.07);font-size:15px}
+.rk-row:first-child{border-top:0}
+.rk-row.me{background:#fff6d6;border-radius:12px;padding:7px 8px}
+.rk-n{width:26px;text-align:center;font-weight:900;font-size:16px}
+.rk-row b{flex:1;font-weight:800}
+.rk-row b i{font-style:normal;font-size:11px;background:#ffc83d;color:#5a3500;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:2px}
+.rk-s{font-weight:900;color:#1456a0}
+.rk-my{font-size:13px;font-weight:700;color:#5a7aa3;text-align:right;margin-top:4px}
+.rk-my b{color:#ff7a2f}
+.rk-note{font-size:12px;font-weight:500;color:#6c84a6;margin-top:6px;text-align:center}
+.rk-empty{font-size:13.5px;font-weight:600;color:#6c84a6;text-align:center;padding:10px 4px}
 </style>
 </head>
 <body>
@@ -151,6 +171,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <div class="score" id="resScore"></div>
     <div id="resUnlock"></div>
     <div id="resBest"></div>
+    <div id="resRank" style="width:100%"></div>
     <div class="wrongbox" id="resWrong"></div>
     <div class="rbtns"><button id="toHome">🏠 처음으로</button><button class="again" id="again">🔁 한 번 더</button></div>
   </section>
@@ -741,6 +762,46 @@ window.addEventListener('keydown', (e) => {
 });
 $('#quit').onclick = () => { running = false; G = null; if (window.speechSynthesis) speechSynthesis.cancel(); show('home'); showBest(); renderFriends(); };
 
+/* ───────── 학원 순위표 (레벨별 오늘 TOP 5 · 이번 달 누적 TOP 5 · 다 함께 쌓은 숫자) ─────────
+   웨일리 보카에 로그인한 학생은 기록이 학원 서버에 올라가고, 아니면 순위만 본다. */
+const RANK = (() => {
+  const API = 'https://hello-world.a28008005.workers.dev/api/game/score';
+  const TEAM = { stairs: ['함께 오른 계단', '층'], run: ['함께 통과한 정답 문', '개'], obby: ['함께 건넌 문장', '개'], sea: ['함께 잡은 바다 친구', '마리'] };
+  const UNIT = { stairs: '층', run: '점', obby: '점', sea: '코인' };
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const code = () => { try { return localStorage.getItem('swv.code') || ''; } catch (e) { return ''; } };
+  function list(rows, unit) {
+    if (!rows.length) return '<div class="rk-empty">아직 기록이 없어요. 첫 번째 주인공이 되어 볼까요?</div>';
+    return rows.map((r) => `<div class="rk-row${r.me ? ' me' : ''}"><span class="rk-n">${['🥇', '🥈', '🥉'][r.rank - 1] || r.rank}</span><b>${esc(r.name)}${r.me ? ' <i>나</i>' : ''}</b><span class="rk-s">${r.score.toLocaleString()}${unit}</span></div>`).join('');
+  }
+  async function show(box, game, level, score, amount) {
+    if (!box) return;
+    const c = code();
+    box.innerHTML = '<div class="rk"><div class="rk-load">🏆 우리 학원 순위 불러오는 중…</div></div>';
+    let d = null;
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? { code: c, game, level, score, amount } : { game, level }) });
+      d = await res.json();
+    } catch (e) { d = null; }
+    if (!d || !d.success) { box.innerHTML = ''; return; }
+    const unit = UNIT[game] || '점', tm = TEAM[game] || ['함께 쌓은 기록', ''];
+    const lvName = { phonics: '파닉스', lv240: '240', lv520: '520', lv860: '860' }[level] || level;
+    const my = (n, total) => n ? `<div class="rk-my">내 순위 <b>${n}등</b> / ${total}명</div>` : '';
+    box.innerHTML = `<div class="rk">
+      <div class="rk-team">🤝 오늘 우리 학원 친구 ${d.team.friends}명이 ${tm[0]} <b>${d.team.amount.toLocaleString()}${tm[1]}</b></div>
+      <div class="rk-h"><span>🏆 ${lvName} 순위</span><div class="rk-tabs"><button class="on" data-t="today">오늘 TOP 5</button><button data-t="month">이번 달 누적</button></div></div>
+      <div class="rk-p" data-p="today">${list(d.today, unit)}${my(d.myToday, d.players.today)}</div>
+      <div class="rk-p" data-p="month" hidden>${list(d.month, unit)}${my(d.myMonth, d.players.month)}<div class="rk-note">날마다의 최고 기록을 더한 점수예요. 매일 오면 쑥쑥 올라가요!</div></div>
+      ${c ? '' : '<div class="rk-note">웨일리 보카에 로그인하고 하면 내 기록도 순위에 올라가요</div>'}
+    </div>`;
+    box.querySelectorAll('.rk-tabs button').forEach((b) => b.onclick = () => {
+      box.querySelectorAll('.rk-tabs button').forEach((x) => x.classList.toggle('on', x === b));
+      box.querySelectorAll('.rk-p').forEach((p) => { p.hidden = p.dataset.p !== b.dataset.t; });
+    });
+  }
+  return { show };
+})();
+
 /* ───────── 결과 ───────── */
 let resultMood = 'happy';
 function endGame(g) {
@@ -768,6 +829,8 @@ function endGame(g) {
   } else { wb.style.display = ''; wb.innerHTML = '<h4>틀린 것 없이 완벽해요! ✨</h4>'; }
   if (stars >= 2) SFX.win();
   show('result');
+  const amount = g.name === 'stairs' ? g.score : g.name === 'run' ? (g.passed || 0) : (g.cleared ? g.total : (g.si || 0));
+  RANK.show($('#resRank'), g.name, sel.lv, g.score, amount);
 }
 $('#again').onclick = () => startGame(curGame);
 $('#toHome').onclick = () => { show('home'); showBest(); renderFriends(); };
