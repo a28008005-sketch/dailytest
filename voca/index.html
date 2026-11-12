@@ -382,25 +382,22 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   --r-lg:22px; --r-md:16px; --r-sm:12px;
 }
 
-/* ------------------------------------------------------------ 밤바다 하늘 */
-.shell{
+/* ------------------------------------------------------------ 바닷속 배경 (원장님이 만든 3D 바다 그림) */
+.shell{background:transparent}
+.shell::before{
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
   background:
-    radial-gradient(120% 46% at 50% -8%, rgba(92,214,255,.28), transparent 64%),
-    radial-gradient(80% 34% at 88% 6%, rgba(255,212,0,.16), transparent 62%),
-    linear-gradient(180deg, var(--navy-700) 0%, var(--navy-800) 44%, var(--navy-900) 100%);
+    linear-gradient(180deg, rgba(6,52,104,.40) 0%, rgba(6,46,96,.48) 40%, rgba(4,34,74,.64) 75%, rgba(3,26,58,.76) 100%),
+    url(../arcade/img/bgSea.jpg) center top / cover no-repeat,
+    #0b4f8a;
 }
 .shell::after{
   background-image:
-    radial-gradient(1.6px 1.6px at 18% 12%, rgba(255,255,255,.85), transparent),
-    radial-gradient(1.4px 1.4px at 72% 8%, rgba(255,255,255,.7), transparent),
-    radial-gradient(1.8px 1.8px at 42% 24%, rgba(255,255,255,.6), transparent),
-    radial-gradient(1.3px 1.3px at 86% 30%, rgba(255,255,255,.75), transparent),
-    radial-gradient(1.5px 1.5px at 10% 40%, rgba(255,255,255,.55), transparent),
-    radial-gradient(1.2px 1.2px at 60% 46%, rgba(255,255,255,.6), transparent),
-    radial-gradient(1.7px 1.7px at 30% 62%, rgba(255,255,255,.5), transparent),
-    radial-gradient(1.3px 1.3px at 80% 70%, rgba(255,255,255,.45), transparent);
-  opacity:.9; mask-image:linear-gradient(180deg,#000,transparent 78%);
-  animation:twinkle 5.5s ease-in-out infinite alternate;
+    linear-gradient(105deg, transparent 20%, rgba(255,255,255,.07) 26%, transparent 34%),
+    linear-gradient(98deg, transparent 48%, rgba(255,255,255,.06) 53%, transparent 60%),
+    linear-gradient(110deg, transparent 66%, rgba(255,255,255,.05) 71%, transparent 78%);
+  position:fixed; opacity:1; mask-image:linear-gradient(180deg,#000,transparent 70%);
+  animation:twinkle 6s ease-in-out infinite alternate;
 }
 @keyframes twinkle{from{opacity:.55}to{opacity:1}}
 
@@ -2274,10 +2271,11 @@ a.sb-entry{text-decoration:none}
 
   /* 바다 친구들 — 카드마다 돌아가며 질문하고, 맞히면 뛰어오르고 틀리면 시무룩해진다. */
   var SB_FRIENDS = [
-    { id: 'octo', name: '옥토', color: '#FF8FB8', dark: '#E8689A' },
-    { id: 'crab', name: '집게', color: '#FF7A45', dark: '#E0582A' },
-    { id: 'puffer', name: '뽀글', color: '#FFC93C', dark: '#E8A915' },
-    { id: 'star', name: '별이', color: '#FFA94D', dark: '#F08A1E' }
+    { id: 'octo', name: '무니' },
+    { id: 'crab', name: '크랩이' },
+    { id: 'clown', name: '코랄' },
+    { id: 'seal', name: '포포' },
+    { id: 'turtle', name: '토토' }
   ];
   var SB_PRAISE = ['정답이에요!', '완벽해요!', '멋져요!', 'Great job!', '최고예요!', 'Perfect!', '천재인데요?', '바로 그거예요!'];
   var SB_CHEER = ['괜찮아요, 다시 해 봐요!', '아깝다! 거의 다 왔어요', '한 번 더 하면 돼요!', '실수해도 괜찮아요'];
@@ -2302,54 +2300,12 @@ a.sb-entry{text-decoration:none}
       ${m === 'sad' ? html`<path className="sbf-tear" d=${'M' + (x + 15) + ' ' + (y + 4) + ' q3 6 0 8 q-3 -2 0 -8z'} fill="#7FD3FF"/>` : null}
     </g>`;
   }
+  // 원장님이 만든 3D 바다 친구들(아케이드와 같은 그림). 기분마다 표정 그림이 바뀐다.
   function SbFriend(props) {
-    var f = props.f || SB_FRIENDS[0], c = f.color, d = f.dark, mood = props.mood || 'idle';
-    var art;
-    if (f.id === 'octo') {
-      art = html`<g>
-        <g className="sbf-legs" stroke=${d} strokeWidth="9" strokeLinecap="round" fill="none">
-          <path d="M26 60 q-8 16 2 28"/><path d="M40 66 q-4 16 4 26"/><path d="M60 66 q4 16 -4 26"/><path d="M74 60 q8 16 -2 28"/>
-        </g>
-        <ellipse cx="50" cy="44" rx="32" ry="30" fill=${c}/>
-        <ellipse cx="38" cy="26" rx="10" ry="6" fill="#fff" opacity=".35"/>
-        <${SbFace} y=${44} mood=${mood}/>
-      </g>`;
-    } else if (f.id === 'crab') {
-      art = html`<g>
-        <g className="sbf-claws">
-          <path d="M26 58 L16 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
-          <path d="M74 58 L84 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
-          <defs><mask id="sbclaw"><rect x="0" y="0" width="100" height="100" fill="#fff"/><path d="M15 30 L9 14 L21 14 Z M85 30 L79 14 L91 14 Z" fill="#000"/></mask></defs>
-          <g mask="url(#sbclaw)"><circle cx="15" cy="28" r="12" fill=${c}/><circle cx="85" cy="28" r="12" fill=${c}/></g>
-        </g>
-        <path d="M41 52 L40 34 M59 52 L60 34" stroke=${d} strokeWidth="4" strokeLinecap="round"/>
-        <g stroke=${d} strokeWidth="4" strokeLinecap="round"><path d="M24 74 l-10 8"/><path d="M28 80 l-8 10"/><path d="M76 74 l10 8"/><path d="M72 80 l8 10"/></g>
-        <ellipse cx="50" cy="66" rx="34" ry="20" fill=${c}/>
-        <ellipse cx="40" cy="58" rx="9" ry="4" fill="#fff" opacity=".3"/>
-        <${SbFace} y=${32} my=${70} mood=${mood}/>
-      </g>`;
-    } else if (f.id === 'puffer') {
-      var spikes = [];
-      for (var k = 0; k < 12; k++) {
-        var ang = (k / 12) * Math.PI * 2, x1 = 50 + Math.cos(ang) * 31, y1 = 52 + Math.sin(ang) * 31;
-        var x2 = 50 + Math.cos(ang) * 41, y2 = 52 + Math.sin(ang) * 41;
-        spikes.push(html`<path key=${k} d=${'M' + (x1 - Math.sin(ang) * 4) + ' ' + (y1 + Math.cos(ang) * 4) + ' L' + x2 + ' ' + y2 + ' L' + (x1 + Math.sin(ang) * 4) + ' ' + (y1 - Math.cos(ang) * 4) + 'Z'} fill=${d}/>`);
-      }
-      art = html`<g>
-        <g className="sbf-spikes">${spikes}</g>
-        <circle cx="50" cy="52" r="33" fill=${c}/>
-        <ellipse cx="50" cy="66" rx="20" ry="12" fill="#FFF3C4" opacity=".8"/>
-        <ellipse cx="38" cy="34" rx="10" ry="6" fill="#fff" opacity=".4"/>
-        <${SbFace} y=${48} mood=${mood}/>
-      </g>`;
-    } else {
-      art = html`<g>
-        <path d="M50 8 L61 38 L94 39 L68 59 L77 91 L50 72 L23 91 L32 59 L6 39 L39 38 Z" fill=${c} stroke=${c} strokeWidth="8" strokeLinejoin="round"/>
-        <circle cx="30" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="70" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="50" cy="22" r="2" fill="#fff" opacity=".7"/>
-        <${SbFace} y=${50} mood=${mood}/>
-      </g>`;
-    }
-    return html`<svg className="sbf" data-mood=${mood} data-who=${f.id} viewBox="0 0 100 100" width=${props.size || 84} height=${props.size || 84} role="img" aria-label=${f.name}>${art}</svg>`;
+    var f = props.f || SB_FRIENDS[0], mood = props.mood || 'idle', size = props.size || 84;
+    var src = '../arcade/img/' + f.id + (mood === 'happy' ? '_happy' : mood === 'sad' ? '_sad' : '') + '.webp';
+    return html`<img className="sbf" data-mood=${mood} data-who=${f.id} src=${src} width=${size} height=${size} alt=${f.name}
+      style=${{ objectFit: 'contain', display: 'block' }} draggable="false"/>`;
   }
 
   // 꽃가루: 맞혔을 때 잠깐 터진다
