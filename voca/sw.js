@@ -8,7 +8,7 @@
  * - 글꼴·라이브러리·아이콘은 보관본을 먼저 쓴다. 바뀔 일이 거의 없기 때문이다.
  * - 학원 서버(로그인·진도 저장)는 절대 보관하지 않는다. 항상 실제 서버로 간다.
  */
-var VERSION = 'whaley-2026-11-04-partial';
+var VERSION = 'whaley-2026-11-12-icon';
 var SHELL = [
   './',
   './manifest.webmanifest',
@@ -46,7 +46,8 @@ function pageKey(url) {
 
 function fromNetworkFirst(request) {
   var key = pageKey(new URL(request.url));
-  return fetch(request).then(function (res) {
+  // 브라우저 임시 보관(최대 10분)을 건너뛰고 늘 서버에 새 버전이 있는지 물어본다 → 고친 내용이 바로 보인다
+  return fetch(request, { cache: 'no-cache' }).then(function (res) {
     if (res && res.ok) {
       var copy = res.clone();
       caches.open(VERSION).then(function (c) { c.put(key, copy); });

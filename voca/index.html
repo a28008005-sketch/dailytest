@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#0A3A63"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="웨일리 보카"></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="theme-color" content="#0A3A63"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=goldwhale"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=goldwhale"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="웨일리 보카"></head><body>
 <title>웨일리 보카</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
@@ -382,25 +382,22 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   --r-lg:22px; --r-md:16px; --r-sm:12px;
 }
 
-/* ------------------------------------------------------------ 밤바다 하늘 */
-.shell{
+/* ------------------------------------------------------------ 바닷속 배경 (원장님이 만든 3D 바다 그림) */
+.shell{background:transparent}
+.shell::before{
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
   background:
-    radial-gradient(120% 46% at 50% -8%, rgba(92,214,255,.28), transparent 64%),
-    radial-gradient(80% 34% at 88% 6%, rgba(255,212,0,.16), transparent 62%),
-    linear-gradient(180deg, var(--navy-700) 0%, var(--navy-800) 44%, var(--navy-900) 100%);
+    linear-gradient(180deg, rgba(6,52,104,.40) 0%, rgba(6,46,96,.48) 40%, rgba(4,34,74,.64) 75%, rgba(3,26,58,.76) 100%),
+    url(../arcade/img/bgSea.jpg) center top / cover no-repeat,
+    #0b4f8a;
 }
 .shell::after{
   background-image:
-    radial-gradient(1.6px 1.6px at 18% 12%, rgba(255,255,255,.85), transparent),
-    radial-gradient(1.4px 1.4px at 72% 8%, rgba(255,255,255,.7), transparent),
-    radial-gradient(1.8px 1.8px at 42% 24%, rgba(255,255,255,.6), transparent),
-    radial-gradient(1.3px 1.3px at 86% 30%, rgba(255,255,255,.75), transparent),
-    radial-gradient(1.5px 1.5px at 10% 40%, rgba(255,255,255,.55), transparent),
-    radial-gradient(1.2px 1.2px at 60% 46%, rgba(255,255,255,.6), transparent),
-    radial-gradient(1.7px 1.7px at 30% 62%, rgba(255,255,255,.5), transparent),
-    radial-gradient(1.3px 1.3px at 80% 70%, rgba(255,255,255,.45), transparent);
-  opacity:.9; mask-image:linear-gradient(180deg,#000,transparent 78%);
-  animation:twinkle 5.5s ease-in-out infinite alternate;
+    linear-gradient(105deg, transparent 20%, rgba(255,255,255,.07) 26%, transparent 34%),
+    linear-gradient(98deg, transparent 48%, rgba(255,255,255,.06) 53%, transparent 60%),
+    linear-gradient(110deg, transparent 66%, rgba(255,255,255,.05) 71%, transparent 78%);
+  position:fixed; opacity:1; mask-image:linear-gradient(180deg,#000,transparent 70%);
+  animation:twinkle 6s ease-in-out infinite alternate;
 }
 @keyframes twinkle{from{opacity:.55}to{opacity:1}}
 
@@ -570,7 +567,7 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
   border:2px solid var(--line); background-image:var(--gloss); background-color:var(--surface);
   box-shadow:var(--edge), var(--shadow);
 }
-.wear-stage svg{width:180px; height:auto}
+.wear-stage svg{width:220px; height:auto}
 .tabs{display:flex; gap:8px}
 .tab{
   flex:1; padding:11px 10px; border-radius:var(--r-sm); border:2px solid var(--line);
@@ -587,6 +584,8 @@ pre.json{background:var(--surface-2); border:1px solid var(--line); border-radiu
 .wear[data-on="1"]{border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,212,0,.22)}
 .wear[data-locked="1"]{opacity:.6}
 .wear-ic{font-size:28px; line-height:1}
+.wear-img{width:44px; height:40px; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.wear-img.smooth{image-rendering:auto}
 .wear-nm{font:700 12px/1.25 var(--f-ui)}
 .wear-cost{font:700 11px/1 var(--f-num); color:var(--gold)}
 .wear-have{font:700 11px/1 var(--f-ui); color:var(--kelp)}
@@ -871,6 +870,7 @@ a.sb-entry{text-decoration:none}
   </div>
 </div>
 
+<script src="../clips/map.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
@@ -1026,6 +1026,8 @@ a.sb-entry{text-decoration:none}
     // iOS only allows speech that begins inside a user gesture, so the first
     // tap of a session opens the channel with a silent utterance.
     prime: function () {
+      // 원어민 녹음 소리도 첫 터치 때 한 번 열어 둔다(아이폰)
+      try { var pa = TTS._audio(); pa.muted = true; var pr = pa.play(); if (pr && pr.catch) pr.catch(function () {}); pa.pause(); pa.muted = false; } catch (e) {}
       if (!window.speechSynthesis) return;
       try {
         var u = new SpeechSynthesisUtterance(' ');
@@ -1035,11 +1037,35 @@ a.sb-entry{text-decoration:none}
       TTS.whenReady(function () {});
     },
 
+    // 교재 원어민 녹음(데일리 듣기 음원에서 단어·문장마다 자른 조각, ../clips)
+    _audio: function () { if (!TTS._au) { TTS._au = new Audio(); TTS._au.preload = 'auto'; } return TTS._au; },
+    clip: function (text) {
+      var m = window.CLIP_MAP; if (!m || !text) return null;
+      var t = String(text).trim();
+      return m[t] || m[t.replace(/\s+/g, ' ')] || null;
+    },
+
     say: function (text, rate, onEnd) {
       // Some engines never report that they finished, and the question screen
       // waits on this callback, so it always fires exactly once.
       var settled = false;
       var done = function () { if (settled) return; settled = true; onEnd && onEnd(); };
+      var key = TTS.clip(text);
+      if (key) {
+        var turnA = TTS._turn = (TTS._turn || 0) + 1;
+        try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+        var au = TTS._audio();
+        try { au.pause(); } catch (e) {}
+        var fallback = function () { if (settled || turnA !== TTS._turn) return; TTS._turn--; settled = true; TTS.say.call(TTS, '\u200b' + text, rate, onEnd); };
+        au.onended = function () { if (turnA === TTS._turn) done(); };
+        au.onerror = fallback;
+        au.src = '../clips/' + key + '.mp3';
+        au.playbackRate = rate && rate < 0.8 ? 0.85 : 1;
+        setTimeout(done, 9000);
+        var pp = au.play(); if (pp && pp.catch) pp.catch(fallback);
+        return;
+      }
+      text = String(text).replace(/^\u200b/, '');
       if (!window.speechSynthesis) { done(); return; }
       // 목소리 준비를 기다리는 사이 다음 문제로 넘어가면, 앞 문제 소리가 뒤늦게
       // 이어서 나오지 않도록 가장 마지막에 부탁한 소리만 낸다.
@@ -1519,14 +1545,30 @@ a.sb-entry{text-decoration:none}
     return null;
   }
 
+  /* 그림 아이템 — 3D 웨일리(x36 y34, 139×126)에 맞춘 자리: 머리 꼭대기 y34, 눈 (81,68)(129,68), 오른쪽 지느러미 (168,96) */
+  function imgArt(id, slot) {
+    var w = WEAR_BY_ID[id];
+    if (!w || !w.img || w.slot !== slot) return null;
+    var src = 'wear/' + w.img + '.webp', st = {};
+    if (slot === 'hand') {
+      var hh = w.ih || 84, ww = hh / w.ar;
+      return html`<g transform=${'rotate(12 168 104)'}><image href=${src} x=${168 - ww / 2} y=${112 - hh} width=${ww} height=${hh} filter="url(#wsh)"/></g>`;
+    }
+    var iw = w.iw || 90, ih = iw * w.ar, cx = w.cx || 105;
+    var y = slot === 'head' ? (w.by || 56) - ih : (w.cy || 70) - ih / 2;
+    var img = html`<image href=${src} x=${cx - iw / 2} y=${y} width=${iw} height=${ih} style=${st} filter=${slot === 'back' || slot === 'fx' ? undefined : 'url(#wsh)'}/>`;
+    return w.rot ? html`<g transform=${'rotate(' + w.rot + ' ' + cx + ' ' + (y + ih / 2) + ')'}>${img}</g>` : img;
+  }
+
   function Whaley(props) {
     var mood = props.mood || 'idle';
     var wear = props.wear || {};
     var boost = props.boost !== false;
     var ko = mood === 'ko';
+    var whaleSrc = 'wear/' + (WEAR_BY_ID[wear.skin] ? WEAR_BY_ID[wear.skin].img : 'whaley') + '.webp';
 
-    return html`<svg className="monster-svg" data-mood=${mood} width="210" height="190"
-        viewBox="0 0 210 190" role="img" aria-label="웨일리">
+    return html`<svg className="monster-svg" data-mood=${mood} width="210" height="218"
+        viewBox="0 -28 210 218" role="img" aria-label="웨일리">
       <defs>
         <radialGradient id="wb" cx="36%" cy="20%">
           <stop offset="0%" stopColor=${WHALE_TOP}/>
@@ -1538,58 +1580,23 @@ a.sb-entry{text-decoration:none}
           <stop offset="55%" stopColor=${FLAME}/>
           <stop offset="100%" stopColor="#E4340C"/>
         </linearGradient>
+        <filter id="wsh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2.5" stdDeviation="1.8" floodColor="#06263d" floodOpacity=".35"/></filter>
+        <clipPath id="wfin"><path d="M150 70 C162 66 178 70 180 84 C182 98 172 110 160 116 L150 116 Z"/></clipPath>
         <linearGradient id="wcape" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FF3B6B"/>
           <stop offset="100%" stopColor="#B00E3C"/>
         </linearGradient>
       </defs>
 
-      ${fxArt(wear.fx)}
-      ${backArt(wear.back)}
+      ${imgArt(wear.fx, 'fx')}
 
-      <g className=${boost ? 'w-boost' : ''} opacity=${ko ? 0 : 1}>
-        <path d="M28 100 q-14 10 -18 24 q16 0 26 -12z" fill="url(#wfl)"/>
-        <path d="M182 100 q14 10 18 24 q-16 0 -26 -12z" fill="url(#wfl)"/>
-      </g>
-      <rect x="18" y="84" width="22" height="13" rx="5" fill=${GOLD}/>
-      <rect x="170" y="84" width="22" height="13" rx="5" fill=${GOLD}/>
-      <path d="M38 78 q-10 4 -12 18 q10 4 16 -4z" fill=${WHALE_DEEP}/>
-      <path d="M172 78 q10 4 12 18 q-10 4 -16 -4z" fill=${WHALE_DEEP}/>
-
-      <ellipse cx="105" cy="96" rx="66" ry="62" fill="url(#wb)"/>
-      <ellipse cx="80" cy="62" rx="26" ry="16" fill="#FFFFFF" opacity=".26"/>
-      <ellipse cx="105" cy="38" rx="9" ry="4" fill="#0A3550"/>
-
-      <g opacity=".92" fill="#FF8FB4">
-        <ellipse cx="77" cy="99" rx="11" ry="7"/>
-        <ellipse cx="133" cy="99" rx="11" ry="7"/>
-      </g>
-      <ellipse cx="55" cy="92" rx="13" ry="8" fill=${GOLD}/>
-      <ellipse cx="155" cy="92" rx="13" ry="8" fill=${GOLD}/>
-
-      ${ko
-        ? html`<g stroke=${INK} strokeWidth="5" strokeLinecap="round">
-            <path d="M78 64 l14 14 M92 64 l-14 14"/>
-            <path d="M118 64 l14 14 M132 64 l-14 14"/>
-          </g>`
-        : html`<g>
-            <ellipse cx="85" cy="71" rx="9" ry="11" fill=${INK}/>
-            <ellipse cx="125" cy="71" rx="9" ry="11" fill=${INK}/>
-            <circle cx="88.5" cy="66" r="3.4" fill="#FFFFFF"/>
-            <circle cx="128.5" cy="66" r="3.4" fill="#FFFFFF"/>
-            <circle cx="81.5" cy="75.5" r="1.9" fill="#FFFFFF" opacity=".85"/>
-            <circle cx="121.5" cy="75.5" r="1.9" fill="#FFFFFF" opacity=".85"/>
-          </g>`}
-      ${ko
-        ? html`<path d="M92 104 q13 -12 26 0" stroke=${INK} strokeWidth="5"
-            fill="none" strokeLinecap="round"/>`
-        : html`<g>
-            <path d="M86 92 h38 a19 16 0 0 1 -38 0z" fill=${INK}/>
-            <path d="M98 104 a8 6 0 0 0 15 0z" fill="#FF6E93"/>
-          </g>`}
-
-      <g transform="translate(0,7)">${faceArt(wear.face)}</g>
-      <g transform="translate(0,14)">${headArt(wear.head)}</g>
+      ${imgArt(wear.back, 'back')}
+      <image href=${whaleSrc} x="36" y="34" width="139" height="126"
+        style=${{ imageRendering: wear.skin === 'skin_pixel' ? 'pixelated' : 'auto' }} opacity=${ko ? .55 : 1}/>
+      ${imgArt(wear.face, 'face')}
+      ${imgArt(wear.head, 'head')}
+      ${imgArt(wear.hand, 'hand')}
+      ${WEAR_BY_ID[wear.hand] && WEAR_BY_ID[wear.hand].img ? html`<image href=${whaleSrc} x="36" y="34" width="139" height="126" clipPath="url(#wfin)" style=${{ imageRendering: wear.skin === 'skin_pixel' ? 'pixelated' : 'auto' }}/>` : null}
     </svg>`;
   }
 
@@ -2264,10 +2271,11 @@ a.sb-entry{text-decoration:none}
 
   /* 바다 친구들 — 카드마다 돌아가며 질문하고, 맞히면 뛰어오르고 틀리면 시무룩해진다. */
   var SB_FRIENDS = [
-    { id: 'octo', name: '옥토', color: '#FF8FB8', dark: '#E8689A' },
-    { id: 'crab', name: '집게', color: '#FF7A45', dark: '#E0582A' },
-    { id: 'puffer', name: '뽀글', color: '#FFC93C', dark: '#E8A915' },
-    { id: 'star', name: '별이', color: '#FFA94D', dark: '#F08A1E' }
+    { id: 'octo', name: '무니' },
+    { id: 'crab', name: '크랩이' },
+    { id: 'clown', name: '코랄' },
+    { id: 'seal', name: '포포' },
+    { id: 'turtle', name: '토토' }
   ];
   var SB_PRAISE = ['정답이에요!', '완벽해요!', '멋져요!', 'Great job!', '최고예요!', 'Perfect!', '천재인데요?', '바로 그거예요!'];
   var SB_CHEER = ['괜찮아요, 다시 해 봐요!', '아깝다! 거의 다 왔어요', '한 번 더 하면 돼요!', '실수해도 괜찮아요'];
@@ -2292,54 +2300,12 @@ a.sb-entry{text-decoration:none}
       ${m === 'sad' ? html`<path className="sbf-tear" d=${'M' + (x + 15) + ' ' + (y + 4) + ' q3 6 0 8 q-3 -2 0 -8z'} fill="#7FD3FF"/>` : null}
     </g>`;
   }
+  // 원장님이 만든 3D 바다 친구들(아케이드와 같은 그림). 기분마다 표정 그림이 바뀐다.
   function SbFriend(props) {
-    var f = props.f || SB_FRIENDS[0], c = f.color, d = f.dark, mood = props.mood || 'idle';
-    var art;
-    if (f.id === 'octo') {
-      art = html`<g>
-        <g className="sbf-legs" stroke=${d} strokeWidth="9" strokeLinecap="round" fill="none">
-          <path d="M26 60 q-8 16 2 28"/><path d="M40 66 q-4 16 4 26"/><path d="M60 66 q4 16 -4 26"/><path d="M74 60 q8 16 -2 28"/>
-        </g>
-        <ellipse cx="50" cy="44" rx="32" ry="30" fill=${c}/>
-        <ellipse cx="38" cy="26" rx="10" ry="6" fill="#fff" opacity=".35"/>
-        <${SbFace} y=${44} mood=${mood}/>
-      </g>`;
-    } else if (f.id === 'crab') {
-      art = html`<g>
-        <g className="sbf-claws">
-          <path d="M26 58 L16 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
-          <path d="M74 58 L84 40" stroke=${d} strokeWidth="6" strokeLinecap="round"/>
-          <defs><mask id="sbclaw"><rect x="0" y="0" width="100" height="100" fill="#fff"/><path d="M15 30 L9 14 L21 14 Z M85 30 L79 14 L91 14 Z" fill="#000"/></mask></defs>
-          <g mask="url(#sbclaw)"><circle cx="15" cy="28" r="12" fill=${c}/><circle cx="85" cy="28" r="12" fill=${c}/></g>
-        </g>
-        <path d="M41 52 L40 34 M59 52 L60 34" stroke=${d} strokeWidth="4" strokeLinecap="round"/>
-        <g stroke=${d} strokeWidth="4" strokeLinecap="round"><path d="M24 74 l-10 8"/><path d="M28 80 l-8 10"/><path d="M76 74 l10 8"/><path d="M72 80 l8 10"/></g>
-        <ellipse cx="50" cy="66" rx="34" ry="20" fill=${c}/>
-        <ellipse cx="40" cy="58" rx="9" ry="4" fill="#fff" opacity=".3"/>
-        <${SbFace} y=${32} my=${70} mood=${mood}/>
-      </g>`;
-    } else if (f.id === 'puffer') {
-      var spikes = [];
-      for (var k = 0; k < 12; k++) {
-        var ang = (k / 12) * Math.PI * 2, x1 = 50 + Math.cos(ang) * 31, y1 = 52 + Math.sin(ang) * 31;
-        var x2 = 50 + Math.cos(ang) * 41, y2 = 52 + Math.sin(ang) * 41;
-        spikes.push(html`<path key=${k} d=${'M' + (x1 - Math.sin(ang) * 4) + ' ' + (y1 + Math.cos(ang) * 4) + ' L' + x2 + ' ' + y2 + ' L' + (x1 + Math.sin(ang) * 4) + ' ' + (y1 - Math.cos(ang) * 4) + 'Z'} fill=${d}/>`);
-      }
-      art = html`<g>
-        <g className="sbf-spikes">${spikes}</g>
-        <circle cx="50" cy="52" r="33" fill=${c}/>
-        <ellipse cx="50" cy="66" rx="20" ry="12" fill="#FFF3C4" opacity=".8"/>
-        <ellipse cx="38" cy="34" rx="10" ry="6" fill="#fff" opacity=".4"/>
-        <${SbFace} y=${48} mood=${mood}/>
-      </g>`;
-    } else {
-      art = html`<g>
-        <path d="M50 8 L61 38 L94 39 L68 59 L77 91 L50 72 L23 91 L32 59 L6 39 L39 38 Z" fill=${c} stroke=${c} strokeWidth="8" strokeLinejoin="round"/>
-        <circle cx="30" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="70" cy="44" r="2" fill="#fff" opacity=".7"/><circle cx="50" cy="22" r="2" fill="#fff" opacity=".7"/>
-        <${SbFace} y=${50} mood=${mood}/>
-      </g>`;
-    }
-    return html`<svg className="sbf" data-mood=${mood} data-who=${f.id} viewBox="0 0 100 100" width=${props.size || 84} height=${props.size || 84} role="img" aria-label=${f.name}>${art}</svg>`;
+    var f = props.f || SB_FRIENDS[0], mood = props.mood || 'idle', size = props.size || 84;
+    var src = '../arcade/img/' + f.id + (mood === 'happy' ? '_happy' : mood === 'sad' ? '_sad' : '') + '.webp';
+    return html`<img className="sbf" data-mood=${mood} data-who=${f.id} src=${src} width=${size} height=${size} alt=${f.name}
+      style=${{ objectFit: 'contain', display: 'block' }} draggable="false"/>`;
   }
 
   // 꽃가루: 맞혔을 때 잠깐 터진다
@@ -2804,7 +2770,7 @@ a.sb-entry{text-decoration:none}
 
       ${prog.lastAdvance && prog.lastAdvance.date === todayStr() && prog.lastAdvance.to === day.label ? html`<div className="card review-card">
         <div style=${{ fontWeight: 700, fontSize: '14px' }}>🌊 새 항로가 열렸어요 · ${day.label}</div>
-        <div className="h-sub">지난번에 ${prog.lastAdvance.from}을(를) ${prog.lastAdvance.src === 'game' ? '몬스터 잡기로' : 'STEP ' + prog.lastAdvance.steps + '까지'} 공부해서 오늘은 ${day.label}로 넘어왔어요.</div>
+        <div className="h-sub">지난번에 ${prog.lastAdvance.from}을(를) ${prog.lastAdvance.src === 'game' ? (lv.id === 'lv520' || lv.id === 'lv860' ? '아케이드 게임으로' : '몬스터 잡기로') : 'STEP ' + prog.lastAdvance.steps + '까지'} 공부해서 오늘은 ${day.label}로 넘어왔어요.</div>
       </div>` : null}
 
       ${prog.reviewFrom != null && lv.days[prog.reviewFrom] ? html`<div className="card review-card">
@@ -2842,6 +2808,11 @@ a.sb-entry{text-decoration:none}
         <span className="mg-ic">👾</span>
         <span><b>몬스터 잡기 게임</b><small>${day.label} 단어로 버블팡·두더지·낚시 · 도감 ${Object.keys(prog.mon || {}).length}마리 · 코인이 여기 쌓여요</small></span>
         ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">오늘 완료 · ${prog.gameDays[day.id]}마리</span>` : html`<span className="mg-go">›</span>`}
+      </a>` : null}
+      ${(lv.id === 'lv520' || lv.id === 'lv860') ? html`<a className="sb-entry mg-entry" href=${'../arcade/?from=voca&d=' + encodeURIComponent(day.id)}>
+        <img className="mg-ic" src="../arcade/img/whale_happy.webp" alt="" style=${{ width: '72px', height: '64px', objectFit: 'contain' }}/>
+        <span><b>웨일리 아케이드 게임</b><small>${day.label} 단어로 무한 계단·웨일리 런·문장 오비 · 코인이 여기 쌓여요</small></span>
+        ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">오늘 완료 · ⭐${prog.gameDays[day.id]}</span>` : html`<span className="mg-go">›</span>`}
       </a>` : null}
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
@@ -2884,39 +2855,92 @@ a.sb-entry{text-decoration:none}
      부스터는 따로 묶어 두 번째 칸에 둔다.
   ===================================================================== */
   var WEARS = [
-    { id: 'crown',   slot: 'head', name: '황금 왕관',   icon: '👑', cost: 320 },
-    { id: 'phones',  slot: 'head', name: '헤드폰',      icon: '🎧', cost: 180 },
-    { id: 'beanie',  slot: 'head', name: '빨간 비니',   icon: '🧶', cost: 140 },
-    { id: 'halo',    slot: 'head', name: '천사 링',     icon: '😇', cost: 260 },
-    { id: 'bunny',   slot: 'head', name: '토끼 귀',     icon: '🐰', cost: 150 },
-    { id: 'horns',   slot: 'head', name: '악마 뿔',     icon: '😈', cost: 200 },
-    { id: 'cap',     slot: 'head', name: '야구 모자',   icon: '🧢', cost: 130 },
-    { id: 'tophat',  slot: 'head', name: '마술사 모자', icon: '🎩', cost: 280 },
-    { id: 'straw',   slot: 'head', name: '밀짚 모자',   icon: '👒', cost: 160 },
-    { id: 'party',   slot: 'head', name: '파티 고깔',   icon: '🎉', cost: 110 },
-    { id: 'space',   slot: 'head', name: '우주 헬멧',   icon: '🪐', cost: 380 },
-    { id: 'ninja',   slot: 'head', name: '닌자 머리띠', icon: '🥷', cost: 170 },
-    { id: 'prop',    slot: 'head', name: '프로펠러 모자', icon: '🚁', cost: 240 },
-    { id: 'shades',  slot: 'face', name: '검은 선글라스', icon: '🕶️', cost: 120 },
-    { id: 'goggle',  slot: 'face', name: '레이싱 고글', icon: '🥽', cost: 200 },
-    { id: 'pixel',   slot: 'face', name: '픽셀 선글라스', icon: '🎮', cost: 260 },
-    { id: 'heart',   slot: 'face', name: '하트 안경',   icon: '💗', cost: 180 },
-    { id: 'monocle', slot: 'face', name: '금테 외알 안경', icon: '🧐', cost: 220 },
-    { id: 'mask',    slot: 'face', name: '하얀 마스크', icon: '😷', cost: 100 },
-    { id: 'cape',    slot: 'back', name: '히어로 망토', icon: '🦸', cost: 240 },
-    { id: 'wings',   slot: 'back', name: '하얀 날개',   icon: '🪽', cost: 300 },
-    { id: 'dwings',  slot: 'back', name: '악마 날개',   icon: '🦇', cost: 330 },
-    { id: 'jetpack', slot: 'back', name: '제트팩',      icon: '🚀', cost: 400 },
-    { id: 'bag',     slot: 'back', name: '컬러 가방',   icon: '🎒', cost: 150 },
-    { id: 'guitar',  slot: 'back', name: '등에 멘 기타', icon: '🎸', cost: 290 },
-    { id: 'trail',   slot: 'fx',   name: '무지개 자국', icon: '🌈', cost: 220 },
-    { id: 'sparkle', slot: 'fx',   name: '반짝이 별',   icon: '✨', cost: 190 },
-    { id: 'fire',    slot: 'fx',   name: '불꽃 분사',   icon: '🔥', cost: 250 },
-    { id: 'hearts',  slot: 'fx',   name: '하트 뿅뿅',   icon: '💕', cost: 170 },
-    { id: 'bolt',    slot: 'fx',   name: '번개 오라',   icon: '⚡', cost: 300 }
+    { id: 'crown', slot: 'head', name: '황금 왕관', icon: '👑', cost: 320, img: 'o_crown', ar: 0.75, iw: 76, by: 46 },
+    { id: 'phones', slot: 'head', name: '헤드폰', icon: '🎧', cost: 180, img: 'o_phones', ar: 0.769, iw: 118, by: 84 },
+    { id: 'beanie', slot: 'head', name: '빨간 비니', icon: '🧶', cost: 140, img: 'o_beanie', ar: 1.012, iw: 92, by: 60 },
+    { id: 'halo', slot: 'head', name: '천사 링', icon: '😇', cost: 260, img: 'o_halo', ar: 0.401, iw: 80, by: 24 },
+    { id: 'bunny', slot: 'head', name: '토끼 귀', icon: '🐰', cost: 150, img: 'o_bunny', ar: 1.198, iw: 84, by: 46 },
+    { id: 'horns', slot: 'head', name: '악마 뿔', icon: '😈', cost: 200, img: 'o_horns', ar: 0.747, iw: 100, by: 50 },
+    { id: 'cap', slot: 'head', name: '야구 모자', icon: '🧢', cost: 130, img: 'o_cap', ar: 0.73, iw: 100, by: 58 },
+    { id: 'tophat', slot: 'head', name: '마술사 모자', icon: '🎩', cost: 280, img: 'o_tophat', ar: 0.785, iw: 84, by: 50 },
+    { id: 'straw', slot: 'head', name: '밀짚 모자', icon: '👒', cost: 160, img: 'o_straw', ar: 0.535, iw: 122, by: 56 },
+    { id: 'party', slot: 'head', name: '파티 고깔', icon: '🎉', cost: 110, img: 'o_party', ar: 1.262, iw: 50, by: 42 },
+    { id: 'space', slot: 'head', name: '우주 헬멧', icon: '🪐', cost: 380, img: 'o_space', ar: 0.862, iw: 134, by: 128 },
+    { id: 'ninja', slot: 'head', name: '닌자 머리띠', icon: '🥷', cost: 170, img: 'o_ninja', ar: 0.465, iw: 106, by: 58 },
+    { id: 'prop', slot: 'head', name: '프로펠러 모자', icon: '🚁', cost: 240, img: 'o_prop', ar: 0.875, iw: 90, by: 56 },
+    { id: 'shades', slot: 'face', name: '검은 선글라스', icon: '🕶️', cost: 120, img: 'o_shades', ar: 0.346, iw: 86, cy: 69 },
+    { id: 'goggle', slot: 'face', name: '레이싱 고글', icon: '🥽', cost: 200, img: 'o_goggle', ar: 0.473, iw: 94, cy: 68 },
+    { id: 'pixel', slot: 'face', name: '픽셀 선글라스', icon: '🎮', cost: 260, img: 'o_pixel', ar: 0.231, iw: 86, cy: 69 },
+    { id: 'heart', slot: 'face', name: '하트 안경', icon: '💗', cost: 180, img: 'o_heart', ar: 0.377, iw: 90, cy: 69 },
+    { id: 'monocle', slot: 'face', name: '금테 외알 안경', icon: '🧐', cost: 220, img: 'o_monocle', ar: 1.297, iw: 50, cy: 73, cx: 128 },
+    { id: 'mask', slot: 'face', name: '하얀 마스크', icon: '😷', cost: 100, img: 'o_mask', ar: 0.627, iw: 80, cy: 90 },
+    { id: 'cape', slot: 'back', name: '히어로 망토', icon: '🦸', cost: 240, img: 'o_cape', ar: 0.827, iw: 172, cy: 112 },
+    { id: 'wings', slot: 'back', name: '하얀 날개', icon: '🪽', cost: 300, img: 'o_wings', ar: 0.496, iw: 212, cy: 74 },
+    { id: 'dwings', slot: 'back', name: '악마 날개', icon: '🦇', cost: 330, img: 'o_dwings', ar: 0.631, iw: 214, cy: 76 },
+    { id: 'jetpack', slot: 'back', name: '제트팩', icon: '🚀', cost: 400, img: 'o_jetpack', ar: 0.958, iw: 184, cy: 106 },
+    { id: 'bag', slot: 'back', name: '컬러 가방', icon: '🎒', cost: 150, img: 'o_bag', ar: 0.8, iw: 162, cy: 98 },
+    { id: 'guitar', slot: 'back', name: '등에 멘 기타', icon: '🎸', cost: 290, img: 'o_guitar', ar: 1.008, iw: 124, cy: 92, cx: 72 },
+    { id: 'trail', slot: 'fx', name: '무지개 자국', icon: '🌈', cost: 220, img: 'o_trail', ar: 0.635, iw: 212, cy: 40 },
+    { id: 'sparkle', slot: 'fx', name: '반짝이 별', icon: '✨', cost: 190, img: 'o_sparkle', ar: 1.0, iw: 220, cy: 92 },
+    { id: 'fire', slot: 'fx', name: '불꽃 분사', icon: '🔥', cost: 250, img: 'o_fire', ar: 0.881, iw: 222, cy: 104 },
+    { id: 'hearts', slot: 'fx', name: '하트 뿅뿅', icon: '💕', cost: 170, img: 'o_hearts', ar: 0.923, iw: 214, cy: 92 },
+    { id: 'bolt', slot: 'fx', name: '번개 오라', icon: '⚡', cost: 300, img: 'o_bolt', ar: 0.858, iw: 214, cy: 90 },
+    { id: 'fx_splash', slot: 'fx', name: '물보라 링', cost: 260, img: 'fx_splash', ar: 0.985, iw: 222, cy: 98 },
+    { id: 'fx_leaf', slot: 'fx', name: '나뭇잎 회오리', cost: 240, img: 'fx_leaf', ar: 0.981, iw: 222, cy: 98 },
+    { id: 'fx_smoke', slot: 'fx', name: '마법 연기', cost: 280, img: 'fx_smoke', ar: 0.85, iw: 222, cy: 96 },
+    { id: 'fx_ice', slot: 'fx', name: '얼음 수정', cost: 300, img: 'fx_ice', ar: 0.888, iw: 222, cy: 96 },
+    { id: 'fx_coins', slot: 'fx', name: '황금 동전 비', cost: 350, img: 'fx_coins', ar: 0.954, iw: 222, cy: 96 },
+    { id: 'fx_notes', slot: 'fx', name: '음표 뿅뿅', cost: 200, img: 'fx_notes', ar: 0.869, iw: 222, cy: 92 },
+    /* ── 블록 게임 느낌 아이템(제미나이로 그린 픽셀 그림) · 손에 드는 무기·도구 · 고래 스킨 ── */
+    {id: 'dia_helm', slot: 'head', name: '다이아 투구', cost: 420, img: 'dia_helm', ar: 0.974, iw: 100, by: 74},
+    {id: 'gold_crown', slot: 'head', name: '픽셀 왕관', cost: 380, img: 'gold_crown', ar: 0.665, iw: 74, by: 48},
+    {id: 'knight_helm', slot: 'head', name: '기사 투구', cost: 300, img: 'knight_helm', ar: 1.116, iw: 96, by: 80},
+    {id: 'viking', slot: 'head', name: '바이킹 투구', cost: 280, img: 'viking', ar: 0.712, iw: 106, by: 60},
+    {id: 'pirate', slot: 'head', name: '해적 선장 모자', cost: 260, img: 'pirate', ar: 0.546, iw: 112, by: 54},
+    {id: 'wizard', slot: 'head', name: '마법사 모자', cost: 240, img: 'wizard', ar: 0.788, iw: 96, by: 56},
+    {id: 'samurai', slot: 'head', name: '사무라이 투구', cost: 360, img: 'samurai', ar: 0.812, iw: 104, by: 62},
+    {id: 'grass_block', slot: 'head', name: '잔디 블록 모자', cost: 200, img: 'grass_block', ar: 0.861, iw: 84, by: 62},
+    {id: 'dragon_horns', slot: 'head', name: '드래곤 뿔', cost: 320, img: 'dragon_horns', ar: 0.831, iw: 112, by: 66},
+    {id: 'pixel_shades', slot: 'face', name: '블록 선글라스', cost: 160, img: 'pixel_shades', ar: 0.369, iw: 84, cy: 69},
+    {id: 'eyepatch', slot: 'face', name: '해적 안대', cost: 140, img: 'eyepatch', ar: 0.75, iw: 80, cy: 66},
+    {id: 'cyber_visor', slot: 'face', name: '사이버 바이저', cost: 300, img: 'cyber_visor', ar: 0.346, iw: 92, cy: 68},
+    {id: 'ninja_mask', slot: 'face', name: '닌자 복면', cost: 200, img: 'ninja_mask', ar: 0.519, iw: 78, cy: 92},
+    {id: 'dive_goggles', slot: 'face', name: '잠수 고글', cost: 150, img: 'dive_goggles', ar: 0.562, iw: 92, cy: 68},
+    {id: 'mustache', slot: 'face', name: '멋쟁이 콧수염', cost: 120, img: 'mustache', ar: 0.331, iw: 50, cy: 86},
+    {id: 'glasses3d', slot: 'face', name: '3D 안경', cost: 130, img: 'glasses3d', ar: 0.419, iw: 86, cy: 69},
+    {id: 'hero_mask', slot: 'face', name: '히어로 가면', cost: 220, img: 'hero_mask', ar: 0.512, iw: 90, cy: 68},
+    {id: 'monocle2', slot: 'face', name: '금테 동글 안경', cost: 170, img: 'monocle2', ar: 0.523, iw: 84, cy: 69},
+    {id: 'dia_sword', slot: 'hand', name: '다이아 검', cost: 450, img: 'dia_sword', ar: 1.926, ih: 82},
+    {id: 'dia_pick', slot: 'hand', name: '다이아 곡괭이', cost: 400, img: 'dia_pick', ar: 1.486, ih: 74},
+    {id: 'gold_axe', slot: 'hand', name: '황금 도끼', cost: 350, img: 'gold_axe', ar: 1.646, ih: 74},
+    {id: 'bow', slot: 'hand', name: '나무 활', cost: 260, img: 'bow', ar: 2.626, ih: 84},
+    {id: 'magic_staff', slot: 'hand', name: '마법 지팡이', cost: 320, img: 'magic_staff', ar: 3.377, ih: 92},
+    {id: 'trident', slot: 'hand', name: '황금 삼지창', cost: 380, img: 'trident', ar: 2.826, ih: 92},
+    {id: 'laser_sword', slot: 'hand', name: '레이저 검', cost: 420, img: 'laser_sword', ar: 2.889, ih: 90},
+    {id: 'hammer', slot: 'hand', name: '돌 망치', cost: 280, img: 'hammer', ar: 1.52, ih: 74},
+    {id: 'torch', slot: 'hand', name: '횃불', cost: 120, img: 'torch', ar: 2.766, ih: 66},
+    {id: 'glider', slot: 'back', name: '글라이더 날개', cost: 300, img: 'glider', ar: 0.377, iw: 210, cy: 74},
+    {id: 'dragon_wings', slot: 'back', name: '드래곤 날개', cost: 420, img: 'dragon_wings', ar: 0.642, iw: 220, cy: 80},
+    {id: 'pixel_jet', slot: 'back', name: '로켓 제트팩', cost: 380, img: 'pixel_jet', ar: 1.194, iw: 176, cy: 112},
+    {id: 'red_cape', slot: 'back', name: '왕의 망토', cost: 180, img: 'red_cape', ar: 0.801, iw: 180, cy: 112},
+    {id: 'chest_pack', slot: 'back', name: '보물상자 가방', cost: 260, img: 'chest_pack', ar: 0.508, iw: 160, cy: 100},
+    {id: 'quiver', slot: 'back', name: '화살통', cost: 200, img: 'quiver', ar: 1.24, iw: 74, cy: 70, cx: 54, rot: -16},
+    {id: 'phoenix_wings', slot: 'back', name: '불사조 날개', cost: 480, img: 'phoenix_wings', ar: 0.881, iw: 190, cy: 86},
+    {id: 'bat_wings', slot: 'back', name: '박쥐 날개', cost: 300, img: 'bat_wings', ar: 0.55, iw: 220, cy: 80},
+    {id: 'mecha_wings', slot: 'back', name: '메카 날개', cost: 500, img: 'mecha_wings', ar: 0.692, iw: 220, cy: 82},
+    {id: 'skin_gold', slot: 'skin', name: '황금 고래', cost: 500, img: 'skin_gold', ar: 0.907},
+    {id: 'skin_dia', slot: 'skin', name: '다이아 고래', cost: 600, img: 'skin_dia', ar: 0.907},
+    {id: 'skin_lava', slot: 'skin', name: '용암 고래', cost: 450, img: 'skin_lava', ar: 0.907},
+    {id: 'skin_zombie', slot: 'skin', name: '좀비 고래', cost: 350, img: 'skin_zombie', ar: 0.907},
+    {id: 'skin_shadow', slot: 'skin', name: '그림자 고래', cost: 450, img: 'skin_shadow', ar: 0.907},
+    {id: 'skin_robot', slot: 'skin', name: '로봇 고래', cost: 400, img: 'skin_robot', ar: 0.907},
+    {id: 'skin_pink', slot: 'skin', name: '딸기 고래', cost: 300, img: 'skin_pink', ar: 0.907},
+    {id: 'skin_pixel', slot: 'skin', name: '블록 고래', cost: 550, img: 'skin_pixel', ar: 0.913},
+    {id: 'skin_rainbow', slot: 'skin', name: '무지개 고래', cost: 700, img: 'skin_rainbow', ar: 0.907}
   ];
-  var SLOT_KO = { head: '머리', face: '얼굴', back: '등', fx: '효과' };
-  var SLOT_ORDER = ['head', 'face', 'back', 'fx'];
+  var WEAR_BY_ID = {}; WEARS.forEach(function (w) { WEAR_BY_ID[w.id] = w; });
+  var SLOT_KO = { skin: '스킨', head: '머리', face: '얼굴', hand: '손', back: '등', fx: '효과' };
+  var SLOT_ORDER = ['skin', 'head', 'face', 'hand', 'back', 'fx'];
 
   var SHOP = [
     { id: 'time', name: '시간 +7초', desc: '문제 시간을 7초 늘려요', cost: 40, icon: 'flame' },
@@ -2967,7 +2991,7 @@ a.sb-entry{text-decoration:none}
                 return html`<button key=${w.id} className="wear" data-on=${on ? '1' : '0'} data-locked=${have || can ? '0' : '1'}
                   disabled=${!can}
                   onClick=${function () { have ? props.onEquip(slot, on ? '' : w.id) : props.onBuyWear(w); }}>
-                  <span className="wear-ic">${w.icon}</span>
+                  ${w.img ? html`<img className=${'wear-img' + (w.slot === 'skin' && w.id !== 'skin_pixel' ? ' smooth' : '')} src=${'wear/' + w.img + '.webp'} alt="" loading="lazy"/>` : html`<span className="wear-ic">${w.icon}</span>`}
                   <span className="wear-nm">${w.name}</span>
                   ${have
                     ? html`<span className="wear-have">${on ? '착용 중' : '보유'}</span>`

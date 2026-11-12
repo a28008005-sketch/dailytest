@@ -684,6 +684,81 @@ async function findStudentByCode(env, code) {
   return { name: textOf(page.properties['이름']), code: clean };
 }
 
+// ── 게임 순위표 (웨일리 아케이드 520·860, 바다 친구 잡기 파닉스·240) ──
+// 학생 한 명·레벨·게임·날짜마다 한 줄(kind=gamescore). 그날 최고 점수(best)와 함께 쌓은 양(amount: 계단 층수 등)을 둔다.
+//  · 오늘의 TOP 5: 같은 레벨·게임에서 오늘 최고 점수
+//  · 이번 달 누적 TOP 5: 같은 레벨·게임에서 이번 달 날마다의 최고 점수를 더한 값 (매일 와서 하는 친구가 올라가요)
+//  · 다 함께: 오늘 모든 레벨 학생이 그 게임에서 쌓은 양의 합 (예: 함께 오른 계단 ○○층)
+// 이름은 가운데 글자를 가려서(김O수) 보낸다. 주소만 알면 누구나 볼 수 있는 화면이라서.
+const GAME_LEVELS = ['phonics', 'lv240', 'lv520', 'lv860', 'lv1240', 'lv1680'];
+const GAME_KINDS = ['stairs', 'run', 'obby', 'sea'];
+function maskName(n) {
+  const a = Array.from(String(n || '').trim());
+  if (a.length <= 1) return a.join('') || '친구';
+  if (a.length === 2) return a[0] + 'O';
+  return a[0] + 'O'.repeat(a.length - 2) + a[a.length - 1];
+}
+async function gameRows(env, game, month) {
+  const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+  const res = await fetch(base + '?kind=eq.gamescore&deleted=eq.false&data->>game=eq.' + encodeURIComponent(game)
+    + '&data->>month=eq.' + encodeURIComponent(month) + '&select=id,data&limit=5000', { headers: staffCloudHeaders(env.SUPABASE_SERVICE_KEY) });
+  if (!res.ok) throw new Error('학원 클라우드 응답 ' + res.status);
+  return (await res.json()).map(r => r.data || {});
+}
+function gameBoard(rows, level, today, me) {
+  const lv = rows.filter(r => r.level === level);
+  const todayRows = lv.filter(r => r.date === today).sort((a, b) => b.best - a.best);
+  const sum = {};
+  for (const r of lv) { const k = r.sid; (sum[k] = sum[k] || { sid: k, name: r.name, score: 0, days: 0 }); sum[k].score += Number(r.best) || 0; sum[k].days++; }
+  const monthList = Object.values(sum).sort((a, b) => b.score - a.score);
+  const pack = (list, f) => list.slice(0, 5).map((r, i) => ({ rank: i + 1, name: maskName(r.name), score: f(r), me: r.sid === me }));
+  const rankOf = (list) => { const i = list.findIndex(r => r.sid === me); return i < 0 ? null : i + 1; };
+  const team = rows.filter(r => r.date === today);
+  return {
+    today: pack(todayRows, r => r.best), month: pack(monthList, r => r.score),
+    myToday: me ? rankOf(todayRows) : null, myMonth: me ? rankOf(monthList) : null,
+    players: { today: todayRows.length, month: monthList.length },
+    team: { amount: team.reduce((t, r) => t + (Number(r.amount) || 0), 0), friends: new Set(team.map(r => r.sid)).size },
+  };
+}
+async function gameScore(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const game = String(payload.game || ''), level = String(payload.level || '');
+    if (!GAME_KINDS.includes(game) || !GAME_LEVELS.includes(level)) return { success: false, error: 'bad-game' };
+    const today = seoulToday(), month = today.slice(0, 7);
+    let me = null;
+    if (payload.code) {
+      const student = await findStudentByCode(env, payload.code);
+      if (student.error) return { success: false, error: student.error };
+      me = student.code;
+      const score = Math.max(0, Math.min(100000, Math.round(Number(payload.score) || 0)));
+      const amount = Math.max(0, Math.min(10000, Math.round(Number(payload.amount) || 0)));
+      const id = 'gs-' + me + '-' + level + '-' + game + '-' + today;
+      const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+      const got = await fetch(base + '?kind=eq.gamescore&id=eq.' + encodeURIComponent(id) + '&select=data', { headers: staffCloudHeaders(env.SUPABASE_SERVICE_KEY) });
+      const prev = got.ok ? ((await got.json())[0] || {}).data : null;
+      const data = {
+        id, sid: me, name: student.name, level, game, date: today, month,
+        best: Math.max(score, (prev && prev.best) || 0),
+        amount: ((prev && prev.amount) || 0) + amount,
+        plays: ((prev && prev.plays) || 0) + 1,
+        updatedAt: new Date().toISOString(),
+      };
+      const put = await fetch(base, {
+        method: 'POST',
+        headers: Object.assign(staffCloudHeaders(env.SUPABASE_SERVICE_KEY), { Prefer: 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify([{ kind: 'gamescore', id, data, deleted: false }]),
+      });
+      if (!put.ok) throw new Error('순위 저장 실패 ' + put.status);
+    }
+    const rows = await gameRows(env, game, month);
+    return Object.assign({ success: true, date: today, saved: !!me }, gameBoard(rows, level, today, me));
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ── 부모님 휴대폰 뒤 4자리 로그인 ──
 // 출결 번호와 같은 번호를 쓴다. 아이가 번호 하나만 기억하면 되게 하기 위함이다.
 // 학생 명부의 칸 이름을 코드에 박아 두지 않고, 이름에 학부모·부모·보호자가 들어간
@@ -1668,6 +1743,10 @@ async function handleRequest(request, env) {
     }
     if (path === '/api/voca/points' && request.method === 'POST') {
       return json(await vocaPoints(env, await request.json().catch(() => ({}))));
+    }
+    // 게임 순위표: 기록 올리기(학생 코드가 있으면 저장) + 순위 받기
+    if (path === '/api/game/score' && request.method === 'POST') {
+      return json(await gameScore(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/voca/save' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
