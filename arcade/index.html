@@ -49,6 +49,8 @@ button{font-family:inherit;cursor:pointer;border:0}
 .starbar{font-size:13px;font-weight:700;color:#2c4f7c;margin:4px 0 2px;background:rgba(255,255,255,.6);padding:4px 12px;border-radius:999px}
 .unlock{font-size:15px;font-weight:800;color:#fff;background:linear-gradient(135deg,#3cc6f7,#4a7cf2);padding:6px 14px 6px 8px;border-radius:16px;margin-top:10px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(60,120,240,.3)}
 .unlock img{width:40px;height:40px;object-fit:contain}
+.backvoca{display:block;margin-top:12px;text-align:center;font-weight:800;font-size:15px;color:var(--navy);text-decoration:none;background:rgba(255,255,255,.7);border:1px solid #fff;border-radius:16px;padding:11px;box-shadow:0 8px 20px rgba(20,70,130,.12)}
+.coinline{margin-top:8px;font-size:15px;font-weight:800;color:#8a5a00;background:linear-gradient(135deg,#fff6cf,#ffe28a);padding:6px 14px;border-radius:999px}
 .foot{font-size:12px;font-weight:600;color:#3d5f88;margin-top:14px;text-align:center}
 /* 게임 */
 #game{background:#000}
@@ -142,7 +144,8 @@ button{font-family:inherit;cursor:pointer;border:0}
       <button class="gcard g2" data-game="run"><span class="ic"><img src="img/whale_swim.webp" alt=""></span><span><h3>웨일리 런</h3><p>바다를 달리며 정답 문으로 쏙! 별 젤리도 냠냠</p></span><span class="best" id="best-run"></span></button>
       <button class="gcard g3" data-game="obby"><span class="ic"><img src="img/turtle.webp" alt=""></span><span><h3>문장 오비</h3><p>단어 발판을 순서대로 밟고 용암을 건너요</p></span><span class="best" id="best-obby"></span></button>
     </div>
-    <div class="foot">소리를 켜면 영어 발음이 나와요 🔊</div>
+    <a class="backvoca" id="backVoca" href="../voca/" hidden>← 웨일리 보카로 돌아가기</a>
+    <div class="foot" id="footNote">소리를 켜면 영어 발음이 나와요 🔊</div>
   </section>
 
   <!-- 게임 -->
@@ -172,6 +175,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <div class="score" id="resScore"></div>
     <div id="resUnlock"></div>
     <div id="resBest"></div>
+    <div id="resCoin"></div>
     <div id="resRank" style="width:100%"></div>
     <div class="wrongbox" id="resWrong"></div>
     <div class="rbtns"><button id="toHome">🏠 처음으로</button><button class="again" id="again">🔁 한 번 더</button></div>
@@ -787,6 +791,60 @@ const RANK = (() => {
 
 const musBtn = () => { $('#mus').textContent = WSOUND.music.isOn() ? '🎵' : '🔇'; };
 $('#mus').onclick = () => { WSOUND.music.toggle(); musBtn(); }; musBtn();
+/* ───────── 웨일리 보카 진도·코인 연결 ─────────
+   보카와 같은 사이트라 기기 저장소를 같이 쓴다. 보카에 로그인한 학생이면 게임 코인을 그 학생 코인에 더하고,
+   보카 오늘 진도 날을 끝까지 했으면 '오늘 공부함'으로 적어 보카가 다음 날 진도를 넘긴다. 학원 서버에도 올린다. */
+const VOCA_API = 'https://hello-world.a28008005.workers.dev';
+const Voca = (function () {
+  const rd = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const code = () => { try { return localStorage.getItem('swv.code'); } catch (e) { return null; } };
+  const profile = rd('swv.profile');
+  const on = !!(profile && profile.studentId);
+  const pkey = on ? 'swv.progress.' + profile.studentId : '';
+  let timer = 0;
+  function push(p) {
+    const c = code(); if (!c) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fetch(VOCA_API + '/api/voca/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+        body: JSON.stringify({ code: c, levelId: profile.levelId || '', dayIdx: p.dayIdx || 0, progress: p }) }).catch(() => {});
+    }, 600);
+  }
+  return {
+    on, profile,
+    prog() { return (on && rd(pkey)) || null; },
+    update(fn) { if (!on) return null; const p = rd(pkey) || { dayIdx: 0, coins: 0 }; fn(p); try { localStorage.setItem(pkey, JSON.stringify(p)); } catch (e) {} push(p); return p; },
+  };
+})();
+const QS = new URLSearchParams(location.search);
+// 보카에서 넘어오면 그날(lv520-V1U2D3)로 맞춘다
+(function () {
+  const m = /^(lv520|lv860)-V(\d+)U(\d+)D(\d+)$/.exec(QS.get('d') || '');
+  if (m) { sel.lv = m[1]; sel.v = +m[2]; sel.u = +m[3]; sel.d = +m[4]; }
+  else if (Voca.on && /^lv(520|860)$/.test(Voca.profile.levelId || '') && !QS.get('lv')) sel.lv = Voca.profile.levelId;
+})();
+$('#backVoca').hidden = QS.get('from') !== 'voca';
+// 별 1개 = 10코인, 끝까지 하면 +5 (별 0개여도 끝까지 했으면 5코인)
+function rewardVoca(g, stars) {
+  const coins = stars * 10 + 5;
+  if (!Voca.on) { $('#resCoin').innerHTML = ''; return; }
+  const dayId = sel.d === 'all' ? null : `${sel.lv}-V${sel.v}U${sel.u}D${sel.d}`;
+  const p = Voca.update((p) => {
+    p.coins = (p.coins || 0) + coins;
+    if (dayId) {
+      p.gameDays = p.gameDays || {}; p.gameDays[dayId] = Math.max(p.gameDays[dayId] || 0, stars);
+      const L = (window.ARCADE_DAYS || []).filter((x) => x.L === (Voca.profile.levelId || ''));
+      const cur = L[Math.min(p.dayIdx || 0, L.length - 1)];
+      if (cur && cur.id === dayId) {
+        const d = new Date(), t = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const same = p.partial && p.partial.dayId === cur.id && p.partial.date === t;
+        p.partial = { lid: cur.L, dayId: cur.id, date: t, steps: same ? (p.partial.steps || 1) : 1, src: same ? (p.partial.src || 'game') : 'game' };
+      }
+    }
+  });
+  $('#resCoin').innerHTML = `<div class="coinline">🪙 +${coins} 보카 코인 (총 ${(p.coins || 0).toLocaleString()})</div>`;
+}
+
 /* ───────── 결과 ───────── */
 let resultMood = 'happy';
 function endGame(g) {
@@ -816,6 +874,7 @@ function endGame(g) {
   show('result');
   const amount = g.name === 'stairs' ? g.score : g.name === 'run' ? (g.passed || 0) : (g.cleared ? g.total : (g.si || 0));
   RANK.show($('#resRank'), g.name, sel.lv, g.score, amount);
+  rewardVoca(g, stars);
 }
 $('#again').onclick = () => startGame(curGame);
 $('#toHome').onclick = () => { show('home'); showBest(); renderFriends(); };
@@ -839,7 +898,7 @@ $('#selUnit').onchange = (e) => { sel.u = +e.target.value; sel.d = 'all'; fillSe
 $('#selDay').onchange = (e) => { sel.d = e.target.value === 'all' ? 'all' : +e.target.value; fillSelects(); };
 document.querySelectorAll('.gcard').forEach((b) => b.onclick = () => startGame(b.dataset.game));
 // 주소로 레벨 지정: ?lv=520 또는 ?lv=860
-const qlv = new URLSearchParams(location.search).get('lv'); if (qlv === '520' || qlv === '860') sel.lv = 'lv' + qlv;
+const qlv = QS.get('lv'); if ((qlv === '520' || qlv === '860') && !QS.get('d')) sel.lv = 'lv' + qlv;
 fillSelects();
 renderFriends();
 mascotLoop($('#mascot'));
