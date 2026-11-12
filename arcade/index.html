@@ -179,6 +179,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <div id="resRank" style="width:100%"></div>
     <div class="wrongbox" id="resWrong"></div>
     <div class="rbtns"><button id="toHome">🏠 처음으로</button><button class="again" id="again">🔁 한 번 더</button></div>
+    <a class="backvoca" id="backVoca2" href="../voca/" hidden style="width:100%;box-sizing:border-box">← 웨일리 보카로 돌아가기</a>
   </section>
 </div>
 
@@ -823,7 +824,7 @@ const QS = new URLSearchParams(location.search);
   if (m) { sel.lv = m[1]; sel.v = +m[2]; sel.u = +m[3]; sel.d = +m[4]; }
   else if (Voca.on && /^lv(520|860)$/.test(Voca.profile.levelId || '') && !QS.get('lv')) sel.lv = Voca.profile.levelId;
 })();
-$('#backVoca').hidden = QS.get('from') !== 'voca';
+$('#backVoca').hidden = $('#backVoca2').hidden = QS.get('from') !== 'voca';
 // 별 1개 = 10코인, 끝까지 하면 +5 (별 0개여도 끝까지 했으면 5코인)
 function rewardVoca(g, stars) {
   const coins = stars * 10 + 5;
