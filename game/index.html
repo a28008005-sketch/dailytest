@@ -376,10 +376,13 @@ const MONS = ['fire_pup', 'water_bun', 'leaf_ham', 'ice_cat', 'rock_bear', 'clou
   'blue_wolf', 'thunder_eagle', 'crystal_dragon', 'lava_rhino', 'sea_serpent', 'ninja_panther', 'ice_fox', 'forest_stag', 'solar_lion',
   'storm_shark', 'mecha_beetle', 'phoenix', 'galaxy_dragon', 'thunder_tiger', 'rune_golem', 'wind_falcon', 'crow_knight', 'magma_turtle'];
 const TINT = ['', '', '', 'hue-rotate(35deg)', 'hue-rotate(-35deg)'];
+const CUTE = MONS.slice(0, 17), COOL = MONS.slice(17);
 function monSVG(w, opt) {
   opt = opt || {};
   const R = rng(hashStr(w.en.toLowerCase()));
-  const src = w.en === 'whaley' ? SEA + 'whale_happy.webp' : 'mon/' + MONS[Math.floor(R() * MONS.length)] + '.webp';
+  // 평소엔 귀여운 몬스터, 실수 없이 잡은 '반짝 몬스터'는 같은 자리의 멋진 몬스터로 변신!
+  const r1 = R(), list = opt.shiny ? COOL : CUTE;
+  const src = w.en === 'whaley' ? SEA + 'whale_happy.webp' : 'mon/' + list[Math.floor(r1 * list.length)] + '.webp';
   const tint = w.en === 'whaley' ? '' : TINT[Math.floor(R() * TINT.length)];
   const star = opt.shiny ? `<svg class="spk" viewBox="0 0 120 124"><g fill="#FFE45C"><path d="M14 18 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/><path d="M104 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path d="M98 100 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/></g></svg>` : '';
   return `<span class="m mi${opt.shiny ? ' sh' : ''}" style="--f:${tint || 'none'}"><img src="${src}" alt="" draggable="false">${star}</span>`;
@@ -685,7 +688,7 @@ async function catchShow(list) {
   const n = list.length;
   const size = n === 1 ? 240 : n === 2 ? 170 : 130;
   C.innerHTML = `<div class="cstage" style="width:${Math.min(92, n * 30 + 40)}vw;max-width:${size * n + 40}px;height:${size}px">
-      <div class="mm" style="position:absolute;inset:0;display:flex;justify-content:center;gap:8px;animation:bob 1s infinite">${list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w, { shiny: m.shiny })}</div>`).join('')}</div>
+      <div class="mm" style="position:absolute;inset:0;display:flex;justify-content:center;gap:8px;animation:bob 1s infinite">${list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w)}</div>`).join('')}</div>
       <div class="ball hidden"><b></b></div></div>
     <div id="cTxt" class="ctitle">몬스터 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
   C.className = '';
@@ -698,13 +701,15 @@ async function catchShow(list) {
   for (let i = 0; i < 3; i++) { await sleep(500); SFX.wob(); }
   await sleep(200);
   st.classList.remove('c3'); st.classList.add('c4'); SFX.catch(); confetti();
+  // 반짝 몬스터는 공에서 나올 때 멋진 모습으로 변신해요
+  mm.innerHTML = list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w, { shiny: m.shiny })}</div>`).join('');
   mm.style.animation = 'appear .5s .1s backwards'; ball.classList.add('hidden');
   const cards = list.map((m) => {
     const w = m.w, was = addDex(w, m.shiny);
     return `<div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${monName(w)} ${was ? '' : '<b style="font-size:13px;color:var(--flame)">NEW</b>'}${m.shiny ? ' ✨' : ''}<small>${w.en} · ${w.ko}</small></span></div>`;
   }).join('');
   C.innerHTML += `<div class="cgrid">${cards}</div>
-    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
+    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 몬스터로 변신! 실수 없이 잡았어요 ✨</div>' : ''}
     <button class="big" style="max-width:320px">계속하기 ▶</button>`;
   C.querySelector('.ctitle').textContent = n > 1 ? n + '마리 잡았다!' : '잡았다!';
   (async () => { for (const m of list) { if (C.classList.contains('hidden')) break; say(m.w); await sleep(1300); } })();
