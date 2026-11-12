@@ -370,8 +370,11 @@ function monName(w) {
   return k && k.length <= 4 ? k + '몬' : w.en.replace(/[^A-Za-z]/g, '').replace(/^./, (c) => c.toUpperCase()) + '몬';
 }
 const SEA = '../arcade/img/';
-// 잡는 몬스터 17종 (제미나이로 새로 그린 오리지널 캐릭터). 단어마다 늘 같은 몬스터·같은 색으로 나와요.
-const MONS = ['fire_pup', 'water_bun', 'leaf_ham', 'ice_cat', 'rock_bear', 'cloud_sheep', 'star_bat', 'candy_dragon', 'thunder_hog', 'flower_kit', 'jelly_pup', 'lava_lizard', 'moon_owl', 'mush_frog', 'crystal_fawn', 'rainbow_snail', 'ghost_mallow'];
+// 잡는 몬스터 35종 — 귀여운 17종 + 멋진 18종 (제미나이로 새로 그린 오리지널 캐릭터). 단어마다 늘 같은 몬스터·같은 색으로 나와요.
+const MONS = ['fire_pup', 'water_bun', 'leaf_ham', 'ice_cat', 'rock_bear', 'cloud_sheep', 'star_bat', 'candy_dragon', 'thunder_hog', 'flower_kit', 'jelly_pup', 'lava_lizard', 'moon_owl', 'mush_frog', 'crystal_fawn', 'rainbow_snail', 'ghost_mallow',
+  // 멋진 몬스터 18종
+  'blue_wolf', 'thunder_eagle', 'crystal_dragon', 'lava_rhino', 'sea_serpent', 'ninja_panther', 'ice_fox', 'forest_stag', 'solar_lion',
+  'storm_shark', 'mecha_beetle', 'phoenix', 'galaxy_dragon', 'thunder_tiger', 'rune_golem', 'wind_falcon', 'crow_knight', 'magma_turtle'];
 const TINT = ['', '', '', 'hue-rotate(35deg)', 'hue-rotate(-35deg)'];
 function monSVG(w, opt) {
   opt = opt || {};
