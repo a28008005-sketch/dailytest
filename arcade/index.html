@@ -749,7 +749,7 @@ $('#quit').onclick = () => { running = false; WSOUND.music.stop(); G = null; if 
    웨일리 보카에 로그인한 학생은 기록이 학원 서버에 올라가고, 아니면 순위만 본다. */
 const RANK = (() => {
   const API = 'https://hello-world.a28008005.workers.dev/api/game/score';
-  const TEAM = { stairs: ['함께 오른 계단', '층'], run: ['함께 통과한 정답 문', '개'], obby: ['함께 건넌 문장', '개'], sea: ['함께 잡은 바다 친구', '마리'] };
+  const TEAM = { stairs: ['함께 오른 계단', '층'], run: ['함께 통과한 정답 문', '개'], obby: ['함께 건넌 문장', '개'], sea: ['함께 잡은 몬스터', '마리'] };
   const UNIT = { stairs: '층', run: '점', obby: '점', sea: '코인' };
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const code = () => { try { return localStorage.getItem('swv.code') || ''; } catch (e) { return ''; } };

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#003C70">
-<title>웨일리 바다 친구 잡기</title>
+<title>웨일리 몬스터 잡기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
@@ -167,7 +167,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 @keyframes rise{to{transform:translateY(-110vh)}}
 .splash{position:absolute; font-size:40px; transform:translate(-50%,-50%); animation:stars .8s forwards; z-index:5; pointer-events:none}
 
-/* ── 바다 친구 이미지 ── */
+/* ── 몬스터 이미지 ── */
 .m.mi{display:block; position:relative}
 .m.mi img{width:100%; height:100%; object-fit:contain; display:block; filter:var(--f,none) drop-shadow(0 4px 6px rgba(0,30,70,.2))}
 .m.mi.sh img{filter:var(--f,none) drop-shadow(0 0 6px #FFE45C) drop-shadow(0 0 12px rgba(255,214,60,.8))}
@@ -257,7 +257,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
   <div class="home-in">
     <div class="title">
       <div id="homeMon" style="width:76px;height:76px"></div>
-      <div><h1>웨일리 바다 친구 잡기</h1><small id="subTitle">오늘 배울 단어 속에 숨은 바다 친구를 모두 잡아라!</small></div>
+      <div><h1>웨일리 몬스터 잡기</h1><small id="subTitle">오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!</small></div>
     </div>
     <div class="who" id="who"></div>
     <a class="ghost hidden" id="backVoca" href="../voca/" style="text-align:center;text-decoration:none;display:block">← 웨일리 보카로 돌아가기</a>
@@ -275,13 +275,13 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
       <div class="course" id="course" style="margin-top:10px"></div>
     </div>
     <div class="panel">
-      <h2 id="prevH">숨어 있는 바다 친구</h2>
+      <h2 id="prevH">숨어 있는 몬스터</h2>
       <div class="preview" id="preview"></div>
     </div>
     <label class="opt"><input type="checkbox" id="optText"> 그림 아래 영어 글자도 보여 주기</label>
     <label class="opt"><input type="checkbox" id="optSlow" checked> 천천히 (처음 하는 친구용)</label>
     <button class="big" id="startBtn">🎮 모험 시작!</button>
-    <div class="row2"><button class="ghost" id="dexBtn">📖 바다 친구 도감</button></div>
+    <div class="row2"><button class="ghost" id="dexBtn">📖 몬스터 도감</button></div>
   </div>
 </section>
 
@@ -335,7 +335,7 @@ const COURSE = {
   2: { day: '화요일', games: ['mole', 'fish', 'bubble'] },
   3: { day: '수요일', games: ['fish', 'bubble', 'mole'] },
   4: { day: '목요일', games: ['bubble', 'fish', 'mole'] },
-  5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 친구가 더 잘 나와요!' },
+  5: { day: '금요일', games: ['mole', 'bubble', 'fish'], bonus: '금요일은 반짝 몬스터가 더 잘 나와요!' },
 };
 // 몬스터마다 잡는 데 필요한 정답 수를 1·2·3 으로 섞는다. 그래야 마지막 게임에서만 줄줄이 잡히지 않고
 // 게임마다 고르게(약 1/3씩) 잡힌다. 잡은 몬스터는 그 게임이 끝날 때 한 번에 보여 준다.
@@ -370,15 +370,16 @@ function monName(w) {
   return k && k.length <= 4 ? k + '몬' : w.en.replace(/[^A-Za-z]/g, '').replace(/^./, (c) => c.toUpperCase()) + '몬';
 }
 const SEA = '../arcade/img/';
-const SPECIES = ['whale', 'octo', 'turtle', 'clown', 'seal', 'crab', 'jelly', 'puffer', 'star', 'seahorse', 'shark', 'penguin', 'squid', 'otter'];
-const TINT = ['', '', 'hue-rotate(40deg)', 'hue-rotate(-40deg)', 'hue-rotate(150deg) saturate(.9)'];
+// 잡는 몬스터 17종 (제미나이로 새로 그린 오리지널 캐릭터). 단어마다 늘 같은 몬스터·같은 색으로 나와요.
+const MONS = ['fire_pup', 'water_bun', 'leaf_ham', 'ice_cat', 'rock_bear', 'cloud_sheep', 'star_bat', 'candy_dragon', 'thunder_hog', 'flower_kit', 'jelly_pup', 'lava_lizard', 'moon_owl', 'mush_frog', 'crystal_fawn', 'rainbow_snail', 'ghost_mallow'];
+const TINT = ['', '', '', 'hue-rotate(35deg)', 'hue-rotate(-35deg)'];
 function monSVG(w, opt) {
   opt = opt || {};
   const R = rng(hashStr(w.en.toLowerCase()));
-  const sp = w.en === 'whaley' ? 'whale_happy' : SPECIES[Math.floor(R() * SPECIES.length)];
+  const src = w.en === 'whaley' ? SEA + 'whale_happy.webp' : 'mon/' + MONS[Math.floor(R() * MONS.length)] + '.webp';
   const tint = w.en === 'whaley' ? '' : TINT[Math.floor(R() * TINT.length)];
   const star = opt.shiny ? `<svg class="spk" viewBox="0 0 120 124"><g fill="#FFE45C"><path d="M14 18 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/><path d="M104 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path d="M98 100 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/></g></svg>` : '';
-  return `<span class="m mi${opt.shiny ? ' sh' : ''}" style="--f:${tint || 'none'}"><img src="${SEA}${sp}.webp" alt="" draggable="false">${star}</span>`;
+  return `<span class="m mi${opt.shiny ? ' sh' : ''}" style="--f:${tint || 'none'}"><img src="${src}" alt="" draggable="false">${star}</span>`;
 }
 function monSVGOld(w, opt) {
   opt = opt || {};
@@ -514,7 +515,7 @@ function dayOf() {
 function renderHome() {
   const own = Voca.on && DATA.levels.some((l) => l.id === Voca.profile.levelId);
   $('#lvPanel').classList.toggle('hidden', DATA.levels.length < 2 || own);
-  $('#subTitle').textContent = `${lvName[sel.lv] === '파닉스' ? 'Phonics' : 'Space Whale ' + lvName[sel.lv]} · 오늘 배울 단어 속에 숨은 바다 친구를 모두 잡아라!`;
+  $('#subTitle').textContent = `${lvName[sel.lv] === '파닉스' ? 'Phonics' : 'Space Whale ' + lvName[sel.lv]} · 오늘 배울 단어 속에 숨은 몬스터를 모두 잡아라!`;
   $('#backVoca').classList.toggle('hidden', QS.get('from') !== 'voca');
   $('#lvChips').innerHTML = '';
   DATA.levels.forEach((L) => {
@@ -527,7 +528,7 @@ function renderHome() {
   fill($('#volSel'), 6, sel.vol, 'Vol.'); fill($('#unitSel'), 4, sel.unit, 'Unit '); fill($('#daySel'), 5, sel.day, 'Day ');
   const c = COURSE[sel.day], mode = store.get('mode', 'course');
   $('#courseH').textContent = '게임 고르기';
-  $('#gpick').innerHTML = `<button class="gp wide ${mode === 'course' ? 'on' : ''}" data-mode="course"><span class="imgs">${c.games.map((g) => `<img src="${SEA}${GAMES[g].img}.webp" alt="">`).join('')}</span><span>🏆 ${c.day} 모험 코스<small>게임 3개를 차례로! 바다 친구를 가장 많이 잡을 수 있어요</small></span></button>`
+  $('#gpick').innerHTML = `<button class="gp wide ${mode === 'course' ? 'on' : ''}" data-mode="course"><span class="imgs">${c.games.map((g) => `<img src="${SEA}${GAMES[g].img}.webp" alt="">`).join('')}</span><span>🏆 ${c.day} 모험 코스<small>게임 3개를 차례로! 몬스터를 가장 많이 잡을 수 있어요</small></span></button>`
     + Object.keys(GAMES).map((g) => `<button class="gp ${mode === g ? 'on' : ''}" data-mode="${g}"><img src="${SEA}${GAMES[g].img}.webp" alt=""><span>${GAMES[g].name}<small>${PICK_DESC[g]}</small></span></button>`).join('');
   $('#gpick').querySelectorAll('.gp').forEach((b) => b.onclick = () => { store.set('mode', b.dataset.mode); renderHome(); });
   $('#startBtn').textContent = mode === 'course' ? '🎮 모험 시작!' : `🎮 ${GAMES[mode].name} 시작!`;
@@ -537,13 +538,13 @@ function renderHome() {
   const d = dayOf();
   const dex = getDex();
   $('#who').innerHTML = Voca.on
-    ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>모은 바다 친구와 코인이 웨일리 보카에 같이 쌓여요</span>`
+    ? `👤 <b>${Voca.profile.name || '학생'}</b> 님 · 🪙 보카 코인 <b>${totalCoins().toLocaleString()}</b><span>모은 몬스터와 코인이 웨일리 보카에 같이 쌓여요</span>`
     : `🎮 체험 모드<span>웨일리 보카에 로그인하면 코인·도감이 내 진도에 쌓여요 (지금은 이 기기에만 저장)</span>`;
-  $('#prevH').textContent = `숨어 있는 바다 친구 ${d.words.length}마리 · ${d.label}` + (d.review ? ' · 문장만 배우는 날이라 앞에서 배운 단어로 복습해요' : '');
+  $('#prevH').textContent = `숨어 있는 몬스터 ${d.words.length}마리 · ${d.label}` + (d.review ? ' · 문장만 배우는 날이라 앞에서 배운 단어로 복습해요' : '');
   $('#preview').innerHTML = d.words.map((w) => `<div title="${w.en}" style="${dex[key(w)] ? '' : 'filter:brightness(0) opacity(.45)'}">${monSVG(w)}</div>`).join('');
   $('#optText').checked = !!opts.text; $('#optSlow').checked = !!opts.slow;
   const total = Object.keys(dex).length;
-  $('#dexBtn').textContent = `📖 바다 친구 도감 (${total}마리)`;
+  $('#dexBtn').textContent = `📖 몬스터 도감 (${total}마리)`;
   $('#homeMon').innerHTML = monSVG({ en: 'whaley' }, { shiny: true });
 }
 function save() { store.set('sel', sel); }
@@ -564,7 +565,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest('[data-k]
 let S = null;
 function show(id) { ['home', 'play', 'result', 'dex'].forEach((x) => $('#' + x).classList.toggle('hidden', x !== id)); }
 
-// 한 가지 게임만 고르면 그 게임을 두 판 (바다 친구는 1~2번 맞히면 잡혀요)
+// 한 가지 게임만 고르면 그 게임을 두 판 (몬스터는 1~2번 맞히면 잡혀요)
 function courseFor() {
   const mode = store.get('mode', 'course'), c = COURSE[sel.day];
   if (mode === 'course' || !GAMES[mode]) return c;
@@ -683,7 +684,7 @@ async function catchShow(list) {
   C.innerHTML = `<div class="cstage" style="width:${Math.min(92, n * 30 + 40)}vw;max-width:${size * n + 40}px;height:${size}px">
       <div class="mm" style="position:absolute;inset:0;display:flex;justify-content:center;gap:8px;animation:bob 1s infinite">${list.map((m) => `<div style="width:${size}px;height:${size}px">${monSVG(m.w, { shiny: m.shiny })}</div>`).join('')}</div>
       <div class="ball hidden"><b></b></div></div>
-    <div id="cTxt" class="ctitle">바다 친구 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
+    <div id="cTxt" class="ctitle">몬스터 ${n > 1 ? n + '마리 ' : ''}발견!</div>`;
   C.className = '';
   const st = C.querySelector('.cstage'), mm = st.querySelector('.mm'), ball = st.querySelector('.ball');
   SFX.wob(); await sleep(900);
@@ -700,7 +701,7 @@ async function catchShow(list) {
     return `<div class="cword">${w.p ? `<img src="pic/${w.p}.jpg" alt="">` : ''}<span>${monName(w)} ${was ? '' : '<b style="font-size:13px;color:var(--flame)">NEW</b>'}${m.shiny ? ' ✨' : ''}<small>${w.en} · ${w.ko}</small></span></div>`;
   }).join('');
   C.innerHTML += `<div class="cgrid">${cards}</div>
-    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 친구! 실수 없이 잡았어요 ✨</div>' : ''}
+    ${list.some((m) => m.shiny) ? '<div class="shiny-tag">✨ 반짝 몬스터! 실수 없이 잡았어요 ✨</div>' : ''}
     <button class="big" style="max-width:320px">계속하기 ▶</button>`;
   C.querySelector('.ctitle').textContent = n > 1 ? n + '마리 잡았다!' : '잡았다!';
   (async () => { for (const m of list) { if (C.classList.contains('hidden')) break; say(m.w); await sleep(1300); } })();
@@ -985,7 +986,7 @@ function Fish(stage, target, list, cb) {
    웨일리 보카에 로그인한 학생은 기록이 학원 서버에 올라가고, 아니면 순위만 본다. */
 const RANK = (() => {
   const API = 'https://hello-world.a28008005.workers.dev/api/game/score';
-  const TEAM = { stairs: ['함께 오른 계단', '층'], run: ['함께 통과한 정답 문', '개'], obby: ['함께 건넌 문장', '개'], sea: ['함께 잡은 바다 친구', '마리'] };
+  const TEAM = { stairs: ['함께 오른 계단', '층'], run: ['함께 통과한 정답 문', '개'], obby: ['함께 건넌 문장', '개'], sea: ['함께 잡은 몬스터', '마리'] };
   const UNIT = { stairs: '층', run: '점', obby: '점', sea: '코인' };
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const code = () => { try { return localStorage.getItem('swv.code') || ''; } catch (e) { return ''; } };
@@ -1043,7 +1044,7 @@ function finish() {
     <div style="text-align:center"><div style="font-size:64px">🏆</div>
       <h1 class="jua" style="font-weight:400;font-size:38px;margin:4px 0">${caught.length}마리 다 잡았다!</h1>
       <div style="color:#9FD8F5">${S.day.label} · ${S.course.day} 코스 완료</div></div>
-    <div class="stat"><div><b>${caught.length}</b><span>모은 친구</span></div><div><b>${shiny}</b><span>반짝 친구</span></div><div><b>+${S.coins}</b><span>${Voca.on ? '보카 코인 (총 ' + totalCoins().toLocaleString() + ')' : '코인'}</span></div></div>
+    <div class="stat"><div><b>${caught.length}</b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>+${S.coins}</b><span>${Voca.on ? '보카 코인 (총 ' + totalCoins().toLocaleString() + ')' : '코인'}</span></div></div>
     <div class="grid">${caught.map((m) => `<button class="mon" data-k="${reg(m.w)}">${m.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(m.w, { shiny: m.shiny })}<b>${monName(m.w)}</b><small>${m.w.en} · ${m.w.ko}</small></button>`).join('')}</div>
     <div id="rRank"></div>
     <button class="big" id="rNext">다음 날 도전 ▶</button>
@@ -1070,9 +1071,9 @@ function showDex(lv) {
   const vol = `-V${sel.vol}U`;
   const locked = all.filter((x) => !dex[key(x.w)] && x.d.id.includes(vol)).slice(0, 40);
   $('#dexIn').innerHTML = `
-    <div class="title"><div style="font-size:44px">📖</div><div><h1>바다 친구 도감</h1><small>${Voca.on ? (Voca.profile.name || '') + ' 님이 ' : ''}단어를 맞혀서 모은 바다 친구들이에요. 누르면 소리가 나요.</small></div></div>
+    <div class="title"><div style="font-size:44px">📖</div><div><h1>몬스터 도감</h1><small>${Voca.on ? (Voca.profile.name || '') + ' 님이 ' : ''}단어를 맞혀서 모은 몬스터들이에요. 누르면 소리가 나요.</small></div></div>
     <div class="tabs">${DATA.levels.map((x) => `<button class="chip ${x.id === lv ? 'on' : ''}" data-lv="${x.id}">${lvName[x.id]}</button>`).join('')}</div>
-    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 친구</span></div><div><b>${shiny}</b><span>반짝 친구</span></div><div><b>${totalCoins().toLocaleString()}</b><span>${Voca.on ? '보카 코인' : '누적 코인'}</span></div></div>
+    <div class="stat"><div><b>${mine.length}<span style="font-size:16px;color:#9FD8F5"> / ${all.length}</span></b><span>모은 몬스터</span></div><div><b>${shiny}</b><span>반짝 몬스터</span></div><div><b>${totalCoins().toLocaleString()}</b><span>${Voca.on ? '보카 코인' : '누적 코인'}</span></div></div>
     <div class="grid">
       ${mine.map((x) => { const r = dex[key(x.w)]; return `<button class="mon" data-k="${reg(x.w)}">${r.shiny ? '<span class="sh">✨</span>' : ''}${monSVG(x.w, { shiny: r.shiny })}<b>${monName(x.w)}</b><small>${x.w.en} · ${x.w.ko}</small></button>`; }).join('')}
       ${locked.map((x) => `<div class="mon lock">${monSVG(x.w)}<b>???</b><small>${x.d.label.replace('Vol.', 'V')}</small></div>`).join('')}
