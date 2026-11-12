@@ -158,6 +158,33 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .say { border: 0; background: var(--orange-soft); color: var(--rust); width: 42px; height: 42px; border-radius: 50%; font-size: 18px; }
 .rowbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
+/* 해석 · 문법 */
+.sl { color: var(--orange); font-style: normal; margin: 0 2px; }
+.gn { grid-column: 2 / 4; margin-top: 4px; font-size: 14px; }
+.gn summary { cursor: pointer; color: var(--rust); font-weight: 700; }
+.gn div { background: var(--paper); border-radius: 10px; padding: 10px 12px; margin-top: 6px; color: var(--ink); line-height: 1.6; }
+.score { font-weight: 800; color: var(--done); }
+.gq { background: var(--card); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow); }
+.gh { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+.gh .ko { color: var(--muted); font-size: 14px; }
+.gbody { font-size: 18px; line-height: 2.1; }
+.pick { display: inline-flex; align-items: center; gap: 2px; background: var(--orange-soft); border-radius: 10px; padding: 0 4px; }
+.opt { border: 0; background: transparent; border-radius: 8px; padding: 2px 8px; font: inherit; font-weight: 600; }
+.opt.on { background: var(--ink); color: var(--paper); }
+.opt.on.right { background: var(--done); color: #fff; }
+.blank { font: inherit; font-size: 17px; width: 11em; max-width: 60vw; padding: 4px 8px; border: 0; border-bottom: 3px solid var(--orange); background: var(--paper); color: var(--ink); border-radius: 6px 6px 0 0; }
+.built { min-height: 48px; background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 18px; line-height: 1.7; cursor: pointer; }
+.built em { color: var(--muted); font-style: normal; font-size: 14px; }
+.built span { background: var(--card); border-radius: 6px; padding: 1px 6px; margin-right: 2px; box-shadow: var(--shadow); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chipw { border: 2px solid var(--orange-soft); background: var(--card); border-radius: 10px; padding: 8px 12px; font-size: 16px; }
+.chipw:disabled { opacity: .3; }
+.gfoot { display: flex; gap: 6px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.btn.small { min-height: 38px; padding: 6px 12px; font-size: 14px; }
+.res { font-weight: 800; font-size: 15px; }
+.res.good { color: var(--done); } .res.bad { color: #C2410C; }
+.sol { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--done-soft); color: var(--ink); font-size: 16px; }
+
 /* 단어 */
 .wlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; padding: 14px 16px; max-width: 1040px; margin: 0 auto; }
 .w { background: var(--card); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; }
@@ -378,9 +405,12 @@ function passageView(b, n, tab) {
   $('title').textContent = `${b.title} · 지문 ${n}`;
   const tabs = [];
   if (p.rn.length) tabs.push(['rn', '리딩 노트', p.rn.length]);
-  if (p.sx.length) tabs.push(['sx', '구문 분석', p.sx.length]);
-  if (p.sent.length) tabs.push(['st', '문장', p.sent.length]);
+  if (p.ans && p.ans.length) tabs.push(['an', '정답·해설', '']);
   if (p.words.length) tabs.push(['wd', '단어', p.words.length]);
+  if (p.sent.length) tabs.push(['st', '해석', p.sent.length]);
+  if (p.sx.length) tabs.push(['sx', '구문 분석', p.sx.length]);
+  const gcount = p.sent.filter(s => s[3] && (s[3].ch || s[3].cq || s[3].bl || (s[3].ord && s[3].ord.length))).length;
+  if (gcount) tabs.push(['gr', '문법 연습', gcount]);
   if (!tab || !tabs.some(t => t[0] === tab)) tab = tabs.length ? tabs[0][0] : 'rn';
   const idx = b.passages.indexOf(p);
   const prev = b.passages[idx - 1], next = b.passages[idx + 1];
@@ -402,6 +432,8 @@ function passageView(b, n, tab) {
   if (tab === 'rn') slides(pane, p.rn, `${b.id}:${n}:rn`, '리딩 노트');
   else if (tab === 'sx') slides(pane, p.sx, `${b.id}:${n}:sx`, '구문 분석');
   else if (tab === 'st') sentences(pane, p.sent);
+  else if (tab === 'an') answers(pane, p.ans, `${b.id}:${n}:an`);
+  else if (tab === 'gr') grammar(pane, p.sent, `${b.id}:${n}`);
   else if (tab === 'wd') words(pane, p.words, `${b.id}:${n}`);
 }
 
@@ -516,22 +548,124 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 function sentences(pane, list) {
   let hideKo = store.get('hideKo', false);
+  let dj = store.get('dj', false);
+  const hasDj = list.some(s => s[3] && s[3].dj);
   const rate = store.get('rate', 0.9);
+  const slash = t => esc(t).replace(/\s*\/\s*/g, ' <i class="sl">/</i> ');
   pane.innerHTML = `<div class="sents"><div class="rowbar">
       <button class="btn" id="hk">${hideKo ? '해석 보이기' : '해석 가리기'}</button>
+      ${hasDj ? `<button class="btn${dj ? ' primary' : ''}" id="dj">직독직해</button>` : ''}
       <button class="btn" id="rt">속도 ${rate < 0.8 ? '천천히' : '보통'}</button>
       <span style="flex:1"></span><button class="btn primary" id="all">🔊 처음부터 듣기</button></div>
-    ${list.map(([no, en, ko], k) => `<div class="sent"><span class="no">${no}</span><div class="en">${esc(en)}</div>
-      <button class="say" data-k="${k}" aria-label="듣기">🔊</button><div class="ko${hideKo ? ' blur' : ''}">${esc(ko)}</div></div>`).join('')}
+    ${list.map(([no, en, ko, x], k) => {
+      x = x || {};
+      const showDj = dj && x.dj;
+      const enHtml = showDj && x.dj[0] ? slash(x.dj[0]) : esc(en);
+      const koHtml = showDj ? slash(x.dj[1]) : esc(ko);
+      return `<div class="sent"><span class="no">${no}</span><div class="en">${enHtml}</div>
+      <button class="say" data-k="${k}" aria-label="듣기">🔊</button><div class="ko${hideKo ? ' blur' : ''}">${koHtml}</div>
+      ${x.gn ? `<details class="gn"><summary>문법 노트</summary><div>${esc(x.gn).replace(/\n/g, '<br>')}</div></details>` : ''}</div>`;
+    }).join('')}
   </div>`;
   pane.querySelectorAll('.say').forEach(b => b.onclick = () => speak(list[+b.dataset.k][1]));
   pane.querySelectorAll('.ko').forEach(k => k.onclick = () => k.classList.toggle('blur'));
   $('hk').onclick = () => { store.set('hideKo', !hideKo); sentences(pane, list); };
+  if ($('dj')) $('dj').onclick = () => { store.set('dj', !dj); sentences(pane, list); };
   $('rt').onclick = () => { store.set('rate', rate < 0.8 ? 0.9 : 0.7); sentences(pane, list); };
   $('all').onclick = () => {
     stopSpeak();
     list.forEach(([, en]) => { const u = new SpeechSynthesisUtterance(en); u.lang = 'en-US'; u.rate = store.get('rate', 0.9); if (voice) u.voice = voice; speechSynthesis.speak(u); });
   };
+}
+
+// ───────── 리딩 정답·해설 ─────────
+// 먼저 리딩 노트 문제를 풀고 나서 보도록, 한 번 눌러야 열린다.
+function answers(pane, pages, memo) {
+  if (ROLE === 'teacher' || store.get('open.' + memo, false)) return slides(pane, pages, memo, '정답·해설', { tall: true });
+  pane.innerHTML = `<div class="empty"><div style="font-size:44px">📝</div>
+    <p style="font-size:18px;color:var(--ink);font-weight:700;margin:8px 0 4px">리딩 노트 문제를 먼저 풀어 봤나요?</p>
+    <p>다 풀었으면 정답과 해설을 확인해요.</p>
+    <button class="btn primary" id="openAns" style="margin-top:12px">정답·해설 보기</button></div>`;
+  $('openAns').onclick = () => { store.set('open.' + memo, true); answers(pane, pages, memo); };
+}
+
+// ───────── 문법 연습 (Supernova Grammar 책 구성: 어법선택 · 빈칸 · 문장배열) ─────────
+const nrm = t => String(t).toLowerCase().replace(/[^a-z0-9']+/g, ' ').trim();
+function grammar(pane, list, memo) {
+  const modes = [
+    ['ch', '어법 선택', list.filter(s => s[3] && (s[3].ch || s[3].cq))],
+    ['bl', '빈칸 채우기', list.filter(s => s[3] && s[3].bl)],
+    ['ord', '문장 배열', list.filter(s => s[3] && s[3].ord && s[3].ord.length)],
+  ].filter(m => m[2].length);
+  let mode = store.get('gmode', modes[0][0]);
+  if (!modes.some(m => m[0] === mode)) mode = modes[0][0];
+  const items = modes.find(m => m[0] === mode)[2];
+  let html = `<div class="sents"><div class="rowbar">${modes.map(([id, label, l]) =>
+    `<button class="btn${id === mode ? ' primary' : ''}" data-gm="${id}">${label} <small>${l.length}</small></button>`).join('')}
+    <span style="flex:1"></span><span class="score" id="score"></span></div>`;
+  items.forEach(([no, en, ko, x], k) => {
+    html += `<div class="gq" data-k="${k}"><div class="gh"><span class="no">${no}</span><span class="ko">${esc(ko)}</span></div>`;
+    if (mode === 'ch' && !x.ch) {
+      html += `<div class="en gbody">${esc(x.cq)}</div>`;
+    } else if (mode === 'ch') {
+      let i = 0;
+      const body = esc(x.ch).replace(/[\[(]\s*([^\[\]()]+?\/[^\[\]()]+?)\s*[\])]/g, (_, g) => {
+        const gi = i++;
+        return `<span class="pick" data-g="${gi}">${g.split('/').map((o, oi) => `<button class="opt" data-o="${oi}">${o.trim()}</button>`).join('<i class="sl">/</i>')}</span>`;
+      });
+      html += `<div class="en gbody">${body}</div>`;
+    } else if (mode === 'bl') {
+      html += `<div class="en gbody">${esc(x.bl).replace(/(_+\s*)+/, '<input class="blank" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="빈칸">')}</div>`;
+    } else {
+      html += `<div class="built" aria-label="만든 문장"></div><div class="chips">${x.ord.map((c, ci) => `<button class="chipw" data-c="${ci}">${esc(c)}</button>`).join('')}</div>`;
+    }
+    html += `<div class="gfoot"><button class="btn ghost small" data-act="check">채점</button><button class="btn ghost small" data-act="show">정답</button>${mode === 'ord' ? '<button class="btn ghost small" data-act="reset">다시</button>' : ''}<span class="res"></span></div>
+      <div class="sol" hidden>${esc(mode === 'bl' ? x.ba : mode === 'ch' && !x.ch ? x.cqa : en)}</div></div>`;
+  });
+  html += '</div>';
+  pane.innerHTML = html;
+  pane.querySelectorAll('[data-gm]').forEach(b => b.onclick = () => { store.set('gmode', b.dataset.gm); grammar(pane, list, memo); });
+  const result = {};
+  const score = () => { const v = Object.values(result); $('score').textContent = v.length ? `맞힌 문제 ${v.filter(Boolean).length} / ${items.length}` : ''; };
+  pane.querySelectorAll('.gq').forEach(box => {
+    const k = +box.dataset.k, [, en, , x] = items[k];
+    const res = box.querySelector('.res'), sol = box.querySelector('.sol');
+    const mark = ok => { res.textContent = ok ? '⭕ 맞았어요' : '❌ 다시 생각해 봐요'; res.className = 'res ' + (ok ? 'good' : 'bad'); if (!(k in result)) result[k] = ok; score(); };
+    if (mode === 'ch') box.querySelectorAll('.pick').forEach(pk => pk.querySelectorAll('.opt').forEach(o => o.onclick = () => {
+      pk.querySelectorAll('.opt').forEach(z => z.classList.remove('on')); o.classList.add('on');
+    }));
+    let built = [];
+    if (mode === 'ord') {
+      const out = box.querySelector('.built');
+      const draw = () => { out.innerHTML = built.map(ci => `<span>${esc(x.ord[ci])}</span>`).join(' ') || '<em>아래 조각을 순서대로 눌러요</em>';
+        box.querySelectorAll('.chipw').forEach(c => c.disabled = built.includes(+c.dataset.c)); };
+      box.querySelectorAll('.chipw').forEach(c => c.onclick = () => { built.push(+c.dataset.c); draw(); });
+      out.onclick = () => { built.pop(); draw(); };
+      draw();
+      box._reset = () => { built = []; draw(); res.textContent = ''; };
+    }
+    box.querySelectorAll('[data-act]').forEach(btn => btn.onclick = () => {
+      const act = btn.dataset.act;
+      if (act === 'show') { sol.hidden = !sol.hidden; return; }
+      if (act === 'reset') return box._reset();
+      if (mode === 'ch' && !x.ch) { sol.hidden = false; res.textContent = '정답과 비교해 봐요'; res.className = 'res'; return; }
+      if (mode === 'ch') {
+        const picks = [...box.querySelectorAll('.pick')];
+        if (picks.some(pk => !pk.querySelector('.on'))) return toast('괄호마다 하나씩 골라요');
+        if (!x.ca || x.ca.some(a => a < 0)) { sol.hidden = false; res.textContent = '정답 문장과 비교해 봐요'; res.className = 'res'; return; }
+        const ok = picks.every((pk, gi) => +pk.querySelector('.on').dataset.o === x.ca[gi]);
+        picks.forEach((pk, gi) => pk.querySelectorAll('.opt').forEach(o => o.classList.toggle('right', ok || +o.dataset.o === x.ca[gi] && o.classList.contains('on'))));
+        mark(ok);
+      } else if (mode === 'bl') {
+        const v = box.querySelector('.blank').value;
+        if (!v.trim()) return toast('빈칸에 답을 써요');
+        mark(nrm(v) === nrm(x.ba));
+      } else {
+        if (built.length !== x.ord.length) return toast('조각을 모두 써요');
+        mark(nrm(built.map(ci => x.ord[ci]).join(' ')) === nrm(en));
+      }
+    });
+  });
 }
 
 // ───────── 단어 ─────────

@@ -61,20 +61,89 @@ def cell(v):
 def clean_en(s):
     return re.sub(r'\s*/\s*', ' ', s).replace('  ', ' ').strip()
 
-def sentences_sn(book):
-    wb = openpyxl.load_workbook(f'{DL}/{book}/haeseok.xlsx', read_only=True, data_only=True)
-    pick = {'SN1': ('1~62(의역)', 2, 3), 'SN2': ('의역', 2, 3), 'SN3': ('파트3', 5, 4), 'SN4': ('종합', 2, 5)}[book]
-    ws = wb[pick[0]]
-    out = []
-    for r in list(ws.iter_rows(values_only=True))[1:]:
+def read_sheet(wb, name):
+    """시트를 {문장번호: (지문번호, 행)} 으로 읽는다."""
+    out = {}
+    if name not in wb.sheetnames: return out
+    for r in list(wb[name].iter_rows(values_only=True))[1:]:
         if not r or r[0] is None or r[1] is None: continue
         try: no, ps = int(str(r[0]).strip()), int(str(r[1]).strip())
         except ValueError: continue
-        en = cell(r[pick[1]]) if len(r) > pick[1] else ''
-        if not en and book == 'SN3': en = clean_en(cell(r[2]))
-        ko = cell(r[pick[2]]) if len(r) > pick[2] else ''
+        out[no] = (ps, [cell(c) for c in r])
+    return out
+
+def col(row, i):
+    return row[i] if row and len(row) > i else ''
+
+# 책마다 엑셀 칸 구성이 달라서, 어느 시트·몇 번째 칸에 무엇이 있는지 적어 둔다.
+#   en 영어 문장 / ko 의역 / dje 직독직해(영어, / 로 끊음) / djk 직독직해(우리말)
+#   gn 문법 설명 / ch 어법선택 문제 / ord 문장배열 조각 / bl 빈칸 문제 / ba 빈칸 정답 / voc 단어
+SHEETS = {
+    'SN1': {'en': ('1~62(의역)', 2), 'ko': ('1~62(의역)', 3), 'dje': ('1~62(직독직해)', 2), 'djk': ('1~62(직독직해)', 3),
+            'ch': ('1~62(어법선택)', 2), 'ord': ('1~62(문장배열&영작)', 2), 'bl': ('1~62(빈칸채우기)', 2), 'ba': ('1~62(빈칸채우기)', 4)},
+    'SN2': {'en': ('의역', 2), 'ko': ('의역', 3), 'dje': ('직독직해', 2), 'djk': ('직독직해', 3),
+            'ch': ('어법선택', 2), 'ord': ('문장배열', 2), 'bl': ('빈칸채우기', 2), 'ba': ('빈칸채우기', 3)},
+    'SN3': {'en': ('파트3', 2), 'ko': ('파트3', 4), 'dje': ('파트3', 2), 'djk': ('파트3', 3), 'gn': ('1~62(의역)', 3),
+            'ch': ('1~62(의역)', 5), 'ord': ('파트3', 5), 'bl': ('파트4', 2), 'ba': ('파트4', 3), 'voc': ('1~62(의역)', 6)},
+    'SN4': {'en': ('종합', 2), 'ko': ('종합', 5), 'djk': ('종합', 4), 'gn': ('종합', 3), 'ch': ('종합', 6),
+            'ord': ('문장배열_문제', 2), 'bl': ('빈칸채우기', 3), 'ba': ('빈칸채우기', 4), 'voc': ('종합', 7)},
+}
+
+def norm(s):
+    return re.sub(r'[^a-z0-9\']+', ' ', s.lower()).strip()
+
+def choice_answers(q, en):
+    """'[ were used / used ]' 같은 괄호마다 정답 보기를 찾는다. 원래 문장에 들어 있는 쪽이 정답."""
+    groups = list(re.finditer(r'[\[(]\s*([^\[\]()]+?/[^\[\]()]+?)\s*[\])]', q))
+    if not groups: return None
+    ne = ' ' + norm(en) + ' '
+    ans = []
+    for g in groups:
+        opts = [o.strip() for o in g.group(1).split('/') if o.strip()]
+        before = norm(q[:g.start()]).split()[-2:]
+        after = norm(re.sub(r'[\[(][^\])]*[\])]', ' ', q[g.end():])).split()[:2]
+        hit = [k for k, o in enumerate(opts) if ' ' + norm(' '.join(before + [o] + after)) + ' ' in ne]
+        if len(hit) != 1:
+            hit = [k for k, o in enumerate(opts) if ' ' + norm(' '.join([o] + after)) + ' ' in ne]
+        if len(hit) != 1:
+            hit = [k for k, o in enumerate(opts) if ' ' + norm(o) + ' ' in ne]
+        ans.append(hit[0] if len(hit) == 1 else -1)
+    return ans
+
+def sentences_sn(book):
+    wb = openpyxl.load_workbook(f'{DL}/{book}/haeseok.xlsx', read_only=True, data_only=True)
+    spec = SHEETS[book]
+    sheets = {name: read_sheet(wb, name) for name, _ in spec.values()}
+    base = sheets[spec['en'][0]]
+    out = []
+    for no in sorted(base):
+        ps = base[no][0]
         if ps <= 0 and out: ps = out[-1]['p']  # 엑셀에 지문 번호가 0으로 잘못 적힌 줄
-        out.append({'no': no, 'p': ps, 'en': clean_en(en), 'ko': ko})
+        get = lambda k: col(sheets[spec[k][0]].get(no, (0, None))[1], spec[k][1]) if k in spec else ''
+        en = clean_en(re.sub(r'[()]', '', get('en'))) if book == 'SN3' else clean_en(get('en'))
+        x = {}
+        dje, djk = get('dje'), get('djk')
+        if djk: x['dj'] = [dje if '/' in dje else '', djk]
+        if get('gn'): x['gn'] = get('gn')
+        ch = get('ch')
+        m = re.search(r'[\[(]?\s*답\s*[:：]', ch or '')
+        if m:  # 바꿔 쓰기 같은 서술형 문제: 문제와 답을 따로 둔다
+            x['cq'] = ch[:m.start()].strip(); x['cqa'] = re.sub(r'[\])]\s*$', '', ch[m.end():]).strip()
+            ch = ''
+        if ch and re.search(r'[\[(][^\])]*/[^\])]*[\])]', ch):
+            x['ch'] = ch; x['ca'] = choice_answers(ch, en)
+        od = get('ord')
+        if od and od.count('/') >= 2 and norm(od) != norm(en): x['ord'] = [c.strip() for c in od.split('/') if c.strip()]
+        bl, ba = get('bl'), get('ba')
+        if bl and ba and '_' in bl: x['bl'] = bl; x['ba'] = ba
+        if get('voc'):
+            v = []
+            for line in re.split(r'\n|\s{2,}|,\s*(?=[A-Za-z][A-Za-z ]*:)', wb[spec['voc'][0]] and get('voc')):
+                if ':' in line:
+                    w, m = line.split(':', 1)
+                    if w.strip(): v.append([w.strip(), m.strip()])
+            if v: x['voc'] = v
+        out.append({'no': no, 'p': ps, 'en': en, 'ko': get('ko'), 'x': x})
     return out
 
 def sentences_snp(book):
@@ -85,8 +154,36 @@ def sentences_snp(book):
         for r in ws.iter_rows(values_only=True):
             if not r or not cell(r[0]): continue
             no += 1
-            out.append({'no': no, 'p': ps, 'en': cell(r[0]), 'ko': cell(r[1]) if len(r) > 1 else ''})
+            en = cell(r[0])
+            out.append({'no': no, 'p': ps, 'en': en, 'ko': cell(r[1]) if len(r) > 1 else '', 'x': {'ord': auto_chunks(en, no)}})
     return out
+
+def auto_chunks(en, seed):
+    """PLUS 책은 문장배열 자료가 없어서 문장을 4~7조각으로 나눠 섞는다 (쉼표·접속사 앞에서 우선 끊음)."""
+    words = en.split()
+    if len(words) < 5: return []
+    n = max(3, min(7, len(words) // 3))
+    cuts = set()
+    for i, w in enumerate(words[:-1]):
+        if w.endswith(',') or words[i + 1].lower() in ('and', 'but', 'that', 'which', 'who', 'when', 'because', 'to', 'in', 'of', 'for', 'with'):
+            cuts.add(i + 1)
+    size = len(words) / n
+    for k in range(1, n):
+        target = round(k * size)
+        near = [c for c in cuts if abs(c - target) <= 1]
+        cuts.add(near[0] if near else target)
+    cuts = sorted(c for c in cuts if 0 < c < len(words))
+    pieces, last = [], 0
+    for c in cuts:
+        if c - last >= 2: pieces.append(' '.join(words[last:c])); last = c
+    pieces.append(' '.join(words[last:]))
+    import random
+    rnd = random.Random(seed)
+    shuffled = pieces[:]
+    for _ in range(5):
+        rnd.shuffle(shuffled)
+        if shuffled != pieces: break
+    return shuffled
 
 def words_sn(book):
     wb = openpyxl.load_workbook(f'{DL}/{book}/words.xlsx', read_only=True, data_only=True)
@@ -95,6 +192,32 @@ def words_sn(book):
         ws = [[cell(r[0]), cell(r[1]) if len(r) > 1 else ''] for r in wb[s].iter_rows(values_only=True) if r and cell(r[0])]
         if ws: sets.append({'name': f'단어 {i + 1}', 'words': ws})
     return sets
+
+def words_by_passage(sets, sents):
+    """단어장은 지문 순서대로 적혀 있다. 단어마다 앞으로 나아가며 그 단어가 나오는 지문을 찾는다."""
+    texts = {}
+    for x in sents: texts[x['p']] = texts.get(x['p'], '') + ' ' + norm(x['en'])
+    order = sorted(texts)
+    def keys(w):
+        w = re.sub(r'\(.*?\)|~|[A-Z]\.?\s*$', ' ', w)
+        ks = [t for t in norm(w).split() if len(t) > 2 and t not in ('the', 'and', 'one', 'sth', 'someone', 'something', 'with', 'from', 'for')]
+        return ks or norm(w).split()[:1]
+    def found(ks, t):
+        return all(re.search(r'\b' + re.escape(k[:max(4, len(k) - 2)]), t) for k in ks)
+    per, pos, miss = {}, 0, 0
+    for st in sets:
+        for w, m in st['words']:
+            ks = keys(w)
+            hit = None
+            for j in range(pos, min(pos + 6, len(order))):
+                if found(ks, texts[order[j]]): hit = j; break
+            if hit is None:
+                hit = next((j for j in range(len(order)) if found(ks, texts[order[j]])), None)
+                if hit is None: miss += 1; hit = pos
+            else:
+                pos = hit
+            per.setdefault(order[hit], []).append([w, m])
+    return per, miss
 
 def words_snp(book):
     per = {}
@@ -133,6 +256,49 @@ def pdf_pages(pdf, label, key):
     files = sorted(glob.glob(tmp + '-*.webp'), key=lambda x: int(re.findall(r'-(\d+)\.webp$', x)[0]))
     return [{'a': put(f'{label}/{i}', open(f, 'rb').read(), key)} for i, f in enumerate(files, 1)]
 
+def reading_answers(book):
+    """리딩 정답지(Reading AK)를 지문별로 나눈다.
+    SN1~4: 한 쪽이 좌우 반쪽으로 나뉘고 반쪽마다 지문 하나. 회색 CORE 표지·빈 반쪽·책 표지는 건너뛴다.
+    PLUS: 쪽 위에 적힌 지문 번호(001 …)를 읽어 나눈다."""
+    pdf = f'{DL}/{book}/ak/reading.pdf'
+    if not os.path.exists(pdf): return {}
+    tmp = f'{WORK}/rak/{book}'
+    os.makedirs(tmp, exist_ok=True)
+    per = {}
+    if book.startswith('SNP'):
+        if not glob.glob(tmp + '/p-*.webp'):
+            subprocess.run(['pdftoppm', '-png', '-scale-to-x', '1400', '-scale-to-y', '-1', pdf, tmp + '/p'], check=True, stderr=subprocess.DEVNULL)
+            for png in glob.glob(tmp + '/p-*.png'):
+                Image.open(png).convert('RGB').save(png[:-4] + '.webp', 'WEBP', quality=75, method=6); os.remove(png)
+        cur = None
+        for i, f in enumerate(page_files(tmp + '/p'), 1):
+            t = subprocess.run(['pdftotext', '-f', str(i), '-l', str(i), '-layout', pdf, '-'], capture_output=True, text=True).stdout
+            if len(t) < 2500: continue  # CORE 표지·단원 소개 쪽 (글자가 거의 없음)
+            m = re.search(r'(?m)^\s*(0\d\d)\b', '\n'.join(t.splitlines()[:20]))
+            if m: cur = int(m.group(1))
+            if cur: per.setdefault(cur, []).append({'a': put(f'{book}-rak/{i}', open(f, 'rb').read(), K_ST)})
+        return per
+    if not glob.glob(tmp + '/h-*.webp'):
+        subprocess.run(['pdftoppm', '-png', '-scale-to-x', '2600', '-scale-to-y', '-1', pdf, tmp + '/p'], check=True, stderr=subprocess.DEVNULL)
+        pages = sorted(glob.glob(tmp + '/p-*.png'), key=lambda x: int(re.findall(r'-(\d+)\.png', x)[0]))
+        n = 0
+        for k, f in enumerate(pages):
+            im = Image.open(f).convert('RGB'); w, h = im.size
+            g = im.convert('L')
+            vals = []
+            for x0, x1 in ((0, w // 2), (w // 2, w)):
+                reg = g.crop((x0 + 30, int(h * .1), x1 - 30, int(h * .6))).resize((200, 200))
+                px = list(reg.getdata()); vals.append(sum(1 for v in px if v < 200) / len(px))
+            if k == 0 and min(vals) < 0.015: continue  # 책 표지
+            for (x0, x1), v in zip(((0, w // 2), (w // 2, w)), vals):
+                if v > 0.6 or v < 0.015: continue      # CORE 표지 / 빈 반쪽
+                n += 1
+                im.crop((x0, 0, x1, h)).save(f'{tmp}/h-{n}.webp', 'WEBP', quality=75, method=6)
+            os.remove(f)
+    for i, f in enumerate(page_files(tmp + '/h'), 1):
+        per[i] = [{'a': put(f'{book}-rak/{i}', open(f, 'rb').read(), K_ST)}]
+    return per
+
 def sentence_of_slide(did, i):
     """슬라이드 글자에서 '001_01' 같은 문장 번호를 읽는다 (구문 PPT 한 장 = 한 문장)."""
     pdf = f'{WORK}/pdf/{did}.full.pdf'
@@ -148,9 +314,9 @@ for book, title in BOOKS:
     s2p = {s['no']: s['p'] for s in sents}
     passages = {}
     def P(n):
-        return passages.setdefault(n, {'n': n, 'rn': [], 'sx': [], 'sent': [], 'words': []})
+        return passages.setdefault(n, {'n': n, 'rn': [], 'sx': [], 'sent': [], 'words': [], 'ans': []})
     for s in sents:
-        P(s['p'])['sent'].append([s['no'], s['en'], s['ko']])
+        P(s['p'])['sent'].append([s['no'], s['en'], s['ko'], s.get('x') or {}])
     for did, m in sorted(manifest.items()):
         if m['book'] != book: continue
         pages = slide_pages(did, m)
@@ -193,9 +359,22 @@ for book, title in BOOKS:
             P(ps)['words'] = w
     else:
         wsets = words_sn(book)
+        per, miss = words_by_passage(wsets, sents)
+        for ps, w in per.items(): P(ps)['words'] = w
+        print(book, 'words per passage', sum(len(v) for v in per.values()), 'unmatched', miss, flush=True)
+    rak = reading_answers(book)
+    for ps, pgs in rak.items(): P(ps)['ans'] = pgs
+    print(book, 'reading answers for', len(rak), 'passages', flush=True)
+    # 문장별 단어(SN3·SN4 엑셀의 voca 칸)도 지문 단어에 더한다
+    for s_ in sents:
+        for w, m in (s_.get('x') or {}).get('voc', []):
+            ws_ = P(s_['p'])['words']
+            if not any(norm(w) == norm(a) for a, _ in ws_): ws_.append([w, m])
     extras = []
     gm = glob.glob(f'{DL}/{book}/grammarmap/Grammar Map_*.pdf')
     if gm: extras.append({'id': 'gm', 'name': 'Grammar Map', 'pages': pdf_pages(gm[0], f'{book}-gm', K_ST)})
+    gak = f'{DL}/{book}/ak/grammar.pdf'
+    if os.path.exists(gak): extras.insert(0, {'id': 'gak', 'name': 'Grammar 해설 (정답·해설)', 'pages': pdf_pages(gak, f'{book}-gak', K_ST)})
     gf = f'{DL}/{book}/grammar_fill.pdf'
     if os.path.exists(gf): extras.append({'id': 'gf', 'name': '구문분석·빈칸채우기', 'pages': pdf_pages(gf, f'{book}-gf', K_ST)})
     ak = glob.glob(f'{DL}/{book}/grammarmap/Grammar Map AK_*.pdf')
