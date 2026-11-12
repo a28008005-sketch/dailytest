@@ -150,6 +150,7 @@ button{font-family:inherit;cursor:pointer;border:0}
     <canvas id="cv"></canvas>
     <div class="hud">
       <button class="x" id="quit" aria-label="나가기">✕</button>
+      <button class="x" id="mus" aria-label="배경음악 켜고 끄기">🎵</button>
       <span class="pill" id="hearts" style="font-size:14px;letter-spacing:-2px">❤️❤️❤️</span>
       <span class="sp"></span>
       <span class="pill" id="combo" style="display:none"></span>
@@ -179,6 +180,7 @@ button{font-family:inherit;cursor:pointer;border:0}
 
 <script src="data.js"></script>
 <script src="audio.js"></script>
+<script src="sound.js"></script>
 <script>
 'use strict';
 /* ───────── 기본 도구 ───────── */
@@ -194,28 +196,7 @@ const store = {
 };
 
 /* ───────── 소리: 효과음은 직접 합성, 영어는 기기 음성 ───────── */
-const SFX = (() => {
-  let ac = null;
-  const ctx = () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state === 'suspended') ac.resume(); return ac; };
-  function tone(f, d, type, vol, slide, delay) {
-    const a = ctx(); if (!a) return;
-    const t = a.currentTime + (delay || 0), o = a.createOscillator(), g = a.createGain();
-    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
-    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
-    g.gain.setValueAtTime(vol || .18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
-    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .02);
-  }
-  return {
-    unlock: ctx,
-    jump() { tone(420, .14, 'square', .08, 820); },
-    ok() { tone(660, .1, 'triangle', .16); tone(990, .16, 'triangle', .16, null, .08); },
-    bad() { tone(220, .28, 'sawtooth', .1, 110); },
-    coin() { tone(1180, .08, 'square', .06); tone(1570, .12, 'square', .06, null, .06); },
-    fall() { tone(500, .6, 'triangle', .14, 80); },
-    win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .22, 'triangle', .16, null, i * .11)); },
-    splash() { tone(160, .35, 'sawtooth', .08, 60); }
-  };
-})();
+const SFX = Object.assign({ unlock: WSOUND.ctx }, WSOUND.sfx); // 소리는 sound.js (배경음악 + 효과음)
 const VOICE = (() => {
   // 1순위: 교재 원어민 녹음(데일리 듣기 음원에서 자른 조각) · 없으면 기기에서 가장 자연스러운 영어 음성
   let v = null;
@@ -231,6 +212,7 @@ const VOICE = (() => {
     say(text, rate) {
       if (!text) return;
       const k = AUD[text];
+      WSOUND.music.duck(text.length > 14 ? 2300 : 1200);
       if (k) { try { speechSynthesis.cancel(); } catch (e) {} au.pause(); au.src = 'audio/' + k + '.mp3'; au.playbackRate = 1; au.play().catch(() => tts(text, rate)); return; }
       tts(text, rate);
     },
@@ -737,11 +719,12 @@ function startGame(name) {
   $('#rImg').src = 'img/' + curChar + (name === 'run' ? '_swim' : '_happy') + '.webp'; $('#rImg').style.transform = name === 'run' && !SWIM_RIGHT[curChar] ? 'scaleX(-1)' : ''; $('#rTitle').textContent = INFO[name][0]; $('#rDesc').innerHTML = INFO[name][1]; $('#ready').classList.add('on');
   running = true; last = performance.now(); requestAnimationFrame(loop);
 }
-$('#go').onclick = () => { $('#ready').classList.remove('on'); SFX.unlock(); G.start(); G.started = true; };
+$('#go').onclick = () => { $('#ready').classList.remove('on'); SFX.unlock(); WSOUND.sfx.resetSteps(); WSOUND.music.play(curGame); G.start(); G.started = true; };
 function loop(now) {
   if (!running) return;
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (G.started) G.update(dt); else G.t = (G.t || 0) + dt;
+  if (G.name === 'stairs' && G.started) WSOUND.music.tempo(1 + Math.min(G.score, 90) / 150); // 높이 오를수록 빨라져요
   if (G.name !== 'run') updParts(dt);
   cx.clearRect(0, 0, W, H); G.draw(cx);
   requestAnimationFrame(loop);
@@ -760,7 +743,7 @@ window.addEventListener('keydown', (e) => {
   if (G.name === 'run') { if (e.key === 'ArrowUp') G.move(-1); if (e.key === 'ArrowDown') G.move(1); }
   if (G.name === 'stairs') { const b = $('#ctrl').querySelectorAll('.choice'); if (e.key === 'ArrowLeft' && b[0]) b[0].dispatchEvent(new Event('pointerdown')); if (e.key === 'ArrowRight' && b[1]) b[1].dispatchEvent(new Event('pointerdown')); }
 });
-$('#quit').onclick = () => { running = false; G = null; if (window.speechSynthesis) speechSynthesis.cancel(); show('home'); showBest(); renderFriends(); };
+$('#quit').onclick = () => { running = false; WSOUND.music.stop(); G = null; if (window.speechSynthesis) speechSynthesis.cancel(); show('home'); showBest(); renderFriends(); };
 
 /* ───────── 학원 순위표 (레벨별 오늘 TOP 5 · 이번 달 누적 TOP 5 · 다 함께 쌓은 숫자) ─────────
    웨일리 보카에 로그인한 학생은 기록이 학원 서버에 올라가고, 아니면 순위만 본다. */
@@ -802,10 +785,12 @@ const RANK = (() => {
   return { show };
 })();
 
+const musBtn = () => { $('#mus').textContent = WSOUND.music.isOn() ? '🎵' : '🔇'; };
+$('#mus').onclick = () => { WSOUND.music.toggle(); musBtn(); }; musBtn();
 /* ───────── 결과 ───────── */
 let resultMood = 'happy';
 function endGame(g) {
-  running = false; if (!g) return;
+  running = false; WSOUND.music.stop(); if (!g) return;
   const acc = g.tries ? g.correct / g.tries : 0;
   let stars;
   if (g.name === 'stairs') stars = g.score >= 40 ? 3 : g.score >= 20 ? 2 : g.score >= 8 ? 1 : 0;

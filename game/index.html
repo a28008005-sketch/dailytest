@@ -289,6 +289,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 <section id="play" class="screen hidden">
   <div class="hud">
     <button class="x" id="quitBtn" aria-label="그만하기">✕</button>
+    <button class="x" id="musBtn" aria-label="배경음악 켜고 끄기">🎵</button>
     <div class="mid">
       <div class="lbl" id="gLbl"></div>
       <div class="dots" id="gDots"></div>
@@ -307,6 +308,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 <section id="dex" class="screen hidden"><div class="home-in" id="dexIn"></div></section>
 
 <script src="data.js"></script>
+<script src="../arcade/sound.js"></script>
 <script>
 'use strict';
 /* ═════════════ 기본 ═════════════ */
@@ -341,7 +343,7 @@ const COURSE = {
 /* ═════════════ 소리 ═════════════ */
 const player = new Audio(); player.preload = 'auto';
 let actx = null;
-function ac() { if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
+function ac() { actx = WSOUND.ctx(); return actx; }
 function tone(f, t, d, type, v, f2) {
   const c = ac(); if (!c) return;
   const o = c.createOscillator(), g = c.createGain(); const s = c.currentTime + t;
@@ -349,19 +351,10 @@ function tone(f, t, d, type, v, f2) {
   g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(v || .08, s + .01); g.gain.exponentialRampToValueAtTime(.0001, s + d);
   o.connect(g); g.connect(c.destination); o.start(s); o.stop(s + d + .02);
 }
-const SFX = {
-  pop() { tone(700, 0, .08, 'sine', .12, 1400); tone(1600, .04, .08, 'triangle', .05); },
-  bonk() { tone(220, 0, .12, 'square', .08, 90); tone(880, .08, .12, 'triangle', .05); },
-  splash() { tone(400, 0, .25, 'sawtooth', .03, 120); tone(900, .1, .2, 'sine', .05, 1500); },
-  ok() { tone(660, 0, .1, 'triangle', .07); tone(990, .08, .16, 'triangle', .06); },
-  no() { tone(200, 0, .16, 'sawtooth', .04, 150); },
-  coin() { tone(990, 0, .06, 'square', .035); tone(1480, .05, .1, 'square', .03); },
-  whoosh() { tone(300, 0, .5, 'sine', .05, 1200); },
-  wob() { tone(330, 0, .09, 'triangle', .05); },
-  catch() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .09, .3, 'triangle', .06)); },
-};
+const SFX = WSOUND.sfx; // 소리는 ../arcade/sound.js (배경음악 + 효과음)
 function say(w) {
   try { speechSynthesis.cancel(); } catch (e) {}
+  WSOUND.music.duck(1300);
   if (w.a) {
     player.src = 'audio/' + w.a + '.mp3';
     player.play().catch(() => tts(w.en));
@@ -593,6 +586,7 @@ function startSession() {
   shuffle(S.mons.map((_, i) => i)).forEach((i, k) => { S.mons[i].need = 1 + (k % nn); });
   show('play');
   renderBar();
+  WSOUND.sfx.resetSteps(); WSOUND.music.play(S.course.games.every((x) => x === 'stairs') ? 'stairs' : 'sea');
   nextRound();
 }
 async function nextRound() {
@@ -641,8 +635,10 @@ async function nextTarget() {
   S.game = (g === 'bubble' ? Bubble : g === 'mole' ? Mole : g === 'stairs' ? Stairs : Fish)($('#stage'), w, options(w), answer);
   setTimeout(() => say(w), 350);
 }
+const musBtn = () => { $('#musBtn').textContent = WSOUND.music.isOn() ? '🎵' : '🔇'; };
+$('#musBtn').onclick = () => { WSOUND.music.toggle(); musBtn(); }; musBtn();
 $('#sayBtn').onclick = () => { if (S && S.cur >= 0) say(S.mons[S.cur].w); };
-$('#quitBtn').onclick = () => { if (S && S.game) S.game.stop(); S = null; show('home'); renderHome(); };
+$('#quitBtn').onclick = () => { WSOUND.music.stop(); if (S && S.game) S.game.stop(); S = null; show('home'); renderHome(); };
 
 function addCoins(n) {
   S.coins += n; $('#coinN').textContent = S.coins;
@@ -813,7 +809,7 @@ function Stairs(stage, target, list, cb) {
       if (key(w) === key(target)) {
         alive = false; st.i++; st.floor++;
         kid.style.transition = 'left .38s ease-out, top .38s ease-out'; place(st.steps[st.i], dir < 0);
-        kid.classList.add('hop'); SFX.pop();
+        kid.classList.add('hop'); SFX.jump(); WSOUND.music.tempo(1 + Math.min(st.floor, 40) / 80);
         world.style.transition = 'transform .45s ease-out'; world.style.transform = `translateY(${-camOf(st.i)}px)`;
         stage.querySelector('.stfl span').textContent = st.floor;
         const ne = document.createElement('div'); ne.className = 'step on'; const np = st.steps[st.i];
@@ -1026,6 +1022,7 @@ const RANK = (() => {
 })();
 
 function finish() {
+  WSOUND.music.stop();
   if (S.game) { S.game.stop(); S.game = null; }
   const caught = S.mons.filter((m) => m.caught), shiny = caught.filter((m) => m.shiny).length;
   // 오늘 게임한 날을 진도에 남긴다 (보카 홈에서 '완료'로 보인다)
