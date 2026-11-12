@@ -1559,7 +1559,7 @@ a.sb-entry{text-decoration:none}
     }
     var iw = w.iw || 90, ih = iw * w.ar, cx = w.cx || 105;
     var y = slot === 'head' ? (w.by || 56) - ih : (w.cy || 70) - ih / 2;
-    var img = html`<image href=${src} x=${cx - iw / 2} y=${y} width=${iw} height=${ih} style=${st} filter=${slot === 'back' ? undefined : 'url(#wsh)'}/>`;
+    var img = html`<image href=${src} x=${cx - iw / 2} y=${y} width=${iw} height=${ih} style=${st} filter=${slot === 'back' || slot === 'fx' ? undefined : 'url(#wsh)'}/>`;
     return w.rot ? html`<g transform=${'rotate(' + w.rot + ' ' + cx + ' ' + (y + ih / 2) + ')'}>${img}</g>` : img;
   }
 
@@ -1591,14 +1591,11 @@ a.sb-entry{text-decoration:none}
         </linearGradient>
       </defs>
 
-      ${fxArt(wear.fx)}
-      ${backArt(wear.back)}
+      ${imgArt(wear.fx, 'fx')}
 
       ${imgArt(wear.back, 'back')}
       <image href=${whaleSrc} x="36" y="34" width="139" height="126"
         style=${{ imageRendering: wear.skin === 'skin_pixel' ? 'pixelated' : 'auto' }} opacity=${ko ? .55 : 1}/>
-      <g transform="translate(0,7)">${faceArt(wear.face)}</g>
-      <g transform="translate(0,14)">${headArt(wear.head)}</g>
       ${imgArt(wear.face, 'face')}
       ${imgArt(wear.head, 'head')}
       ${imgArt(wear.hand, 'hand')}
@@ -2897,36 +2894,42 @@ a.sb-entry{text-decoration:none}
      부스터는 따로 묶어 두 번째 칸에 둔다.
   ===================================================================== */
   var WEARS = [
-    { id: 'crown',   slot: 'head', name: '황금 왕관',   icon: '👑', cost: 320 },
-    { id: 'phones',  slot: 'head', name: '헤드폰',      icon: '🎧', cost: 180 },
-    { id: 'beanie',  slot: 'head', name: '빨간 비니',   icon: '🧶', cost: 140 },
-    { id: 'halo',    slot: 'head', name: '천사 링',     icon: '😇', cost: 260 },
-    { id: 'bunny',   slot: 'head', name: '토끼 귀',     icon: '🐰', cost: 150 },
-    { id: 'horns',   slot: 'head', name: '악마 뿔',     icon: '😈', cost: 200 },
-    { id: 'cap',     slot: 'head', name: '야구 모자',   icon: '🧢', cost: 130 },
-    { id: 'tophat',  slot: 'head', name: '마술사 모자', icon: '🎩', cost: 280 },
-    { id: 'straw',   slot: 'head', name: '밀짚 모자',   icon: '👒', cost: 160 },
-    { id: 'party',   slot: 'head', name: '파티 고깔',   icon: '🎉', cost: 110 },
-    { id: 'space',   slot: 'head', name: '우주 헬멧',   icon: '🪐', cost: 380 },
-    { id: 'ninja',   slot: 'head', name: '닌자 머리띠', icon: '🥷', cost: 170 },
-    { id: 'prop',    slot: 'head', name: '프로펠러 모자', icon: '🚁', cost: 240 },
-    { id: 'shades',  slot: 'face', name: '검은 선글라스', icon: '🕶️', cost: 120 },
-    { id: 'goggle',  slot: 'face', name: '레이싱 고글', icon: '🥽', cost: 200 },
-    { id: 'pixel',   slot: 'face', name: '픽셀 선글라스', icon: '🎮', cost: 260 },
-    { id: 'heart',   slot: 'face', name: '하트 안경',   icon: '💗', cost: 180 },
-    { id: 'monocle', slot: 'face', name: '금테 외알 안경', icon: '🧐', cost: 220 },
-    { id: 'mask',    slot: 'face', name: '하얀 마스크', icon: '😷', cost: 100 },
-    { id: 'cape',    slot: 'back', name: '히어로 망토', icon: '🦸', cost: 240 },
-    { id: 'wings',   slot: 'back', name: '하얀 날개',   icon: '🪽', cost: 300 },
-    { id: 'dwings',  slot: 'back', name: '악마 날개',   icon: '🦇', cost: 330 },
-    { id: 'jetpack', slot: 'back', name: '제트팩',      icon: '🚀', cost: 400 },
-    { id: 'bag',     slot: 'back', name: '컬러 가방',   icon: '🎒', cost: 150 },
-    { id: 'guitar',  slot: 'back', name: '등에 멘 기타', icon: '🎸', cost: 290 },
-    { id: 'trail',   slot: 'fx',   name: '무지개 자국', icon: '🌈', cost: 220 },
-    { id: 'sparkle', slot: 'fx',   name: '반짝이 별',   icon: '✨', cost: 190 },
-    { id: 'fire',    slot: 'fx',   name: '불꽃 분사',   icon: '🔥', cost: 250 },
-    { id: 'hearts',  slot: 'fx',   name: '하트 뿅뿅',   icon: '💕', cost: 170 },
-    { id: 'bolt',    slot: 'fx',   name: '번개 오라',   icon: '⚡', cost: 300 },
+    { id: 'crown', slot: 'head', name: '황금 왕관', icon: '👑', cost: 320, img: 'o_crown', ar: 0.75, iw: 76, by: 46 },
+    { id: 'phones', slot: 'head', name: '헤드폰', icon: '🎧', cost: 180, img: 'o_phones', ar: 0.769, iw: 118, by: 84 },
+    { id: 'beanie', slot: 'head', name: '빨간 비니', icon: '🧶', cost: 140, img: 'o_beanie', ar: 1.012, iw: 92, by: 60 },
+    { id: 'halo', slot: 'head', name: '천사 링', icon: '😇', cost: 260, img: 'o_halo', ar: 0.401, iw: 80, by: 24 },
+    { id: 'bunny', slot: 'head', name: '토끼 귀', icon: '🐰', cost: 150, img: 'o_bunny', ar: 1.198, iw: 84, by: 46 },
+    { id: 'horns', slot: 'head', name: '악마 뿔', icon: '😈', cost: 200, img: 'o_horns', ar: 0.747, iw: 100, by: 50 },
+    { id: 'cap', slot: 'head', name: '야구 모자', icon: '🧢', cost: 130, img: 'o_cap', ar: 0.73, iw: 100, by: 58 },
+    { id: 'tophat', slot: 'head', name: '마술사 모자', icon: '🎩', cost: 280, img: 'o_tophat', ar: 0.785, iw: 84, by: 50 },
+    { id: 'straw', slot: 'head', name: '밀짚 모자', icon: '👒', cost: 160, img: 'o_straw', ar: 0.535, iw: 122, by: 56 },
+    { id: 'party', slot: 'head', name: '파티 고깔', icon: '🎉', cost: 110, img: 'o_party', ar: 1.262, iw: 50, by: 42 },
+    { id: 'space', slot: 'head', name: '우주 헬멧', icon: '🪐', cost: 380, img: 'o_space', ar: 0.862, iw: 134, by: 128 },
+    { id: 'ninja', slot: 'head', name: '닌자 머리띠', icon: '🥷', cost: 170, img: 'o_ninja', ar: 0.465, iw: 106, by: 58 },
+    { id: 'prop', slot: 'head', name: '프로펠러 모자', icon: '🚁', cost: 240, img: 'o_prop', ar: 0.875, iw: 90, by: 56 },
+    { id: 'shades', slot: 'face', name: '검은 선글라스', icon: '🕶️', cost: 120, img: 'o_shades', ar: 0.346, iw: 86, cy: 69 },
+    { id: 'goggle', slot: 'face', name: '레이싱 고글', icon: '🥽', cost: 200, img: 'o_goggle', ar: 0.473, iw: 94, cy: 68 },
+    { id: 'pixel', slot: 'face', name: '픽셀 선글라스', icon: '🎮', cost: 260, img: 'o_pixel', ar: 0.231, iw: 86, cy: 69 },
+    { id: 'heart', slot: 'face', name: '하트 안경', icon: '💗', cost: 180, img: 'o_heart', ar: 0.377, iw: 90, cy: 69 },
+    { id: 'monocle', slot: 'face', name: '금테 외알 안경', icon: '🧐', cost: 220, img: 'o_monocle', ar: 0.627, iw: 86, cy: 69 },
+    { id: 'mask', slot: 'face', name: '하얀 마스크', icon: '😷', cost: 100, img: 'o_mask', ar: 0.627, iw: 80, cy: 90 },
+    { id: 'cape', slot: 'back', name: '히어로 망토', icon: '🦸', cost: 240, img: 'o_cape', ar: 0.827, iw: 172, cy: 112 },
+    { id: 'wings', slot: 'back', name: '하얀 날개', icon: '🪽', cost: 300, img: 'o_wings', ar: 0.496, iw: 212, cy: 74 },
+    { id: 'dwings', slot: 'back', name: '악마 날개', icon: '🦇', cost: 330, img: 'o_dwings', ar: 0.631, iw: 214, cy: 76 },
+    { id: 'jetpack', slot: 'back', name: '제트팩', icon: '🚀', cost: 400, img: 'o_jetpack', ar: 0.958, iw: 184, cy: 106 },
+    { id: 'bag', slot: 'back', name: '컬러 가방', icon: '🎒', cost: 150, img: 'o_bag', ar: 0.8, iw: 162, cy: 98 },
+    { id: 'guitar', slot: 'back', name: '등에 멘 기타', icon: '🎸', cost: 290, img: 'o_guitar', ar: 1.008, iw: 124, cy: 92, cx: 72 },
+    { id: 'trail', slot: 'fx', name: '무지개 자국', icon: '🌈', cost: 220, img: 'o_trail', ar: 0.635, iw: 212, cy: 40 },
+    { id: 'sparkle', slot: 'fx', name: '반짝이 별', icon: '✨', cost: 190, img: 'o_sparkle', ar: 1.0, iw: 220, cy: 92 },
+    { id: 'fire', slot: 'fx', name: '불꽃 분사', icon: '🔥', cost: 250, img: 'o_fire', ar: 0.881, iw: 222, cy: 104 },
+    { id: 'hearts', slot: 'fx', name: '하트 뿅뿅', icon: '💕', cost: 170, img: 'o_hearts', ar: 0.923, iw: 214, cy: 92 },
+    { id: 'bolt', slot: 'fx', name: '번개 오라', icon: '⚡', cost: 300, img: 'o_bolt', ar: 0.858, iw: 214, cy: 90 },
+    { id: 'fx_splash', slot: 'fx', name: '물보라 링', cost: 260, img: 'fx_splash', ar: 0.985, iw: 222, cy: 98 },
+    { id: 'fx_leaf', slot: 'fx', name: '나뭇잎 회오리', cost: 240, img: 'fx_leaf', ar: 0.981, iw: 222, cy: 98 },
+    { id: 'fx_smoke', slot: 'fx', name: '마법 연기', cost: 280, img: 'fx_smoke', ar: 0.85, iw: 222, cy: 96 },
+    { id: 'fx_ice', slot: 'fx', name: '얼음 수정', cost: 300, img: 'fx_ice', ar: 0.888, iw: 222, cy: 96 },
+    { id: 'fx_coins', slot: 'fx', name: '황금 동전 비', cost: 350, img: 'fx_coins', ar: 0.954, iw: 222, cy: 96 },
+    { id: 'fx_notes', slot: 'fx', name: '음표 뿅뿅', cost: 200, img: 'fx_notes', ar: 0.869, iw: 222, cy: 92 },
     /* ── 블록 게임 느낌 아이템(제미나이로 그린 픽셀 그림) · 손에 드는 무기·도구 · 고래 스킨 ── */
     {id: 'dia_helm', slot: 'head', name: '다이아 투구', cost: 420, img: 'dia_helm', ar: 0.974, iw: 100, by: 74},
     {id: 'gold_crown', slot: 'head', name: '픽셀 왕관', cost: 380, img: 'gold_crown', ar: 0.665, iw: 74, by: 48},
