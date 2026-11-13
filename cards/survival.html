@@ -87,7 +87,10 @@ h1 em{font-style:normal;color:var(--gold)}
 .recnote{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-2px}
 #face{position:absolute;width:216px;height:216px;border-radius:50%;object-fit:cover;transform:scaleX(-1);filter:brightness(1.12) contrast(1.03) saturate(1.12);border:6px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#000;left:1040px;top:222px;z-index:3}
 #face.low{top:482px}
-.rec{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.45);color:#fff;font-weight:900;font-size:18px;padding:6px 14px;border-radius:999px;z-index:4}
+#face.offscreen{left:0;top:0;width:160px;height:120px;opacity:.01;z-index:0;border:0;box-shadow:none}
+#recView{position:absolute;inset:0;width:1280px;height:720px;z-index:2}
+#stage.recmode .scene,#stage.recmode .bgw{visibility:hidden}
+.rec{position:absolute;bottom:18px;left:24px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.45);color:#fff;font-weight:900;font-size:18px;padding:6px 14px;border-radius:999px;z-index:4}
 .rec i{width:12px;height:12px;border-radius:50%;background:#ff3b30;animation:blink 1s steps(1) infinite}
 .over{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgba(6,16,50,.86)}
 .over .box{background:#fff;color:#1b2440;border-radius:24px;padding:36px 44px;min-width:560px;max-width:880px;text-align:center;display:flex;flex-direction:column;gap:16px;align-items:center}
@@ -201,6 +204,8 @@ h1 em{font-style:normal;color:var(--gold)}
             <div class="whomsg ok" id="whoMsg">학생을 고르면 연습 기록이 선생님 화면에 남아요.</div>
           </div></div>
         <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
+        <div class="opt" id="camOpt"><span>태블릿 카메라 위치 <small style="font-weight:500;color:var(--muted)">(얼굴 화면을 카메라 가까이 둬서 렌즈를 보며 말하게 해요)</small></span><div class="seg" id="oCam"></div></div>
+        <div class="opt" id="blurOpt"><span>배경</span><div class="seg" id="oBlur"></div></div>
         <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
         <div class="opt"><span>생각 시간</span><div class="seg" id="oThink"></div></div>
         <div class="opt"><span>정답</span><div class="seg" id="oAns"></div></div>
@@ -226,6 +231,7 @@ h1 em{font-style:normal;color:var(--gold)}
     <section class="scene" id="scClear" hidden><canvas id="confetti" width="1280" height="720"></canvas><div class="clear">MISSION CLEAR!</div><div class="clname" id="clName"></div><div class="clsub" id="clSub"></div></section>
     <section class="scene outro" id="scOutro" hidden><div class="bgw" aria-hidden="true"><span>WHALE</span><span>ENGLISH</span></div><img src="logo.png" alt="고래영어 WHALE ENGLISH"><div class="t">SENTENCE BANK SURVIVAL</div></section>
     <div class="paused" id="pz" hidden>일시정지 · 스페이스바로 계속</div>
+    <canvas id="recView" width="1280" height="720" hidden></canvas>
     <video id="face" muted playsinline autoplay hidden></video>
     <div class="rec" id="recTag" hidden><i></i>REC</div>
     <div class="over" id="over" hidden><div class="box"><h3 id="ovT"></h3><p id="ovP"></p><div class="bar" id="ovBar" hidden><i id="ovFill"></i></div><div class="btns" id="ovBtns"></div></div></div>
@@ -241,7 +247,7 @@ var LS = { get: function (k, d) { try { var v = localStorage.getItem('sbs.' + k)
            set: function (k, v) { try { localStorage.setItem('sbs.' + k, JSON.stringify(v)); } catch (e) {} } };
 var THINK_DEF = { '240': 4, '520': 5, '860': 5, '1240': 6, '1680': 7 };
 var sel = { lv: '240', vol: 1 };
-var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice') };
+var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice'), cam: LS.get('cam', 'top'), blur: LS.get('blur', 'on') };
 var me = LS.get('me', null); // { name, code }
 var HW_API = 'https://staff.whalejinju.kr/hw/api/sv';
 var LOGIN_API = 'https://hello-world.a28008005.workers.dev/api/voca/login';
@@ -287,6 +293,8 @@ function renderHome() {
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
   seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', renderMode);
+  seg('#oCam', [['top', '⬆ 위 가운데'], ['left', '⬅ 왼쪽'], ['right', '오른쪽 ➡']], 'cam');
+  seg('#oBlur', [['on', '배경 흐리게'], ['off', '그대로']], 'blur');
   renderMode(); renderMe();
   renderPanel();
 }
@@ -301,8 +309,9 @@ function renderPanel() {
 function sync() { LS.set('sel', { lv: sel.lv, vol: sel.vol }); history.replaceState(null, '', '?lv=' + sel.lv + '&v=' + sel.vol); }
 function kidName() { return me && me.name ? me.name : ''; }
 function renderMode() {
+  $('#camOpt').hidden = opt.mode !== 'real'; $('#blurOpt').hidden = opt.mode !== 'real';
   $('#modeNote').textContent = opt.mode === 'real'
-    ? '카드 화면과 내 얼굴·목소리가 한 영상으로 녹화되고, 끝나면 선생님께 자동으로 올라가요. (카메라·마이크 허용 필요)'
+    ? '카드 화면과 내 얼굴·목소리가 한 영상으로 녹화되고, 끝나면 선생님께 자동으로 올라가요. 주변 소음은 줄이고 배경은 흐리게 녹화돼요. (카메라·마이크 허용 필요)'
     : '연습은 녹화하지 않고 횟수와 범위만 기록해요.';
   $('#goBtn').firstChild.textContent = opt.mode === 'real' ? '🎥 실전 녹화 시작' : '▶ 서바이벌 시작';
 }
@@ -543,6 +552,7 @@ function pickMime() {
   for (var i = 0; i < list.length; i++) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
   return '';
 }
+<<<<<<< Updated upstream
 /* 얼굴을 밝게: 노출·화이트밸런스 자동 + 노출 살짝 올리기 (되는 기기만) */
 function camBright(stream) {
   try {
@@ -586,18 +596,92 @@ async function recBegin() {
     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
   });
   camBright(REC.cam);
+=======
+/* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
+var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
+function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function segStart(video) {
+  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
+  try {
+    if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
+    var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
+    m.setOptions({ modelSelection: 1, selfieMode: false });
+    m.onResults(function (r) {
+      var mk = SEG.mask, im = r.segmentationMask;
+      if (!im) return;
+      mk.width = im.width; mk.height = im.height;
+      var c = mk.getContext('2d'); c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
+      SEG.ready = true;
+    });
+    await m.initialize();
+    SEG.model = m;
+    (function tick() {
+      if (!SEG.on) return;
+      var now = performance.now();
+      if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
+        SEG.busy = true; SEG.last = now;
+        SEG.model.send({ image: video }).catch(function () {}).then(function () { SEG.busy = false; });
+      }
+      requestAnimationFrame(tick);
+    })();
+  } catch (e) { SEG.on = false; }
+}
+function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
+
+/* 주변 소음 줄이기: 브라우저 잡음 제거 + 낮은·높은 잡음 걸러내기 + 말하지 않을 때 소리 낮추기(노이즈 게이트) */
+var GATE_SRC = "class G extends AudioWorkletProcessor{constructor(){super();this.g=0;this.hold=0}process(i,o){var a=i[0]&&i[0][0],b=o[0];if(!a){return true}var s=0;for(var k=0;k<a.length;k++)s+=a[k]*a[k];var r=Math.sqrt(s/a.length);if(r>0.018)this.hold=90;else if(this.hold>0)this.hold--;var t=this.hold>0?1:0.06;for(var k=0;k<a.length;k++){this.g+=(t-this.g)*(t>this.g?0.03:0.0012);var v=a[k]*this.g;for(var c=0;c<b.length;c++)b[c][k]=v}return true}}registerProcessor('gorae-gate',G)";
+async function micChain(ctx, stream) {
+  var src = ctx.createMediaStreamSource(stream);
+  var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 110;
+  var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+  var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -28; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
+  var g = ctx.createGain(); g.gain.value = 1.3;
+  src.connect(hp); hp.connect(lp);
+  var last = lp;
+  try {
+    if (ctx.audioWorklet) {
+      await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([GATE_SRC], { type: 'application/javascript' })));
+      var gate = new AudioWorkletNode(ctx, 'gorae-gate'); lp.connect(gate); last = gate;
+    }
+  } catch (e) {}
+  last.connect(comp); comp.connect(g);
+  return g;
+}
+
+/* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
+function lay() {
+  var c = opt.cam || 'top';
+  if (c === 'left') return { face: { cx: 172, cy: 340, r: 142 }, board: { x: 346, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 795 };
+  if (c === 'right') return { face: { cx: 1108, cy: 340, r: 142 }, board: { x: 120, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 485 };
+  return { face: { cx: 640, cy: 96, r: 84 }, board: { x: 248, y: 190, pw: 660, ph: 456 }, bubble: 'side', cx: 640 };
+}
+
+async function recBegin() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) throw new Error('unsupported');
+  REC.cam = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } },
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
+  });
+>>>>>>> Stashed changes
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
+<<<<<<< Updated upstream
   await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
+=======
+  (await micChain(REC.actx, REC.cam)).connect(REC.dest);
+>>>>>>> Stashed changes
   route(voice);
-  REC.canvas = document.createElement('canvas'); REC.canvas.width = 960; REC.canvas.height = 540;
+  if (opt.blur !== 'off') segStart(face);
+  // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
+  REC.canvas = $('#recView'); REC.canvas.width = 1280; REC.canvas.height = 720;
+  $('#stage').classList.add('recmode'); REC.canvas.hidden = false; face.classList.add('offscreen');
   var stream = REC.canvas.captureStream(30);
   REC.dest.stream.getAudioTracks().forEach(function (t) { stream.addTrack(t); });
   var mime = pickMime();
-  REC.mr = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 1500000, audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
+  REC.mr = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 2200000, audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
   REC.chunks = [];
   REC.mr.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
   REC.on = true;
@@ -614,16 +698,17 @@ function recStop() {
   });
 }
 function recCleanup() {
-  REC.on = false; cancelAnimationFrame(REC.raf);
+  REC.on = false; cancelAnimationFrame(REC.raf); segStop();
   try { if (REC.mr && REC.mr.state !== 'inactive') { REC.mr.onstop = null; REC.mr.stop(); } } catch (e) {}
   try { REC.cam && REC.cam.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
   try { REC.actx && REC.actx.close(); } catch (e) {}
   voice = new Audio(); // 오디오 연결을 끊은 새 재생기로 바꿉니다
   REC = { on: false, cam: null, actx: null, dest: null, mr: null, chunks: [], canvas: null, raf: 0 };
-  $('#face').hidden = true; $('#face').srcObject = null; $('#recTag').hidden = true;
+  $('#face').hidden = true; $('#face').srcObject = null; $('#face').classList.remove('offscreen'); $('#recTag').hidden = true;
+  $('#recView').hidden = true; $('#stage').classList.remove('recmode');
 }
 
-/* 녹화 화면 그리기 (1280×720 기준 좌표를 960×540 으로 줄여 그림) */
+/* 녹화 화면 그리기 (1280×720) */
 var LOGO = new Image(); LOGO.src = 'logo.png';
 function rr(x, cx, cy, w, h, r) { x.beginPath(); x.moveTo(cx + r, cy); x.arcTo(cx + w, cy, cx + w, cy + h, r); x.arcTo(cx + w, cy + h, cx, cy + h, r); x.arcTo(cx, cy + h, cx, cy, r); x.arcTo(cx, cy, cx + w, cy, r); x.closePath(); }
 function T(x, text, px, y, font, color, opts) {
@@ -632,79 +717,144 @@ function T(x, text, px, y, font, color, opts) {
   if (w > maxW) { px = Math.floor(px * maxW / w); x.font = font.replace('#', px + 'px'); }
   x.fillText(text, opts.x != null ? opts.x : 640, y);
 }
+function wrap(x, text, maxW) {
+  var words = String(text).split(' '), lines = [], cur = '';
+  words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (x.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
+  if (cur) lines.push(cur); return lines;
+}
 var F_D = '# "Black Han Sans","Noto Sans KR",sans-serif', F_E = '# "Archivo Black","Arial Black",sans-serif', F_B9 = '900 # "Noto Sans KR",sans-serif', F_B7 = '700 # "Noto Sans KR",sans-serif';
 function ease(t) { t = Math.max(0, Math.min(1, t)); return 1 - Math.pow(1 - t, 3); }
+var FC = { a: document.createElement('canvas'), b: document.createElement('canvas'), s: document.createElement('canvas') };
+function drawFace(x, cx, cy, R) {
+  var face = $('#face');
+  if (!REC.cam || face.readyState < 2) return;
+  var vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh), sx = (vw - sq) / 2, sy = (vh - sq) / 2, D = Math.round(R * 2);
+  var a = FC.a; if (a.width !== D) { a.width = D; a.height = D; }
+  var ac = a.getContext('2d'); ac.clearRect(0, 0, D, D);
+  if (SEG.ready) {
+    // 1) 흐린 배경: 아주 작게 줄였다가 크게 늘려 흐리게 만듭니다 (모든 기기에서 동작)
+    var s = FC.s; s.width = 24; s.height = 24; var sc = s.getContext('2d'); sc.drawImage(face, sx, sy, sq, sq, 0, 0, 24, 24);
+    ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s, 0, 0, D, D);
+    ac.fillStyle = 'rgba(20,40,110,.18)'; ac.fillRect(0, 0, D, D);
+    // 2) 사람 부분만 선명하게
+    var b = FC.b; if (b.width !== D) { b.width = D; b.height = D; }
+    var bc = b.getContext('2d'); bc.globalCompositeOperation = 'source-over'; bc.clearRect(0, 0, D, D);
+    var mk = SEG.mask, kx = mk.width / vw, ky = mk.height / vh;
+    bc.drawImage(mk, sx * kx, sy * ky, sq * kx, sq * ky, 0, 0, D, D);
+    bc.globalCompositeOperation = 'source-in';
+    bc.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
+    bc.globalCompositeOperation = 'source-over';
+    ac.drawImage(b, 0, 0);
+  } else {
+    ac.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
+  }
+  x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(cx, cy + 8, R + 7, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(cx, cy, R + 7, 0, Math.PI * 2); x.fill();
+  x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
+  x.translate(cx, cy); x.scale(-1, 1); x.drawImage(a, -R, -R, R * 2, R * 2);
+  x.restore();
+  var nm = kidName();
+  if (nm) { x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 4, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 14, F_B9, V.lvInk || '#003C70', { x: cx }); }
+}
+function drawBoard(x, B, now) {
+  var bw = B.pw + 54, bh = B.ph + 54, bx = B.x, by = B.y;
+  x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 10, bw, bh, 18); x.fill();
+  x.fillStyle = '#b8bdc7'; rr(x, bx, by, bw, bh, 18); x.fill();
+  x.strokeStyle = '#8f959f'; x.lineWidth = 7; rr(x, bx + 3.5, by + 3.5, bw - 7, bh - 7, 15); x.stroke();
+  x.save(); rr(x, bx + 14, by + 14, bw - 28, bh - 28, 8); x.clip(); x.fillStyle = '#fff'; x.fillRect(bx + 14, by + 14, bw - 28, bh - 28); x.fillStyle = '#ffd21f';
+  for (var k = -bh; k < bw + bh; k += 30) { x.beginPath(); x.moveTo(bx + k, by + bh); x.lineTo(bx + k + 16, by + bh); x.lineTo(bx + k + 16 + bh, by); x.lineTo(bx + k + bh, by); x.closePath(); x.fill(); }
+  x.restore();
+  var ct2 = ease((now - V.cardT) / 450), ox = (1 - ct2) * 70, px = bx + 27, py = by + 27;
+  x.save(); x.globalAlpha = ct2; x.translate(ox, 0);
+  x.fillStyle = '#fff'; x.fillRect(px, py, B.pw, B.ph);
+  if (V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight, s2 = Math.min(B.pw / iw, B.ph / ih); x.drawImage(V.img, px + (B.pw - iw * s2) / 2, py + (B.ph - ih * s2) / 2, iw * s2, ih * s2); }
+  x.restore();
+  var ty = by + bh - 4, tw = bw + 60, tx = bx - 30;
+  if (ty + 22 <= 720) {
+    x.fillStyle = '#b8bdc7'; rr(x, tx, ty, tw, 20, 6); x.fill(); x.fillStyle = '#8f959f'; x.fillRect(tx, ty + 15, tw, 5);
+    [[tx + 40, 76, '#222'], [tx + 130, 76, '#2b41b0'], [tx + tw - 126, 86, '#ff5a2a']].forEach(function (m) { x.fillStyle = m[2]; rr(x, m[0], ty - 11, m[1], 14, 4); x.fill(); });
+  }
+}
+function drawRing(x, rx, ry) {
+  x.lineWidth = 6; x.strokeStyle = '#e8edf6'; x.beginPath(); x.arc(rx, ry, 24, 0, Math.PI * 2); x.stroke();
+  if (V.ring > 0) { x.strokeStyle = '#ffd21f'; x.lineCap = 'round'; x.beginPath(); x.arc(rx, ry, 24, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - V.ring), false); x.stroke(); x.lineCap = 'butt'; }
+  if (V.ringNum) T(x, V.ringNum, 22, ry + 1, F_E, '#003C70', { x: rx });
+}
+function drawBubble(x, L, now) {
+  if (!V.bubble) return;
+  var bt = ease((now - V.bubble.t) / 300), ans = V.bubble.kind === 'a', text = V.bubble.text;
+  x.globalAlpha = bt;
+  if (L.bubble === 'side') {
+    // 오른쪽 세로 말풍선 (카메라가 위에 있을 때)
+    var px2 = 34; x.font = F_E.replace('#', px2 + 'px'); var lines = wrap(x, text, 236);
+    while (lines.length > 5 && px2 > 22) { px2 -= 2; x.font = F_E.replace('#', px2 + 'px'); lines = wrap(x, text, 236); }
+    var lh = px2 * 1.2, h = 86 + lines.length * lh + (ans ? 20 : 86), bx = 976, by = 228 + (1 - bt) * 14, w = 288;
+    x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 8, w, h, 28); x.fill();
+    x.fillStyle = '#fff'; rr(x, bx, by, w, h, 28); x.fill();
+    x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx + 50, by + 46, 28, 0, Math.PI * 2); x.fill();
+    T(x, ans ? 'A' : 'Q', 26, by + 47, F_E, '#fff', { x: bx + 50 });
+    T(x, ans ? '대답' : (text === 'Say it in English!' ? '영어로 말해요' : '질문'), 22, by + 47, F_B9, '#66708a', { align: 'left', x: bx + 90 });
+    lines.forEach(function (ln, i) { T(x, ln, px2, by + 96 + i * lh + lh / 2 - 6, F_E, '#003C70', { align: 'left', x: bx + 26, max: 240 }); });
+    if (!ans) drawRing(x, bx + w / 2, by + h - 46);
+  } else {
+    var fpx = text.length > 52 ? 27 : text.length > 38 ? 33 : 40;
+    x.font = F_E.replace('#', fpx + 'px'); var tw = Math.min(x.measureText(text).width, 900);
+    var w2 = 14 + 58 + 14 + tw + 26 + (ans ? 0 : 64), h2 = 86, bx2 = L.cx - w2 / 2, by2 = 618 + (1 - bt) * 14;
+    x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx2, by2 + 8, w2, h2, 43); x.fill();
+    x.fillStyle = '#fff'; rr(x, bx2, by2, w2, h2, 43); x.fill();
+    x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx2 + 43, by2 + 43, 29, 0, Math.PI * 2); x.fill();
+    T(x, ans ? 'A' : 'Q', 26, by2 + 44, F_E, '#fff', { x: bx2 + 43 });
+    T(x, text, fpx, by2 + 44, F_E, '#003C70', { align: 'left', x: bx2 + 86, max: 900 });
+    if (!ans) drawRing(x, bx2 + w2 - 55, by2 + 43);
+  }
+  x.globalAlpha = 1;
+}
 function drawFrame(x) {
-  var now = performance.now();
-  x.setTransform(0.75, 0, 0, 0.75, 0, 0);
+  var now = performance.now(), L = lay(), F = L.face, CX = L.cx, MW = L.bubble === 'side' ? 1200 : 860;
+  x.setTransform(1, 0, 0, 1, 0, 0);
   var outro = V.scene === 'scOutro';
   if (outro) { x.fillStyle = '#fff'; x.fillRect(0, 0, 1280, 720); }
   else { var g = x.createRadialGradient(640, 288, 0, 640, 288, 900); g.addColorStop(0, '#1b3a9a'); g.addColorStop(.55, '#132f86'); g.addColorStop(1, '#0b1f5e'); x.fillStyle = g; x.fillRect(0, 0, 1280, 720); }
   var words = outro ? ['WHALE', 'ENGLISH'] : ['SENTENCE', 'BANK', 'SURVIVAL'];
   words.forEach(function (w, i) { T(x, w, 176, 360 + (i - (words.length - 1) / 2) * 158, F_E, outro ? '#e9effb' : 'rgba(255,255,255,.06)', { max: 1400 }); });
   var a = ease((now - V.sceneT) / 550); x.globalAlpha = a; var dy = (1 - a) * 18;
+  var topCam = L.bubble === 'side', y0 = topCam ? 40 : 0; // 카메라가 위면 글자를 조금 내립니다
   if (V.scene === 'scTitle') {
-    T(x, '큰 목소리로, 자신 있게, 끝까지 도전하는', 40, 300 + dy, F_B7, '#fff');
-    T(x, '센텐스뱅크 서바이벌', 124, 400 + dy, F_D, '#fff');
+    T(x, '큰 목소리로, 자신 있게, 끝까지 도전하는', 40, 320 + y0 + dy, F_B7, '#fff', { x: CX, max: MW });
+    T(x, '센텐스뱅크 서바이벌', 124, 420 + y0 + dy, F_D, '#fff', { x: CX, max: MW });
   } else if (V.scene === 'scWelcome') {
-    T(x, '고래영어', 36, 205 + dy, F_B7, '#fff');
-    T(x, 'SENTENCE BANK SURVIVAL에 오신 것을', 44, 262 + dy, F_E, '#fff');
-    T(x, '환영합니다', 120, 352 + dy, F_D, '#fff');
+    T(x, '고래영어', 36, 225 + y0 + dy, F_B7, '#fff', { x: CX });
+    T(x, 'SENTENCE BANK SURVIVAL에 오신 것을', 44, 280 + y0 + dy, F_E, '#fff', { x: CX, max: MW });
+    T(x, '환영합니다', 120, 368 + y0 + dy, F_D, '#fff', { x: CX });
     x.font = F_E.replace('#', '30px'); var bw = x.measureText(V.badge || '').width + 60;
-    x.fillStyle = V.lvColor || '#ffd21f'; rr(x, 640 - bw / 2, 432 + dy, bw, 56, 28); x.fill();
-    T(x, V.badge || '', 30, 461 + dy, F_E, V.lvInk || '#003C70');
-    if (V.who) T(x, V.who, 70, 548 + dy, F_D, '#ffd21f');
+    x.fillStyle = V.lvColor || '#ffd21f'; rr(x, CX - bw / 2, 448 + y0 + dy, bw, 56, 28); x.fill();
+    T(x, V.badge || '', 30, 477 + y0 + dy, F_E, V.lvInk || '#003C70', { x: CX });
+    if (V.who) T(x, V.who, 70, 566 + y0 + dy, F_D, '#ffd21f', { x: CX, max: MW });
   } else if (V.scene === 'scCount') {
-    if (V.ready) T(x, 'Are you ready?', 64, 190, F_E, '#fff');
+    if (V.ready) T(x, 'Are you ready?', 64, 220 + y0, F_E, '#fff', { x: CX, max: MW });
     var ct = (now - (V.countT || 0)) / 900, sc = ct < .25 ? 1.7 - .7 * (ct / .25) : 1 - .07 * Math.min(1, (ct - .25) / .75);
-    x.save(); x.translate(640, 410); x.scale(sc, sc); x.globalAlpha = Math.min(1, ct / .25 + .05) * a;
+    x.save(); x.translate(CX, 430 + y0); x.scale(sc, sc); x.globalAlpha = Math.min(1, ct / .25 + .05) * a;
     T(x, V.count || '', V.count === 'GO!' ? 220 : 300, 0, F_E, V.count === 'GO!' ? '#fff' : '#ffd21f', { x: 0 }); x.restore();
   } else if (V.scene === 'scCard') {
     x.globalAlpha = 1;
     x.font = F_E.replace('#', '22px'); var lw = x.measureText(V.hud || '').width + 36;
-    x.fillStyle = V.lvColor || '#ffed04'; rr(x, 30, 22, lw, 36, 18); x.fill(); T(x, V.hud || '', 22, 41, F_E, V.lvInk || '#003C70', { x: 30 + lw / 2 });
-    T(x, V.page || '', 22, 41, F_E, 'rgba(255,255,255,.85)', { align: 'right', x: 1250 });
-    x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, 273, 68, 734, 524, 18); x.fill();
-    x.fillStyle = '#b8bdc7'; rr(x, 273, 58, 734, 524, 18); x.fill();
-    x.strokeStyle = '#8f959f'; x.lineWidth = 7; rr(x, 276.5, 61.5, 727, 517, 15); x.stroke();
-    x.save(); rr(x, 287, 72, 706, 496, 8); x.clip(); x.fillStyle = '#fff'; x.fillRect(287, 72, 706, 496); x.fillStyle = '#ffd21f';
-    for (var k = -500; k < 1300; k += 30) { x.beginPath(); x.moveTo(287 + k, 568); x.lineTo(287 + k + 16, 568); x.lineTo(287 + k + 16 + 496, 72); x.lineTo(287 + k + 496, 72); x.closePath(); x.fill(); }
-    x.restore();
-    var ct2 = ease((now - V.cardT) / 450), ox = (1 - ct2) * 70;
-    x.save(); x.globalAlpha = ct2; x.translate(ox, 0);
-    x.fillStyle = '#fff'; x.fillRect(300, 85, 680, 470);
-    if (V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight, s2 = Math.min(680 / iw, 470 / ih); x.drawImage(V.img, 300 + (680 - iw * s2) / 2, 85 + (470 - ih * s2) / 2, iw * s2, ih * s2); }
-    x.restore();
-    x.fillStyle = '#b8bdc7'; rr(x, 240, 578, 800, 22, 6); x.fill(); x.fillStyle = '#8f959f'; x.fillRect(240, 595, 800, 5);
-    [[280, 76, '#222'], [370, 76, '#2b41b0'], [914, 86, '#ff5a2a']].forEach(function (m) { x.fillStyle = m[2]; rr(x, m[0], 567, m[1], 14, 4); x.fill(); });
-    if (V.bubble) {
-      var bt = ease((now - V.bubble.t) / 300), ans = V.bubble.kind === 'a';
-      var fpx = V.bubble.text.length > 52 ? 27 : V.bubble.text.length > 38 ? 33 : 40;
-      x.font = F_E.replace('#', fpx + 'px'); var tw = Math.min(x.measureText(V.bubble.text).width, 1000);
-      var w = 14 + 58 + 14 + tw + 26 + (ans ? 0 : 64), h = 86, bx = 640 - w / 2, by = 612 + (1 - bt) * 14;
-      x.globalAlpha = bt; x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 8, w, h, 43); x.fill();
-      x.fillStyle = '#fff'; rr(x, bx, by, w, h, 43); x.fill();
-      x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx + 14 + 29, by + 43, 29, 0, Math.PI * 2); x.fill();
-      T(x, ans ? 'A' : 'Q', 26, by + 44, F_E, '#fff', { x: bx + 43 });
-      T(x, V.bubble.text, fpx, by + 44, F_E, '#003C70', { align: 'left', x: bx + 86, max: 1000 });
-      if (!ans) {
-        var rx = bx + w - 26 - 29, ry = by + 43;
-        x.lineWidth = 6; x.strokeStyle = '#e8edf6'; x.beginPath(); x.arc(rx, ry, 24, 0, Math.PI * 2); x.stroke();
-        if (V.ring > 0) { x.strokeStyle = '#ffd21f'; x.lineCap = 'round'; x.beginPath(); x.arc(rx, ry, 24, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - V.ring), false); x.stroke(); x.lineCap = 'butt'; }
-        if (V.ringNum) T(x, V.ringNum, 22, ry + 1, F_E, '#003C70', { x: rx });
-      }
-      x.globalAlpha = 1;
-    }
+    var hx = opt.cam === 'right' ? 1250 - lw : 30;
+    x.fillStyle = V.lvColor || '#ffed04'; rr(x, hx, 22, lw, 36, 18); x.fill(); T(x, V.hud || '', 22, 41, F_E, V.lvInk || '#003C70', { x: hx + lw / 2 });
+    if (opt.cam === 'left') T(x, V.page || '', 22, 80, F_E, 'rgba(255,255,255,.85)', { align: 'left', x: 30 });
+    else T(x, V.page || '', 22, opt.cam === 'right' ? 80 : 41, F_E, 'rgba(255,255,255,.85)', { align: 'right', x: 1250 });
+    drawBoard(x, L.board, now);
+    drawBubble(x, L, now);
   } else if (V.scene === 'scClear') {
     if (V.ps) V.ps.forEach(function (p) { x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); });
-    T(x, 'MISSION CLEAR!', 124, 250 + dy, F_E, '#ffd21f');
-    T(x, V.clName || '', 74, 370 + dy, F_D, '#fff');
-    T(x, V.clSub || '', 30, 450 + dy, F_B7, 'rgba(255,255,255,.92)');
+    T(x, 'MISSION CLEAR!', 124, 280 + y0 + dy, F_E, '#ffd21f', { x: CX, max: MW });
+    T(x, V.clName || '', 74, 395 + y0 + dy, F_D, '#fff', { x: CX, max: MW });
+    T(x, V.clSub || '', 30, 470 + y0 + dy, F_B7, 'rgba(255,255,255,.92)', { x: CX, max: MW });
   } else if (outro) {
     if (LOGO.complete && LOGO.naturalWidth) { var lh = 420 * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, 430, 340 - lh / 2 - 20 + dy, 420, lh); }
     T(x, 'SENTENCE BANK SURVIVAL', 30, 340 + 120 + dy, F_E, '#5d6b90');
   }
   x.globalAlpha = 1;
+<<<<<<< Updated upstream
   // 얼굴 동그라미
   var face = $('#face');
   if (REC.cam && face.readyState >= 2 && !outro) {
@@ -716,6 +866,9 @@ function drawFrame(x) {
     x.restore();
     if (V.who && V.scene === 'scCard') { var nm = kidName(); x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 6, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 12, F_B9, V.lvInk || '#003C70', { x: cx }); }
   }
+=======
+  if (!outro) drawFace(x, F.cx, F.cy, F.r);
+>>>>>>> Stashed changes
 }
 
 /* 얼굴 보정: 밝기 · 대비 · 혈색 + 살짝 뽀얀 빛 + 따뜻한 톤 */
