@@ -645,15 +645,19 @@ async function recBegin() {
   // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
   REC.canvas = $('#recView'); REC.canvas.width = 1280; REC.canvas.height = 720;
   $('#stage').classList.add('recmode'); REC.canvas.hidden = false; face.classList.add('offscreen');
-  var stream = REC.canvas.captureStream(30);
+  // 녹화용은 960×540 · 초당 24장으로 줄여서 담습니다 (화면 보기는 그대로 선명하게)
+  REC.out = document.createElement('canvas'); REC.out.width = 960; REC.out.height = 540;
+  var octx = REC.out.getContext('2d'); octx.imageSmoothingQuality = 'high';
+  var stream = REC.out.captureStream(24);
   REC.dest.stream.getAudioTracks().forEach(function (t) { stream.addTrack(t); });
   var mime = pickMime();
-  REC.mr = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 2200000, audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
+  REC.mr = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 850000, audioBitsPerSecond: 64000 }, mime ? { mimeType: mime } : {}));
   REC.chunks = [];
   REC.mr.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
   REC.on = true;
   var ctx = REC.canvas.getContext('2d');
-  (function loop() { if (!REC.on) return; try { drawFrame(ctx); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  (function loop() { if (!REC.on) return; try { drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  REC.t0 = Date.now();
   REC.mr.start(1000);
   $('#recTag').hidden = false;
 }
@@ -862,27 +866,35 @@ async function postJson(url, body) {
 async function uploadVideo(blob, meta, onProg) {
   var type = String(blob.type || 'video/webm').split(';')[0];
   var st = await postJson(HW_API + '/start', Object.assign({}, meta, { size: blob.size, type: type }));
-  var parts = [], n = Math.ceil(blob.size / st.partSize);
-  for (var i = 0; i < n; i++) {
-    var chunk = blob.slice(i * st.partSize, Math.min(blob.size, (i + 1) * st.partSize));
-    var ok = null;
-    for (var tryN = 0; tryN < 3 && !ok; tryN++) {
+  // 5MB 조각을 3개씩 동시에 올립니다
+  var PART = 5 * 1024 * 1024, n = Math.ceil(blob.size / PART), parts = new Array(n), next = 0, done = 0;
+  async function one(i) {
+    var chunk = blob.slice(i * PART, Math.min(blob.size, (i + 1) * PART)), ok = null;
+    for (var tryN = 0; tryN < 4 && !ok; tryN++) {
       try {
         var r = await fetch(HW_API + '/part?key=' + encodeURIComponent(st.key) + '&uploadId=' + encodeURIComponent(st.uploadId) + '&n=' + (i + 1), { method: 'PUT', body: chunk });
         var j = await r.json(); if (r.ok && j.ok) ok = j;
       } catch (e) {}
+      if (!ok) await new Promise(function (r2) { setTimeout(r2, 800 * (tryN + 1)); });
     }
     if (!ok) throw new Error('영상 조각을 올리지 못했어요.');
-    parts.push({ partNumber: ok.partNumber, etag: ok.etag });
-    onProg((i + 1) / n);
+    parts[i] = { partNumber: ok.partNumber, etag: ok.etag };
+    onProg(++done / n);
   }
+  async function worker() { while (next < n) { var i = next++; await one(i); } }
+  await Promise.all([worker(), worker(), worker()]);
   await postJson(HW_API + '/complete', { id: st.id, key: st.key, uploadId: st.uploadId, parts: parts });
   return st.id;
 }
 async function afterRecording(r) {
   overlay('녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
+  var dur = REC.t0 ? Date.now() - REC.t0 : 0;
   var blob = await recStop();
   var meta = baseRec(); meta.mode = 'real';
+  // webm 은 길이 정보가 비어 있어 재생·건너뛰기가 느립니다 → 길이를 채워 넣습니다
+  if (blob && /webm/.test(blob.type) && dur) {
+    try { if (!window.ysFixWebmDuration) await loadScript('fixwebm.js'); blob = await ysFixWebmDuration(blob, dur, { logger: false }); } catch (e) {}
+  }
   recCleanup();
   if (!blob || blob.size < 1000) { overlay('녹화가 안 됐어요', '이 기기에서 녹화가 되지 않았어요. 크롬(안드로이드)이나 사파리(아이패드)로 다시 해 주세요.', [['처음 화면으로', exit]]); return; }
   var ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
