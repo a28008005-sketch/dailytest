@@ -204,7 +204,6 @@ h1 em{font-style:normal;color:var(--gold)}
             <div class="whomsg ok" id="whoMsg">학생을 고르면 연습 기록이 선생님 화면에 남아요.</div>
           </div></div>
         <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
-        <div class="opt" id="camOpt"><span>태블릿 카메라 위치 <small style="font-weight:500;color:var(--muted)">(얼굴 화면을 카메라 가까이 둬서 렌즈를 보며 말하게 해요)</small></span><div class="seg" id="oCam"></div></div>
         <div class="opt" id="blurOpt"><span>배경</span><div class="seg" id="oBlur"></div></div>
         <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
         <div class="opt"><span>생각 시간</span><div class="seg" id="oThink"></div></div>
@@ -247,7 +246,7 @@ var LS = { get: function (k, d) { try { var v = localStorage.getItem('sbs.' + k)
            set: function (k, v) { try { localStorage.setItem('sbs.' + k, JSON.stringify(v)); } catch (e) {} } };
 var THINK_DEF = { '240': 4, '520': 5, '860': 5, '1240': 6, '1680': 7 };
 var sel = { lv: '240', vol: 1 };
-var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice'), cam: LS.get('cam', 'top'), blur: LS.get('blur', 'on') };
+var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice'), cam: 'top', blur: LS.get('blur', 'on') };
 var me = LS.get('me', null); // { name, code }
 var HW_API = 'https://staff.whalejinju.kr/hw/api/sv';
 var LOGIN_API = 'https://hello-world.a28008005.workers.dev/api/voca/login';
@@ -293,7 +292,6 @@ function renderHome() {
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
   seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', renderMode);
-  seg('#oCam', [['top', '⬆ 위 가운데'], ['left', '⬅ 왼쪽'], ['right', '오른쪽 ➡']], 'cam');
   seg('#oBlur', [['on', '배경 흐리게'], ['off', '그대로']], 'blur');
   renderMode(); renderMe();
   renderPanel();
@@ -309,7 +307,7 @@ function renderPanel() {
 function sync() { LS.set('sel', { lv: sel.lv, vol: sel.vol }); history.replaceState(null, '', '?lv=' + sel.lv + '&v=' + sel.vol); }
 function kidName() { return me && me.name ? me.name : ''; }
 function renderMode() {
-  $('#camOpt').hidden = opt.mode !== 'real'; $('#blurOpt').hidden = opt.mode !== 'real';
+  $('#blurOpt').hidden = opt.mode !== 'real';
   $('#modeNote').textContent = opt.mode === 'real'
     ? '카드 화면과 내 얼굴·목소리가 한 영상으로 녹화되고, 끝나면 선생님께 자동으로 올라가요. 주변 소음은 줄이고 배경은 흐리게 녹화돼요. (카메라·마이크 허용 필요)'
     : '연습은 녹화하지 않고 횟수와 범위만 기록해요.';
