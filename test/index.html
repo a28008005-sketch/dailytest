@@ -657,11 +657,6 @@ select.chip { padding-right: 8px; max-width: 210px; }
 
   <p class="hint">다 읽었으면 <b>녹음해서 선생님께 보내기</b>까지 하고, 종이의 녹음 제출 칸에 표시하세요.</p>
 
-  <a class="cardlink" id="cardLink" href="https://a28008005-sketch.github.io/dailytest/cards/" hidden>
-    <span class="cl-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 19h12a2 2 0 0 0 2-2V9"/></svg></span>
-    <span><b>Sentence Bank 말하기 카드</b><small>이 단원 카드로 사진 보고 말하기 연습</small></span>
-    <span class="cl-go">›</span>
-  </a>
 
   <div class="daynav">
     <button class="chip" id="prevDay" type="button">← 앞 Day</button>
@@ -682,11 +677,6 @@ select.chip { padding-right: 8px; max-width: 210px; }
     <select id="daySel" aria-label="일차 고르기"></select>
     <button class="play-main" id="openDay" type="button">이 Day 열기</button>
   </section>
-  <a class="cardlink" id="cardLinkAll" href="https://a28008005-sketch.github.io/dailytest/cards/">
-    <span class="cl-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 19h12a2 2 0 0 0 2-2V9"/></svg></span>
-    <span><b>Sentence Bank 말하기 카드</b><small>레벨별 카드로 사진 보고 말하기 연습</small></span>
-    <span class="cl-go">›</span>
-  </a>
 </div>
 
 <div class="dock" id="dock">
@@ -1052,14 +1042,6 @@ select.chip { padding-right: 8px; max-width: 210px; }
     var t = ids[here + delta];
     if (!t) return;
     location.search = "?d=" + encodeURIComponent(t);
-  }
-  // 이 Day 가 속한 단원의 말하기 카드로 바로 엽니다(파닉스는 카드가 없음).
-  var um = /^lv(\d+)-V(\d)U(\d)D\d+$/.exec(dayId);
-  if (um) {
-    var cl = $("cardLink");
-    cl.href += "?lv=" + um[1] + "&v=" + um[2] + "&u=" + um[3];
-    cl.querySelector("small").textContent = "Vol." + um[2] + " Unit " + um[3] + " 카드로 사진 보고 말하기 연습";
-    cl.hidden = false;
   }
   $("prevDay").disabled = here <= 0;
   $("nextDay").disabled = here >= ids.length - 1;
