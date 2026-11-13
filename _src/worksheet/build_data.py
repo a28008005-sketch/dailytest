@@ -82,6 +82,8 @@ SPACING = {
     '나는 저지방 우유가 다 떨어 져서 슈퍼마켓에 가요.': '나는 저지방 우유가 다 떨어져서 슈퍼마켓에 가요.',
     '우 리는 캠프파이어를 만들 거예 요.': '우리는 캠프파이어를 만들 거예요.',
 }
+# 기존 자료의 명백한 오타 (원장님 확인)
+TYPO = {'오란색': '노란색'}
 POS = ["I don't mind waiting.", "It won't be scary if you close your eyes.", "I can't wait to travel.",
        "If I didn't have a parachute, I would get hurt.", "If you have not eaten meat bone tea, you should try it.",
        "Speaking Chinese is not easy.", "In the future, we'll not have to drive on the road.",
@@ -129,6 +131,7 @@ for k, o in D.items():
             else: report['img_none'].append((k, en0))
         if x is None: x = isneg(en)
         if not oc: report['new_item'].append((k, en0))
+        ko = TYPO.get(ko, ko)
         items.append({'no': no, 'kind': kind, 'en': en, 'ko': ko, 'img': img, 'x': bool(x and img)})
     out[k] = {'lv': lv, 'vol': vol, 'unit': unit, 'day': day, 'items': items}
 json.dump(out, open(W + '/days.json', 'w'), ensure_ascii=False)
