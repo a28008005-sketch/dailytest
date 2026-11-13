@@ -1,0 +1,39 @@
+@page { size: A4; margin: 27pt 27.5pt 28pt 28.5pt; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { width: 539.3pt; font-family: "Gothic A1", sans-serif; color: #16202b; word-break: keep-all; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.sheet { break-before: page; }
+.sheet:first-child { break-before: auto; }
+.hdr { margin-top: 4.5pt; height: 30.7pt; border-radius: 6pt; background: var(--hdr); display: flex; align-items: center; padding: 0 9.8pt 0 9pt; color: #fff; }
+.badge { background: var(--badge); color: var(--dark); border-radius: 99pt; height: 16.5pt; padding: 0 7.5pt; font: 800 11pt/16.5pt "Gothic A1"; }
+.ttl { font: 800 15pt/1 "Gothic A1"; margin-left: 5.9pt; letter-spacing: -.01em; }
+.org { margin-left: auto; font: 700 8.5pt/1 "Gothic A1"; }
+.panel { margin-top: 11.7pt; height: 97.5pt; border: .75pt solid var(--strong); border-radius: 5pt; background: var(--panel); display: flex; align-items: center; padding: 0 14.5pt 0 11.7pt; }
+.pl { flex: 1; }
+.ln { display: flex; align-items: center; color: var(--dark); }
+.ln b { font: 700 9.5pt/1 "Gothic A1"; white-space: nowrap; }
+.boxes { display: flex; gap: 6pt; margin-left: 9pt; }
+.box { width: 21pt; height: 21pt; border: .75pt solid var(--strong); border-radius: 3pt; background: #fff; position: relative; }
+.box i { position: absolute; left: 1.4pt; top: .8pt; font: normal 500 7pt/1 "Gothic A1"; color: var(--num); }
+.l2 { margin-top: 9pt; }
+.rec { width: 26.3pt; height: 25.5pt; border: .75pt solid var(--strong); border-radius: 3pt; background: #fff; margin: 0 8.5pt 0 9pt; }
+.name { width: 125.3pt; border-bottom: .8pt solid var(--strong); height: 12pt; margin: 0 8.2pt 0 8.2pt; }
+.hint { font: 500 7.5pt/1 "Gothic A1"; color: var(--hint); }
+.qr { width: 66pt; display: flex; flex-direction: column; align-items: center; gap: 5pt; margin-top: 2pt; }
+.qr svg { width: 66pt; height: 66pt; display: block; background: #fff; outline: 3pt solid #fff; }
+.qr span { font: 700 7.2pt/1 "Gothic A1"; color: var(--dark); white-space: nowrap; }
+.list { margin-top: 10.4pt; --h: 48pt; --en: 16pt; --ko: 13.6pt; }
+.sec { font: 800 9pt/1 "Gothic A1"; color: var(--dark); padding: 9pt 0 4pt; break-after: avoid; }
+.sec:first-child { padding-top: 0; }
+.row { display: grid; grid-template-columns: 21pt 49.5pt 264pt 1fr; min-height: var(--h); align-items: center; border-bottom: .75pt solid var(--line); break-inside: avoid; }
+.sec + .row { border-top: .75pt solid var(--line); }
+.plain .row { grid-template-columns: 21pt 313.5pt 1fr; }
+.row.z { background: var(--zebra); }
+.c-no { font: 800 9pt/1 "Gothic A1"; color: var(--dark); text-align: right; padding-right: 3.7pt; }
+.c-img { padding: 3pt 0 3pt .4pt; }
+.ph { display: block; position: relative; width: 40.5pt; height: 30pt; border: .75pt solid var(--img); border-radius: 4pt; background: #fff; }
+.ph img { width: 100%; height: 100%; object-fit: cover; border-radius: 3.4pt; display: block; }
+.ph .x { position: absolute; width: 13.2pt; height: 13.2pt; right: -3.65pt; bottom: -2.9pt; }
+.c-en { font: 600 var(--en)/1.22 Lexend, sans-serif; padding: 4pt 6pt 4pt 7.7pt; color: #16202b; word-break: normal; }
+.plain .c-en { padding-left: 6.5pt; }
+.c-ko { font: 500 var(--ko)/1.27 "Gothic A1"; padding: 4pt 6pt 4pt 7.2pt; color: #2f3a46; }
