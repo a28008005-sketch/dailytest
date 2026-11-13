@@ -523,7 +523,17 @@ function jump(d) {
   hush(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
   idx = Math.max(0, Math.min(cards.length - 1, idx + d)); var r = ++run; playCards(r);
 }
-function exit() { if (SES && !SES.complete && SES.mode === 'practice') logPractice(); run++; confRun++; hush(); recCleanup(); $('#over').hidden = true; $('#play').hidden = true; document.body.classList.remove('playing'); $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
+/* 녹화 중간에 끄면: 2장 넘게 했고 8초 넘게 찍었으면 여기까지를 선생님께 올리고, 너무 짧으면 그냥 닫습니다 */
+function stopEarly() {
+  if (!SES || SES.mode !== 'real' || SES.complete || SES.stopping || !REC.on || !REC.mr || REC.mr.state === 'inactive') return false;
+  if ((SES.done || 0) < 2 || Date.now() - (REC.t0 || Date.now()) < 8000) return false;
+  SES.stopping = true; SES.complete = true; SES.partial = true;
+  run++; confRun++; hush(); paused = false; $('#pz').hidden = true;
+  afterRecording(run, true);
+  return true;
+}
+document.addEventListener('visibilitychange', function () { if (document.hidden) stopEarly(); });
+function exit() { if (stopEarly()) return; if (SES && !SES.complete && SES.mode === 'practice') logPractice(); run++; confRun++; hush(); recCleanup(); $('#over').hidden = true; $('#play').hidden = true; document.body.classList.remove('playing'); $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
 function fs() { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {} }
 $('#goBtn').onclick = start;
 $('#bPause').onclick = togglePause; $('#bPrev').onclick = function () { jump(-1); }; $('#bNext').onclick = function () { jump(1); };
@@ -712,7 +722,7 @@ async function recBegin() {
   REC.mr.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
   REC.on = true;
   var ctx = REC.canvas.getContext('2d');
-  (function loop() { if (!REC.on) return; try { drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  (function loop() { if (!REC.on) return; try { REC.fid = (REC.fid || 0) + 1; drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
   await segWait(4000);
   REC.t0 = Date.now();
   REC.mr.start(1000);
@@ -758,8 +768,8 @@ function drawFaceCircle(x, cx, cy, R) {
   if (!REC.cam || face.readyState < 2) return;
   var vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh), sx = (vw - sq) / 2, sy = (vh - sq) / 2, D = Math.round(R * 2);
   var a = FC.a; if (a.width !== D) { a.width = D; a.height = D; }
-  var ac = a.getContext('2d'); ac.clearRect(0, 0, D, D);
-  if (SEG.ready) {
+  var ac = a.getContext('2d'), reuse = !!REC.fid && FC.fid === REC.fid; FC.fid = REC.fid;
+  if (reuse) { /* 이번 화면에서 이미 만든 얼굴 */ } else if (ac.clearRect(0, 0, D, D), SEG.ready) {
     // 1) 흐린 배경: 아주 작게 줄였다가 크게 늘려 흐리게 만듭니다 (모든 기기에서 동작)
     var s = FC.s; s.width = 24; s.height = 24; var sc = s.getContext('2d'); sc.drawImage(face, sx, sy, sq, sq, 0, 0, 24, 24);
     ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s, 0, 0, D, D);
@@ -946,11 +956,11 @@ async function uploadVideo(blob, meta, onProg) {
   await postJson(HW_API + '/complete', { id: st.id, key: st.key, uploadId: st.uploadId, parts: parts });
   return st.id;
 }
-async function afterRecording(r) {
-  overlay('녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
+async function afterRecording(r, partial) {
+  overlay(partial ? '여기까지 저장하는 중…' : '녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
   var dur = REC.t0 ? Date.now() - REC.t0 : 0;
   var blob = await recStop();
-  var meta = baseRec(); meta.mode = 'real';
+  var meta = baseRec(); meta.mode = 'real'; if (partial) meta.done = Math.min(meta.done, cards.length);
   // webm 은 길이 정보가 비어 있어 재생·건너뛰기가 느립니다 → 길이를 채워 넣습니다
   if (blob && /webm/.test(blob.type) && dur) {
     try { if (!window.ysFixWebmDuration) await loadScript('fixwebm.js'); blob = await ysFixWebmDuration(blob, dur, { logger: false }); } catch (e) {}
@@ -958,12 +968,13 @@ async function afterRecording(r) {
   recCleanup();
   if (!blob || blob.size < 1000) { overlay('녹화가 안 됐어요', '이 기기에서 녹화가 되지 않았어요. 크롬(안드로이드)이나 사파리(아이패드)로 다시 해 주세요.', [['처음 화면으로', exit]]); return; }
   var ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
-  var file = URL.createObjectURL(blob), fname = meta.name + '_센텐스뱅크_' + meta.level + '_Vol' + meta.vol + '.' + ext;
+  var file = URL.createObjectURL(blob), fname = meta.name + '_센텐스뱅크_' + meta.level + '_Vol' + meta.vol + (partial ? '_' + meta.done + '장까지' : '') + '.' + ext;
   async function go() {
     overlay('선생님께 보내는 중…', meta.name + ' · ' + meta.level + ' Vol.' + meta.vol + ' 영상 (' + (blob.size / 1048576).toFixed(0) + 'MB)', [], 0);
     try {
       await uploadVideo(blob, meta, function (p) { $('#ovFill').style.width = Math.round(p * 100) + '%'; });
       SES.logged = true;
+      if (partial) overlay('여기까지 선생님께 보냈어요', meta.done + '장까지 한 영상을 저장했어요. 다음엔 끝까지 도전해 봐요!', [['처음 화면으로', exit], ['영상 저장', null, 'sec', file, fname]]); else
       overlay('선생님께 보냈어요! 🎉', '멋지게 해냈어요. 선생님이 확인하고 부모님께 보내 드릴 거예요.', [['처음 화면으로', exit], ['영상 저장', null, 'sec', file, fname]]);
     } catch (e) {
       overlay('보내지 못했어요', (e && e.message ? e.message + ' ' : '') + '인터넷 연결을 확인하고 다시 보내 주세요.', [['다시 보내기', go], ['이 기기에 저장', null, 'sec', file, fname], ['그만두기', exit, 'sec']]);
