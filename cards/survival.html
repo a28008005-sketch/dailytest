@@ -552,7 +552,45 @@ function pickMime() {
   for (var i = 0; i < list.length; i++) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
   return '';
 }
-<<<<<<< Updated upstream
+/* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
+var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
+function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function segStart(video) {
+  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
+  try {
+    if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
+    var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
+    m.setOptions({ modelSelection: 1, selfieMode: false });
+    m.onResults(function (r) {
+      var mk = SEG.mask, im = r.segmentationMask;
+      if (!im) return;
+      mk.width = im.width; mk.height = im.height;
+      var c = mk.getContext('2d'); c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
+      SEG.ready = true;
+    });
+    await m.initialize();
+    SEG.model = m;
+    (function tick() {
+      if (!SEG.on) return;
+      var now = performance.now();
+      if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
+        SEG.busy = true; SEG.last = now;
+        SEG.model.send({ image: video }).catch(function () {}).then(function () { SEG.busy = false; });
+      }
+      requestAnimationFrame(tick);
+    })();
+  } catch (e) { SEG.on = false; }
+}
+function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
+
+/* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
+function lay() {
+  var c = opt.cam || 'top';
+  if (c === 'left') return { face: { cx: 172, cy: 340, r: 142 }, board: { x: 346, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 795 };
+  if (c === 'right') return { face: { cx: 1108, cy: 340, r: 142 }, board: { x: 120, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 485 };
+  return { face: { cx: 640, cy: 96, r: 84 }, board: { x: 248, y: 190, pw: 660, ph: 456 }, bubble: 'side', cx: 640 };
+}
+
 /* 얼굴을 밝게: 노출·화이트밸런스 자동 + 노출 살짝 올리기 (되는 기기만) */
 function camBright(stream) {
   try {
@@ -596,83 +634,12 @@ async function recBegin() {
     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
   });
   camBright(REC.cam);
-=======
-/* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
-var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
-function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-async function segStart(video) {
-  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
-  try {
-    if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
-    var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
-    m.setOptions({ modelSelection: 1, selfieMode: false });
-    m.onResults(function (r) {
-      var mk = SEG.mask, im = r.segmentationMask;
-      if (!im) return;
-      mk.width = im.width; mk.height = im.height;
-      var c = mk.getContext('2d'); c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
-      SEG.ready = true;
-    });
-    await m.initialize();
-    SEG.model = m;
-    (function tick() {
-      if (!SEG.on) return;
-      var now = performance.now();
-      if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
-        SEG.busy = true; SEG.last = now;
-        SEG.model.send({ image: video }).catch(function () {}).then(function () { SEG.busy = false; });
-      }
-      requestAnimationFrame(tick);
-    })();
-  } catch (e) { SEG.on = false; }
-}
-function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
-
-/* 주변 소음 줄이기: 브라우저 잡음 제거 + 낮은·높은 잡음 걸러내기 + 말하지 않을 때 소리 낮추기(노이즈 게이트) */
-var GATE_SRC = "class G extends AudioWorkletProcessor{constructor(){super();this.g=0;this.hold=0}process(i,o){var a=i[0]&&i[0][0],b=o[0];if(!a){return true}var s=0;for(var k=0;k<a.length;k++)s+=a[k]*a[k];var r=Math.sqrt(s/a.length);if(r>0.018)this.hold=90;else if(this.hold>0)this.hold--;var t=this.hold>0?1:0.06;for(var k=0;k<a.length;k++){this.g+=(t-this.g)*(t>this.g?0.03:0.0012);var v=a[k]*this.g;for(var c=0;c<b.length;c++)b[c][k]=v}return true}}registerProcessor('gorae-gate',G)";
-async function micChain(ctx, stream) {
-  var src = ctx.createMediaStreamSource(stream);
-  var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 110;
-  var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
-  var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -28; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
-  var g = ctx.createGain(); g.gain.value = 1.3;
-  src.connect(hp); hp.connect(lp);
-  var last = lp;
-  try {
-    if (ctx.audioWorklet) {
-      await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([GATE_SRC], { type: 'application/javascript' })));
-      var gate = new AudioWorkletNode(ctx, 'gorae-gate'); lp.connect(gate); last = gate;
-    }
-  } catch (e) {}
-  last.connect(comp); comp.connect(g);
-  return g;
-}
-
-/* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
-function lay() {
-  var c = opt.cam || 'top';
-  if (c === 'left') return { face: { cx: 172, cy: 340, r: 142 }, board: { x: 346, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 795 };
-  if (c === 'right') return { face: { cx: 1108, cy: 340, r: 142 }, board: { x: 120, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 485 };
-  return { face: { cx: 640, cy: 96, r: 84 }, board: { x: 248, y: 190, pw: 660, ph: 456 }, bubble: 'side', cx: 640 };
-}
-
-async function recBegin() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) throw new Error('unsupported');
-  REC.cam = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } },
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
-  });
->>>>>>> Stashed changes
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
-<<<<<<< Updated upstream
   await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
-=======
-  (await micChain(REC.actx, REC.cam)).connect(REC.dest);
->>>>>>> Stashed changes
   route(voice);
   if (opt.blur !== 'off') segStart(face);
   // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
@@ -725,7 +692,7 @@ function wrap(x, text, maxW) {
 var F_D = '# "Black Han Sans","Noto Sans KR",sans-serif', F_E = '# "Archivo Black","Arial Black",sans-serif', F_B9 = '900 # "Noto Sans KR",sans-serif', F_B7 = '700 # "Noto Sans KR",sans-serif';
 function ease(t) { t = Math.max(0, Math.min(1, t)); return 1 - Math.pow(1 - t, 3); }
 var FC = { a: document.createElement('canvas'), b: document.createElement('canvas'), s: document.createElement('canvas') };
-function drawFace(x, cx, cy, R) {
+function drawFaceCircle(x, cx, cy, R) {
   var face = $('#face');
   if (!REC.cam || face.readyState < 2) return;
   var vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh), sx = (vw - sq) / 2, sy = (vh - sq) / 2, D = Math.round(R * 2);
@@ -751,7 +718,7 @@ function drawFace(x, cx, cy, R) {
   x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(cx, cy + 8, R + 7, 0, Math.PI * 2); x.fill();
   x.fillStyle = '#fff'; x.beginPath(); x.arc(cx, cy, R + 7, 0, Math.PI * 2); x.fill();
   x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
-  x.translate(cx, cy); x.scale(-1, 1); x.drawImage(a, -R, -R, R * 2, R * 2);
+  x.translate(cx, cy); x.scale(-1, 1); drawFace(x, a, 0, 0, D, R);
   x.restore();
   var nm = kidName();
   if (nm) { x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 4, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 14, F_B9, V.lvInk || '#003C70', { x: cx }); }
@@ -854,21 +821,7 @@ function drawFrame(x) {
     T(x, 'SENTENCE BANK SURVIVAL', 30, 340 + 120 + dy, F_E, '#5d6b90');
   }
   x.globalAlpha = 1;
-<<<<<<< Updated upstream
-  // 얼굴 동그라미
-  var face = $('#face');
-  if (REC.cam && face.readyState >= 2 && !outro) {
-    var cx = 1148, cy = V.scene === 'scCard' ? 330 : 590, R = 108, vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh);
-    x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(cx, cy + 8, R + 6, 0, Math.PI * 2); x.fill();
-    x.fillStyle = '#fff'; x.beginPath(); x.arc(cx, cy, R + 6, 0, Math.PI * 2); x.fill();
-    x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
-    x.translate(cx, cy); x.scale(-1, 1); drawFace(x, face, (vw - sq) / 2, (vh - sq) / 2, sq, R);
-    x.restore();
-    if (V.who && V.scene === 'scCard') { var nm = kidName(); x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 6, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 12, F_B9, V.lvInk || '#003C70', { x: cx }); }
-  }
-=======
-  if (!outro) drawFace(x, F.cx, F.cy, F.r);
->>>>>>> Stashed changes
+  if (!outro) drawFaceCircle(x, F.cx, F.cy, F.r);
 }
 
 /* 얼굴 보정: 밝기 · 대비 · 혈색 + 살짝 뽀얀 빛 + 따뜻한 톤 */

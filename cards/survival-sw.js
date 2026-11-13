@@ -2,13 +2,8 @@
  * - 화면(html·cards.js)은 인터넷에서 먼저 새로 받고, 안 되면 보관본을 씁니다. 그래야 고친 내용이 바로 반영됩니다.
  * - 카드 그림·음성·효과음은 한 번 받으면 기기에 보관해 두고 다음부터 바로 씁니다.
  */
-<<<<<<< Updated upstream
-var VERSION = 'survival-2026-11-07b';
+var VERSION = 'survival-2026-11-13';
 var SHELL = ['./survival.html', './cards.js', './phonics.html', './phonics-cards.js', './phonics.webmanifest', './logo.png', './survival.webmanifest', './icons/icon-192.png',
-=======
-var VERSION = 'survival-2026-11-10';
-var SHELL = ['./survival.html', './cards.js', './logo.png', './survival.webmanifest', './icons/icon-192.png',
->>>>>>> Stashed changes
   './sfx/card.mp3', './sfx/question.mp3', './sfx/answer.mp3', './sfx/tick.mp3', './sfx/go.mp3', './sfx/intro.mp3', './sfx/clear.mp3', './sfx/outro.mp3',
   './voice/say.mp3', './voice/welcome.mp3', './voice/ready.mp3', './voice/great.mp3'];
 self.addEventListener('install', function (e) {
@@ -44,11 +39,6 @@ self.addEventListener('fetch', function (e) {
   if (url.origin !== location.origin) return;
   var p = url.pathname;
   if (!/\/cards\//.test(p)) return;
-<<<<<<< Updated upstream
-  if (/\/(img|audio|sfx|voice|icons)\//.test(p)) { e.respondWith(cacheFirst(req)); return; }
-  if (/\/(survival|phonics)\.html$|\/(phonics-)?cards\.js$/.test(p)) { e.respondWith(networkFirst(req)); return; }
-=======
   if (/\/(img|audio|sfx|voice|icons|seg)\//.test(p)) { e.respondWith(cacheFirst(req)); return; }
-  if (/\/survival\.html$|\/cards\.js$/.test(p)) { e.respondWith(networkFirst(req)); return; }
->>>>>>> Stashed changes
+  if (/\/(survival|phonics)\.html$|\/(phonics-)?cards\.js$/.test(p)) { e.respondWith(networkFirst(req)); return; }
 });
