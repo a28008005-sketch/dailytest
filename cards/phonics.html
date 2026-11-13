@@ -134,7 +134,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .paper{position:absolute;left:27px;top:27px;width:680px;height:470px;background:#fff;border-radius:4px;overflow:hidden}
 .paper img{width:100%;height:100%;object-fit:contain;display:block}
 .paper .pword{display:none;align-items:center;justify-content:center;font:900 96px "Noto Sans KR",system-ui,sans-serif;color:#0b1f5e;letter-spacing:.02em;line-height:1;white-space:nowrap}
-.paper.v-both img{height:70%}
+.paper.v-both img{height:70%;object-fit:cover;object-position:50% 0}   /* 카드 아래 한글 뜻은 가리고 영어 단어를 보여 줌 */
 .paper.v-both .pword{display:flex;height:30%;border-top:3px dashed #dfe4ee}
 .paper.v-word img{display:none}
 .paper.v-word .pword{display:flex;height:100%;font-size:180px}
@@ -299,7 +299,7 @@ function renderHome() {
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
   seg('#oView', [['both', '그림 + 단어'], ['pic', '그림만'], ['word', '단어만']], 'view');
-  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); });
+  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); if (opt.mode === 'real') segWarm(); });
   renderMode(); renderMe();
   renderPanel();
 }
@@ -418,10 +418,10 @@ function ring(sec, r, listen) {
       if (listen && !paused && used > 300) {
         var lv = micLevel(), thr = Math.max(.012, vd.floor * 3.2);
         if (lv < vd.floor) vd.floor += (lv - vd.floor) * .1; else vd.floor += (lv - vd.floor) * .003;
-        if (lv > thr) { vd.speech += dt; vd.sil = 0; if (vd.speech > 250) vd.on = true; }
+        if (lv > thr) { vd.speech += dt; vd.sil = 0; if (vd.speech > 180) vd.on = true; }
         else { vd.sil += dt; if (!vd.on) vd.speech = Math.max(0, vd.speech - dt * .5); }
         REC.floor = vd.floor;
-        if (vd.on && vd.speech >= 450 && vd.sil >= 1000) { fg.style.strokeDashoffset = 150.8; num.textContent = ''; V.ring = 1; V.ringNum = ''; sfx('tick'); return res(); }
+        if (vd.on && vd.speech >= 280 && vd.sil >= 600) { fg.style.strokeDashoffset = 150.8; num.textContent = ''; V.ring = 1; V.ringNum = ''; sfx('tick'); return res(); }
       }
       var f = Math.min(1, used / total); fg.style.strokeDashoffset = 150.8 * f; num.textContent = Math.max(1, Math.ceil((total - used) / 1000)); V.ring = f; V.ringNum = num.textContent;
       if (f >= 1) { num.textContent = ''; V.ringNum = ''; return res(); }
@@ -491,10 +491,10 @@ async function playCards(r) {
     w.style.fontSize = ''; var fs0 = vm === 'word' ? 180 : 96, room = 620; w.style.fontSize = Math.min(fs0, Math.floor(fs0 * room / Math.max(1, c.a.length * fs0 * .58))) + 'px';
     p.classList.add('cardin'); V.img = $('#cImg'); V.cardT = performance.now();
     $('#say').classList.add('hide'); V.bubble = null; sfx('card');
-    await sleep(650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    await sleep(opt.mode === 'real' ? 380 : 650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 1) 선생님 대사
     if (vm === 'word') { bubble('q', 'Read it!'); sfx('question'); await sleep(900, r); }
-    else if (c.qLang === 'ko') { bubble('q', 'Say it in English!'); await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); }
+    else if (c.qLang === 'ko') { bubble('q', 'Say it in English!'); if (opt.mode === 'real' && idx >= 2) { sfx('question'); await sleep(300, r); } else { await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); } }
     else { bubble('q', c.q); await sleep(150, r); await speak(c.qa ? 'audio/' + c.qa + '.mp3' : '', c.q, r); }
     await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 2) 학생 차례
@@ -503,7 +503,7 @@ async function playCards(r) {
     if (ansMode() === 'show') {
       sfx('answer'); bubble('a', c.a); await sleep(380, r);
       await speak(c.aa ? 'audio/' + c.aa + '.mp3' : '', c.a, r); await sleep(700, r);
-    } else { await sleep(300, r); }
+    } else { await sleep(opt.mode === 'real' ? 150 : 300, r); }
     await waitPaused(r); if (!alive(r)) return;
     if (idx === my) idx++;
   }
@@ -579,24 +579,37 @@ function pickMime() {
 /* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
 var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
 function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-async function segStart(video) {
-  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
-  try {
+// 엔진(약 6MB)은 실전 녹화를 고르면 홈 화면에서 미리 받아 준비해 둡니다 → 카메라를 켜자마자 흐리게
+var SEGM = null;
+function segWarm() {
+  if (SEGM) return SEGM;
+  SEGM = (async function () {
     if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
     var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
     m.setOptions({ modelSelection: 1, selfieMode: false });
     m.onResults(function (r) {
       var mk = SEG.mask, im = r.segmentationMask;
-      if (!im) return;
+      if (!SEG.on || !mk || !im) return;
       mk.width = im.width; mk.height = im.height;
       var c = mk.getContext('2d'); c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
       keepFront(c, mk);   // 화면 앞 아이만 남기고 뒤에 있는 사람은 배경처럼 흐리게
       SEG.ready = true;
     });
     await m.initialize();
+    return m;
+  })();
+  SEGM.catch(function () { SEGM = null; });
+  return SEGM;
+}
+function segWait(ms) { return new Promise(function (res) { var t0 = performance.now(); (function l() { if (SEG.ready || !SEG.on || performance.now() - t0 > ms) return res(); setTimeout(l, 80); })(); }); }
+async function segStart(video) {
+  var my = SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
+  try {
+    var m = await segWarm();
+    if (SEG !== my || !my.on) return;
     SEG.model = m;
     (function tick() {
-      if (!SEG.on) return;
+      if (SEG !== my || !my.on) return;
       var now = performance.now();
       if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
         SEG.busy = true; SEG.last = now;
@@ -635,7 +648,7 @@ function keepFront(c, mk) {
   kc.putImageData(kd, 0, 0);
   c.save(); c.globalCompositeOperation = 'destination-in'; c.imageSmoothingEnabled = true; c.drawImage(KF.k, 0, 0, mk.width, mk.height); c.restore();
 }
-function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
+function segStop() { SEG.on = false; SEG.model = null; SEG.ready = false; }   // 엔진은 닫지 않고 다음 녹화에 다시 씁니다
 
 /* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
 function lay() {
@@ -690,13 +703,13 @@ async function recBegin() {
   });
   camBright(REC.cam);
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
+  segStart(face);   // 배경은 항상 흐리게 (준비될 때까지는 얼굴 동그라미 전체를 흐리게)
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
   await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
   route(voice);
-  segStart(face);   // 배경은 항상 흐리게
   // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
   REC.canvas = $('#recView'); REC.canvas.width = 1280; REC.canvas.height = 720;
   $('#stage').classList.add('recmode'); REC.canvas.hidden = false; face.classList.add('offscreen');
@@ -712,6 +725,7 @@ async function recBegin() {
   REC.on = true;
   var ctx = REC.canvas.getContext('2d');
   (function loop() { if (!REC.on) return; try { drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  await segWait(4000);
   REC.t0 = Date.now();
   REC.mr.start(1000);
   $('#recTag').hidden = false;
@@ -771,6 +785,9 @@ function drawFaceCircle(x, cx, cy, R) {
     bc.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
     bc.globalCompositeOperation = 'source-over';
     ac.drawImage(b, 0, 0);
+  } else if (SEG.on) {
+    var s0 = FC.s; s0.width = 20; s0.height = 20; s0.getContext('2d').drawImage(face, sx, sy, sq, sq, 0, 0, 20, 20);
+    ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s0, 0, 0, D, D);
   } else {
     ac.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
   }
@@ -794,7 +811,7 @@ function drawBoard(x, B, now) {
   x.save(); x.globalAlpha = ct2; x.translate(ox, 0);
   x.fillStyle = '#fff'; x.fillRect(px, py, B.pw, B.ph);
   var vm = V.view || 'pic', ih0 = vm === 'both' ? B.ph * .7 : B.ph;
-  if (vm !== 'word' && V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight, s2 = Math.min(B.pw / iw, ih0 / ih); x.drawImage(V.img, px + (B.pw - iw * s2) / 2, py + (ih0 - ih * s2) / 2, iw * s2, ih * s2); }
+  if (vm !== 'word' && V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight * (vm === 'both' ? .72 : 1), s2 = Math.min(B.pw / iw, ih0 / ih); x.drawImage(V.img, 0, 0, iw, ih, px + (B.pw - iw * s2) / 2, py + (ih0 - ih * s2) / 2, iw * s2, ih * s2); }   // 그림+단어: 카드 아래 한글 뜻(아래 28%)은 잘라 냄
   if (vm !== 'pic' && V.word) {   // 영어 단어 (녹화 영상에는 그림과 함께)
     if (vm === 'both') { x.strokeStyle = '#dfe4ee'; x.lineWidth = 3; x.setLineDash([10, 8]); x.beginPath(); x.moveTo(px + 20, py + ih0); x.lineTo(px + B.pw - 20, py + ih0); x.stroke(); x.setLineDash([]); }
     var wy = vm === 'both' ? py + ih0 + (B.ph - ih0) / 2 : py + B.ph / 2;
@@ -974,6 +991,7 @@ async function afterRecording(r) {
 }
 
 renderHome();
+if (opt.mode === 'real') setTimeout(function () { segWarm(); }, 600);
 
 /* ── 학습패드 앱 설치 ── */
 (function () {

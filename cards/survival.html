@@ -291,7 +291,7 @@ function renderHome() {
   seg('#oThink', [[0, '레벨 기본(' + THINK_DEF[sel.lv] + '초)'], [3, '3초'], [5, '5초'], [8, '8초']], 'think', renderPanel);
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
-  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); });
+  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); if (opt.mode === 'real') segWarm(); });
   renderMode(); renderMe();
   renderPanel();
 }
@@ -567,24 +567,37 @@ function pickMime() {
 /* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
 var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
 function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-async function segStart(video) {
-  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
-  try {
+// 엔진(약 6MB)은 실전 녹화를 고르면 홈 화면에서 미리 받아 준비해 둡니다 → 카메라를 켜자마자 흐리게
+var SEGM = null;
+function segWarm() {
+  if (SEGM) return SEGM;
+  SEGM = (async function () {
     if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
     var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
     m.setOptions({ modelSelection: 1, selfieMode: false });
     m.onResults(function (r) {
       var mk = SEG.mask, im = r.segmentationMask;
-      if (!im) return;
+      if (!SEG.on || !mk || !im) return;
       mk.width = im.width; mk.height = im.height;
       var c = mk.getContext('2d'); c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
       keepFront(c, mk);   // 화면 앞 아이만 남기고 뒤에 있는 사람은 배경처럼 흐리게
       SEG.ready = true;
     });
     await m.initialize();
+    return m;
+  })();
+  SEGM.catch(function () { SEGM = null; });
+  return SEGM;
+}
+function segWait(ms) { return new Promise(function (res) { var t0 = performance.now(); (function l() { if (SEG.ready || !SEG.on || performance.now() - t0 > ms) return res(); setTimeout(l, 80); })(); }); }
+async function segStart(video) {
+  var my = SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
+  try {
+    var m = await segWarm();
+    if (SEG !== my || !my.on) return;
     SEG.model = m;
     (function tick() {
-      if (!SEG.on) return;
+      if (SEG !== my || !my.on) return;
       var now = performance.now();
       if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
         SEG.busy = true; SEG.last = now;
@@ -623,7 +636,7 @@ function keepFront(c, mk) {
   kc.putImageData(kd, 0, 0);
   c.save(); c.globalCompositeOperation = 'destination-in'; c.imageSmoothingEnabled = true; c.drawImage(KF.k, 0, 0, mk.width, mk.height); c.restore();
 }
-function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
+function segStop() { SEG.on = false; SEG.model = null; SEG.ready = false; }   // 엔진은 닫지 않고 다음 녹화에 다시 씁니다
 
 /* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
 function lay() {
@@ -678,13 +691,13 @@ async function recBegin() {
   });
   camBright(REC.cam);
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
+  segStart(face);   // 배경은 항상 흐리게 (준비될 때까지는 얼굴 동그라미 전체를 흐리게)
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
   await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
   route(voice);
-  segStart(face);   // 배경은 항상 흐리게
   // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
   REC.canvas = $('#recView'); REC.canvas.width = 1280; REC.canvas.height = 720;
   $('#stage').classList.add('recmode'); REC.canvas.hidden = false; face.classList.add('offscreen');
@@ -700,6 +713,7 @@ async function recBegin() {
   REC.on = true;
   var ctx = REC.canvas.getContext('2d');
   (function loop() { if (!REC.on) return; try { drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
+  await segWait(4000);
   REC.t0 = Date.now();
   REC.mr.start(1000);
   $('#recTag').hidden = false;
@@ -759,6 +773,9 @@ function drawFaceCircle(x, cx, cy, R) {
     bc.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
     bc.globalCompositeOperation = 'source-over';
     ac.drawImage(b, 0, 0);
+  } else if (SEG.on) {
+    var s0 = FC.s; s0.width = 20; s0.height = 20; s0.getContext('2d').drawImage(face, sx, sy, sq, sq, 0, 0, 20, 20);
+    ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s0, 0, 0, D, D);
   } else {
     ac.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
   }
@@ -956,6 +973,7 @@ async function afterRecording(r) {
 }
 
 renderHome();
+if (opt.mode === 'real') setTimeout(function () { segWarm(); }, 600);
 
 /* ── 학습패드 앱 설치 ── */
 (function () {
