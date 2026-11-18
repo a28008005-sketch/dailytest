@@ -134,7 +134,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .paper{position:absolute;left:27px;top:27px;width:680px;height:470px;background:#fff;border-radius:4px;overflow:hidden}
 .paper img{width:100%;height:100%;object-fit:contain;display:block}
 .paper .pword{display:none;align-items:center;justify-content:center;font:900 96px "Noto Sans KR",system-ui,sans-serif;color:#0b1f5e;letter-spacing:.02em;line-height:1;white-space:nowrap}
-.paper.v-both img{height:70%;object-fit:cover;object-position:50% 0}   /* 카드 아래 한글 뜻은 가리고 영어 단어를 보여 줌 */
+.paper.v-both img{height:70%}
 .paper.v-both .pword{display:flex;height:30%;border-top:3px dashed #dfe4ee}
 .paper.v-word img{display:none}
 .paper.v-word .pword{display:flex;height:100%;font-size:180px}
@@ -172,10 +172,40 @@ h1 em{font-style:normal;color:var(--gold)}
 .ctl{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.75));z-index:20;transition:opacity .3s}
 .ctl.off{opacity:0;pointer-events:none}
 .ctl button{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:9px 14px;font-size:14px;font-weight:700}
+.gate{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;overflow:auto;background:radial-gradient(900px 420px at 50% -10%,#24439f 0%,transparent 70%),var(--navy-d)}
+.gate[hidden]{display:none}
+.gbox{width:min(420px,100%);display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;color:#fff}
+.gbox img{height:46px;background:#fff;border-radius:12px;padding:6px 14px;box-sizing:content-box}
+.gbox h2{margin:0;font-size:26px;line-height:1.35;font-weight:900}
+.gdots{display:flex;gap:12px}
+.gdots i{width:56px;height:66px;border-radius:14px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);display:grid;place-items:center;font:900 34px var(--f-e);font-style:normal;color:#fff}
+.gdots i.on{background:#fff;color:var(--ink);border-color:#fff}
+.gmsg{min-height:22px;font-weight:800;color:var(--gold);font-size:16px}
+.gch{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gch:empty{display:none}
+.gch button{border:0;border-radius:14px;background:var(--gold);color:var(--ink);font-weight:900;font-size:22px;padding:14px 24px}
+.gpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.gpad button{height:66px;border:0;border-radius:16px;background:#fff;color:var(--ink);font:900 30px var(--f-e);touch-action:manipulation}
+.gpad button:active{transform:scale(.96)}
+.gpad .fn{background:rgba(255,255,255,.14);color:#fff;font:800 19px "Noto Sans KR",sans-serif}
+.gskip{background:none;border:0;color:rgba(255,255,255,.5);text-decoration:underline;font-size:14px;padding:6px}
+details.more{border-top:1px dashed var(--line);padding-top:8px}
+details.more summary{cursor:pointer;font-size:13px;font-weight:800;color:var(--muted)}
+details.more .opt{margin-top:10px}
+.say.turn .who2{background:#2fb36b;font-size:30px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="gate" id="gate"><div class="gbox">
+  <img src="logo.png" alt="고래영어">
+  <h2>부모님 휴대폰 번호<br>뒤 4자리를 눌러 주세요</h2>
+  <div class="gdots" id="gDots"><i></i><i></i><i></i><i></i></div>
+  <div class="gmsg" id="gMsg"></div>
+  <div class="gch" id="gCh"></div>
+  <div class="gpad" id="gPad"></div>
+  <button type="button" class="gskip" id="gSkip">선생님 · 학생 없이 열기</button>
+</div></div>
 
 <div id="home">
   <div class="wrap">
@@ -210,10 +240,12 @@ h1 em{font-style:normal;color:var(--gold)}
           </div></div>
         <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
         <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
-        <div class="opt"><span>생각 시간</span><div class="seg" id="oThink"></div></div>
         <div class="opt" id="ansOpt"><span>정답</span><div class="seg" id="oAns"></div></div>
         <div class="opt" id="viewOpt"><span>카드 보기</span><div class="seg" id="oView"></div></div>
-        <div class="opt"><span>카드 순서</span><div class="seg" id="oOrder"></div></div>
+        <details class="more"><summary>선생님 설정 (생각 시간 · 카드 순서)</summary>
+          <div class="opt"><span>생각 시간 (대답이 없을 때 최대)</span><div class="seg" id="oThink"></div></div>
+          <div class="opt"><span>카드 순서</span><div class="seg" id="oOrder"></div></div>
+        </details>
         <button class="go" id="goBtn">▶ 서바이벌 시작<small>시작하면 전체화면으로 바뀝니다 · 스페이스바 멈춤 · ← → 이전/다음</small></button>
       </div>
     </div>
@@ -254,7 +286,9 @@ var sel = { lv: 'Phonics', vol: 1 };
 var opt = { unit: 0, think: LS.get('think', 0), ans: LS.get('ans', 'show'), order: LS.get('order', 'seq'), mode: LS.get('mode', 'practice'), cam: 'top', view: LS.get('view', 'both') };
 function ansMode() { return opt.mode === 'real' ? 'hide' : opt.ans; }  // 실전 녹화는 정답을 보여 주지 않고 바로 다음 카드로
 function viewMode() { return opt.mode === 'real' ? 'both' : opt.view; } // 녹화 영상은 항상 그림 + 영어 단어
-var me = LS.get('me', null); // { name, code }
+var me = null; // { name, code } — 학습패드를 여러 아이가 함께 쓰므로 열 때마다 4자리로 들어옵니다
+var SV_LOGIN = 'https://hello-world.a28008005.workers.dev/api/sv/login';
+var PAGE_PH = true, BOOKED = false;
 var HW_API = 'https://staff.whalejinju.kr/hw/api/sv';
 var LOGIN_API = 'https://hello-world.a28008005.workers.dev/api/voca/login';
 var q = new URLSearchParams(location.search);
@@ -293,13 +327,14 @@ function renderHome() {
   })(v);
   $('#pickSum').hidden = !PRESET; $('#pickRows').hidden = PRESET;
   $('#pickName').textContent = (sel.lv === 'Phonics' ? 'Whale Phonics' : sel.lv) + ' · Vol.' + sel.vol;
+  $('#pickSum').querySelector('span').textContent = BOOKED && kidName() ? kidName() + '의 지금 교재예요 · Unit 을 골라 시작하세요' : '선생님이 정해 준 레벨이에요';
   $('#pickMore').onclick = function () { PRESET = false; renderHome(); };
   seg('#oUnit', [[0, 'Vol 전체'], [1, 'Unit 1'], [2, 'Unit 2'], [3, 'Unit 3'], [4, 'Unit 4']], 'unit', renderPanel);
   seg('#oThink', [[0, '레벨 기본(' + THINK_DEF[sel.lv] + '초)'], [3, '3초'], [5, '5초'], [8, '8초']], 'think', renderPanel);
   seg('#oAns', [['show', '보여 주고 읽어 주기'], ['hide', '숨기기 (실전)']], 'ans', renderPanel);
   seg('#oOrder', [['seq', '교재 순서'], ['rand', '섞기']], 'order');
   seg('#oView', [['both', '그림 + 단어'], ['pic', '그림만'], ['word', '단어만']], 'view');
-  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); if (opt.mode === 'real') segWarm(); });
+  seg('#oMode', [['practice', '연습'], ['real', '🎥 실전 녹화']], 'mode', function () { renderMode(); renderPanel(); });
   renderMode(); renderMe();
   renderPanel();
 }
@@ -316,15 +351,71 @@ function kidName() { return me && me.name ? me.name : ''; }
 function renderMode() {
   $('#ansOpt').hidden = opt.mode === 'real'; $('#viewOpt').hidden = opt.mode === 'real';
   $('#modeNote').textContent = opt.mode === 'real'
-    ? '화면에는 그림과 영어 단어가 나오고, 부모님께 가는 영상에는 영어 단어와 내 얼굴·목소리만 담겨요. 끝나면 선생님께 자동으로 올라가고, 중간에 끄면 거기까지 저장돼요. 화면 앞 학생만 선명하고 뒤 배경은 흐리게, 주변 소음은 줄여서 녹화돼요. 대답을 다 말하면 바로 다음 카드로 넘어가요. (카메라·마이크 허용 필요)'
-    : '연습은 녹화하지 않고 횟수와 범위만 기록해요.';
+    ? '카드 화면과 내 얼굴·목소리가 한 영상으로 녹화되고, 끝나면 선생님께 자동으로 올라가요. 화면 앞 학생만 선명하고 뒤 배경·사람은 흐리게, 주변 소음은 줄여서 녹화돼요. 질문은 목소리로만 묻고, 대답을 다 말하면 바로 다음 카드로 넘어가요. (카메라·마이크 허용 필요)'
+    : '연습은 녹화하지 않아요. 대답을 다 말하면 정답을 확인하고 바로 다음 카드로 넘어가요. (마이크 허용 필요)';
   $('#goBtn').firstChild.textContent = opt.mode === 'real' ? '🎥 실전 녹화 시작' : '▶ 서바이벌 시작';
 }
 function renderMe() {
   var on = !!(me && me.name);
-  $('#me').hidden = !on; $('#ph4Row').hidden = on;
-  $('#meName').textContent = on ? me.name + ' ✓' : '';
-  if (on) { $('#whoChoices').innerHTML = ''; msg(''); }
+  $('#me').hidden = false; $('#ph4Row').hidden = true; $('#whoChoices').innerHTML = '';
+  $('#meName').textContent = on ? me.name + ' ✓' : '학생 없이 연습 중';
+  $('#meOut').textContent = on ? '바꾸기' : '들어오기';
+  msg(on ? '' : '실전 녹화는 학생이 들어와야 할 수 있어요.', true);
+}
+/* ── 들어오기: 부모님 휴대폰 뒤 4자리 ── */
+var G = { p: '' };
+function gDraw() { Array.prototype.forEach.call(document.querySelectorAll('#gDots i'), function (el, i) { el.textContent = G.p[i] ? '●' : ''; el.className = G.p[i] ? 'on' : ''; }); }
+function gMsg(t) { $('#gMsg').textContent = t || ''; }
+function gateShow() { G.p = ''; gDraw(); gMsg(''); $('#gCh').innerHTML = ''; $('#gate').hidden = false; }
+(function () {
+  var pad = $('#gPad');
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '지우기', '0', '확인'].forEach(function (k) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = k; if (k.length > 1) b.className = 'fn';
+    b.onclick = function () {
+      if (k === '지우기') { G.p = G.p.slice(0, -1); gDraw(); gMsg(''); $('#gCh').innerHTML = ''; return; }
+      if (k === '확인') { if (G.p.length === 4) gateLogin(); else gMsg('4자리를 모두 눌러 주세요'); return; }
+      if (G.p.length >= 4) return;
+      G.p += k; gDraw(); if (G.p.length === 4) gateLogin();
+    };
+    pad.appendChild(b);
+  });
+  $('#gSkip').onclick = function () { me = null; $('#gate').hidden = true; renderMe(); };
+})();
+function postLogin(url, body) {
+  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { if (r.status === 404) throw new Error('old'); return r.json(); });
+}
+function gateLogin(extra) {
+  var body = Object.assign({ phone4: G.p }, extra || {});
+  gMsg('찾는 중…'); $('#gCh').innerHTML = '';
+  postLogin(SV_LOGIN, body).catch(function (e) { if (e.message === 'old') return postLogin(LOGIN_API, body); throw e; })
+    .then(function (j) {
+      if (j && j.success) return onLogin(j);
+      if (j && j.choices) {
+        gMsg('내 이름을 눌러 주세요');
+        j.choices.forEach(function (c) { var b = document.createElement('button'); b.type = 'button'; b.textContent = c.name; b.onclick = function () { gateLogin({ studentId: c.id }); }; $('#gCh').appendChild(b); });
+        return;
+      }
+      G.p = ''; gDraw(); gMsg((j && j.error) || '학생을 찾지 못했어요. 다시 눌러 주세요');
+    }).catch(function () { G.p = ''; gDraw(); gMsg('인터넷 연결을 확인해 주세요'); });
+}
+function onLogin(j) {
+  me = { name: j.name, code: j.code || '' };
+  var b = j.book;
+  if (b && b.level) {
+    // 파닉스 교재는 파닉스 화면, 센텐스뱅크는 센텐스뱅크 화면에서 엽니다
+    if ((b.level === 'Phonics') !== PAGE_PH) {
+      try { sessionStorage.setItem('sv.hand', JSON.stringify({ me: me, book: b })); } catch (e) {}
+      location.href = (b.level === 'Phonics' ? 'phonics.html' : 'survival.html') + '?lv=' + b.level + '&v=' + b.vol + '&u=' + (b.unit || 0);
+      return;
+    }
+    if (D.levels.some(function (l) { return l.id === b.level; })) {
+      sel.lv = b.level; sel.vol = b.vol; opt.unit = b.unit || 0; PRESET = true; BOOKED = true;
+      try { history.replaceState(null, '', '?lv=' + sel.lv + '&v=' + sel.vol); } catch (e) {}
+    }
+  } else { BOOKED = false; }
+  $('#gate').hidden = true; renderHome();
+  if (!BOOKED) msg('선생님 화면에 지금 교재가 아직 없어요. 레벨 · 권을 골라 주세요.', true);
 }
 function msg(t, ok) { var m = $('#whoMsg'); m.textContent = t; m.className = 'whomsg' + (ok ? ' ok' : ''); }
 function login(extra) {
@@ -350,7 +441,7 @@ function login(extra) {
 }
 $('#ph4Go').onclick = function () { login(); };
 $('#ph4').onkeydown = function (e) { if (e.key === 'Enter') login(); };
-$('#meOut').onclick = function () { me = null; LS.set('me', null); $('#ph4').value = ''; renderMe(); msg('학생을 고르면 연습 기록이 선생님 화면에 남아요.', true); };
+$('#meOut').onclick = function () { me = null; BOOKED = false; renderMe(); gateShow(); };
 
 /* ── 소리 ── */
 var voice = new Audio(), sfxPool = {};
@@ -401,8 +492,8 @@ function bubble(kind, text) {
   var b = $('#say'); b.classList.add('hide'); V.bubble = null;
   setTimeout(function () {
     V.bubble = { kind: kind, text: text, t: performance.now() }; V.ring = 0; V.ringNum = '';
-    b.className = 'say' + (kind === 'a' ? ' ans' : '');
-    $('#sWho').textContent = kind === 'a' ? 'A' : 'Q';
+    b.className = 'say' + (kind === 'a' ? ' ans' : kind === 'turn' ? ' turn' : '');
+    $('#sWho').textContent = kind === 'a' ? 'A' : kind === 'turn' ? '🎤' : 'Q';
     var tx = $('#sTxt'); tx.textContent = text; tx.className = 'txt ' + sizeCls(text);
     $('#rNum').textContent = ''; $('#rFg').style.strokeDashoffset = 0;
   }, 120);
@@ -418,10 +509,10 @@ function ring(sec, r, listen) {
       if (listen && !paused && used > 300) {
         var lv = micLevel(), thr = Math.max(.012, vd.floor * 3.2);
         if (lv < vd.floor) vd.floor += (lv - vd.floor) * .1; else vd.floor += (lv - vd.floor) * .003;
-        if (lv > thr) { vd.speech += dt; vd.sil = 0; if (vd.speech > 180) vd.on = true; }
+        if (lv > thr) { vd.speech += dt; vd.sil = 0; if (vd.speech > 250) vd.on = true; }
         else { vd.sil += dt; if (!vd.on) vd.speech = Math.max(0, vd.speech - dt * .5); }
         REC.floor = vd.floor;
-        if (vd.on && vd.speech >= 280 && vd.sil >= 600) { fg.style.strokeDashoffset = 150.8; num.textContent = ''; V.ring = 1; V.ringNum = ''; sfx('tick'); return res(); }
+        if (vd.on && vd.speech >= 450 && vd.sil >= 1000) { fg.style.strokeDashoffset = 150.8; num.textContent = ''; V.ring = 1; V.ringNum = ''; sfx('tick'); return res(); }
       }
       var f = Math.min(1, used / total); fg.style.strokeDashoffset = 150.8 * f; num.textContent = Math.max(1, Math.ceil((total - used) / 1000)); V.ring = f; V.ringNum = num.textContent;
       if (f >= 1) { num.textContent = ''; V.ringNum = ''; return res(); }
@@ -437,7 +528,7 @@ function micLevel() {
 function preload(c) { if (!c) return; var l = sel.lv; new Image().src = 'img/' + l + '/' + c.no + '.webp'; if (c.aa) fetch('audio/' + c.aa + '.mp3').catch(function () {}); if (c.qLang === 'en' && c.qa) fetch('audio/' + c.qa + '.mp3').catch(function () {}); }
 
 async function start() {
-  if (opt.mode === 'real' && !kidName()) { msg('실전 녹화는 먼저 학생을 골라 주세요. (학부모 휴대폰 뒤 4자리)'); $('#ph4').focus(); return; }
+  if (opt.mode === 'real' && !kidName()) { gateShow(); gMsg('실전 녹화는 먼저 들어와 주세요'); return; }
   var l = level(); cards = volCards().slice();
   if (opt.order === 'rand') for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
   var kid = kidName();
@@ -456,7 +547,7 @@ async function start() {
   try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().then(function () { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(function () {}); } catch (e) {} }).catch(function () {}); } catch (e) {}
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(function () {}); } catch (e) {}
   preload(cards[0]); preload(cards[1]);
-  if (opt.mode === 'real') { try { var AC0 = window.AudioContext || window.webkitAudioContext; REC.actx = new AC0(); REC.actx.resume(); } catch (e) {} }
+  try { var AC0 = window.AudioContext || window.webkitAudioContext; REC.actx = new AC0(); REC.actx.resume(); } catch (e) {}   // 터치한 순간에 만들어야 태블릿에서 소리가 납니다
   var r = ++run;
   await waitLandscape(r); if (!alive(r)) return;
   SES = { startedAt: Date.now(), logged: false, mode: opt.mode };
@@ -468,6 +559,8 @@ async function start() {
       return;
     }
     if (!alive(r)) return;
+  } else {
+    await micBegin(); if (!alive(r)) return;   // 연습: 녹화는 안 하고, 대답이 끝났는지만 듣습니다
   }
   intro(r);
 }
@@ -491,19 +584,20 @@ async function playCards(r) {
     w.style.fontSize = ''; var fs0 = vm === 'word' ? 180 : 96, room = 620; w.style.fontSize = Math.min(fs0, Math.floor(fs0 * room / Math.max(1, c.a.length * fs0 * .58))) + 'px';
     p.classList.add('cardin'); V.img = $('#cImg'); V.cardT = performance.now();
     $('#say').classList.add('hide'); V.bubble = null; sfx('card');
-    await sleep(opt.mode === 'real' ? 380 : 650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    await sleep(650, r); await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 1) 선생님 대사
-    if (vm === 'word') { bubble('q', 'Read it!'); sfx('question'); await sleep(900, r); }
-    else if (c.qLang === 'ko') { bubble('q', 'Say it in English!'); if (opt.mode === 'real' && idx >= 2) { sfx('question'); await sleep(300, r); } else { await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); } }
-    else { bubble('q', c.q); await sleep(150, r); await speak(c.qa ? 'audio/' + c.qa + '.mp3' : '', c.q, r); }
+    if (vm === 'word') { sfx('question'); await sleep(450, r); }
+    else if (c.qLang === 'ko') { await sleep(150, r); await speak('voice/say.mp3', 'Say it in English!', r); }
+    else { await sleep(150, r); await speak(c.qa ? 'audio/' + c.qa + '.mp3' : '', c.q, r); }
     await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 2) 학생 차례
-    await ring(thinkSec(), r, opt.mode === 'real' && REC.an); await waitPaused(r); if (!alive(r) || idx !== my) continue;
+    bubble('turn', 'Your turn!');
+    await ring(thinkSec(), r, REC.an); await waitPaused(r); if (!alive(r) || idx !== my) continue;
     // 3) 정답
     if (ansMode() === 'show') {
       sfx('answer'); bubble('a', c.a); await sleep(380, r);
-      await speak(c.aa ? 'audio/' + c.aa + '.mp3' : '', c.a, r); await sleep(700, r);
-    } else { await sleep(opt.mode === 'real' ? 150 : 300, r); }
+      await speak(c.aa ? 'audio/' + c.aa + '.mp3' : '', c.a, r); await sleep(350, r);
+    } else { await sleep(300, r); }
     await waitPaused(r); if (!alive(r)) return;
     if (idx === my) idx++;
   }
@@ -535,17 +629,7 @@ function jump(d) {
   hush(); paused = false; $('#pz').hidden = true; $('#bPause').textContent = '⏸ 멈춤';
   idx = Math.max(0, Math.min(cards.length - 1, idx + d)); var r = ++run; playCards(r);
 }
-/* 녹화 중간에 끄면: 2장 넘게 했고 8초 넘게 찍었으면 여기까지를 선생님께 올리고, 너무 짧으면 그냥 닫습니다 */
-function stopEarly() {
-  if (!SES || SES.mode !== 'real' || SES.complete || SES.stopping || !REC.on || !REC.mr || REC.mr.state === 'inactive') return false;
-  if ((SES.done || 0) < 2 || Date.now() - (REC.t0 || Date.now()) < 8000) return false;
-  SES.stopping = true; SES.complete = true; SES.partial = true;
-  run++; confRun++; hush(); paused = false; $('#pz').hidden = true;
-  afterRecording(run, true);
-  return true;
-}
-document.addEventListener('visibilitychange', function () { if (document.hidden) stopEarly(); });
-function exit() { if (stopEarly()) return; if (SES && !SES.complete && SES.mode === 'practice') logPractice(); run++; confRun++; hush(); recCleanup(); $('#over').hidden = true; $('#play').hidden = true; document.body.classList.remove('playing'); $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
+function exit() { if (SES && !SES.complete && SES.mode === 'practice') logPractice(); run++; confRun++; hush(); recCleanup(); $('#over').hidden = true; $('#play').hidden = true; document.body.classList.remove('playing'); $('#home').hidden = false; try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {} }
 function fs() { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {} }
 $('#goBtn').onclick = start;
 $('#bPause').onclick = togglePause; $('#bPrev').onclick = function () { jump(-1); }; $('#bNext').onclick = function () { jump(1); };
@@ -589,37 +673,24 @@ function pickMime() {
 /* 배경 흐리게: 사람 모양(셀피 분할) 모델을 기기에서 돌려 얼굴·몸만 선명하게 남깁니다. 모델 파일은 seg/ 폴더에 있습니다. */
 var SEG = { on: false, model: null, busy: false, mask: null, ready: false, last: 0 };
 function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-// 엔진(약 6MB)은 실전 녹화를 고르면 홈 화면에서 미리 받아 준비해 둡니다 → 카메라를 켜자마자 흐리게
-var SEGM = null;
-function segWarm() {
-  if (SEGM) return SEGM;
-  SEGM = (async function () {
+async function segStart(video) {
+  SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
+  try {
     if (!window.SelfieSegmentation) await loadScript('seg/selfie_segmentation.js');
     var m = new SelfieSegmentation({ locateFile: function (f) { return 'seg/' + f; } });
     m.setOptions({ modelSelection: 1, selfieMode: false });
     m.onResults(function (r) {
       var mk = SEG.mask, im = r.segmentationMask;
-      if (!SEG.on || !mk || !im) return;
+      if (!im) return;
       mk.width = im.width; mk.height = im.height;
       var c = mk.getContext('2d'); c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, mk.width, mk.height); c.drawImage(im, 0, 0);
       keepFront(c, mk);   // 화면 앞 아이만 남기고 뒤에 있는 사람은 배경처럼 흐리게
       SEG.ready = true;
     });
     await m.initialize();
-    return m;
-  })();
-  SEGM.catch(function () { SEGM = null; });
-  return SEGM;
-}
-function segWait(ms) { return new Promise(function (res) { var t0 = performance.now(); (function l() { if (SEG.ready || !SEG.on || performance.now() - t0 > ms) return res(); setTimeout(l, 80); })(); }); }
-async function segStart(video) {
-  var my = SEG = { on: true, model: null, busy: false, mask: document.createElement('canvas'), ready: false, last: 0 };
-  try {
-    var m = await segWarm();
-    if (SEG !== my || !my.on) return;
     SEG.model = m;
     (function tick() {
-      if (SEG !== my || !my.on) return;
+      if (!SEG.on) return;
       var now = performance.now();
       if (!SEG.busy && video.readyState >= 2 && now - SEG.last > 66) {
         SEG.busy = true; SEG.last = now;
@@ -658,7 +729,7 @@ function keepFront(c, mk) {
   kc.putImageData(kd, 0, 0);
   c.save(); c.globalCompositeOperation = 'destination-in'; c.imageSmoothingEnabled = true; c.drawImage(KF.k, 0, 0, mk.width, mk.height); c.restore();
 }
-function segStop() { SEG.on = false; SEG.model = null; SEG.ready = false; }   // 엔진은 닫지 않고 다음 녹화에 다시 씁니다
+function segStop() { SEG.on = false; try { SEG.model && SEG.model.close(); } catch (e) {} SEG.model = null; SEG.ready = false; }
 
 /* 카메라 위치에 따라 화면 배치를 정합니다 (1280×720 기준). 얼굴 동그라미를 카메라 가까이 두면 아이 눈길이 렌즈 쪽으로 갑니다. */
 function lay() {
@@ -713,13 +784,13 @@ async function recBegin() {
   });
   camBright(REC.cam);
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
-  segStart(face);   // 배경은 항상 흐리게 (준비될 때까지는 얼굴 동그라미 전체를 흐리게)
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!REC.actx) REC.actx = new AC(); try { await REC.actx.resume(); } catch (e) {}
   REC.dest = REC.actx.createMediaStreamDestination();
   await voiceChain(REC.actx.createMediaStreamSource(REC.cam), REC.dest);
   route(voice);
+  segStart(face);   // 배경은 항상 흐리게
   // 녹화되는 화면을 그대로 아이에게 보여 줍니다 (보이는 것 = 녹화되는 것)
   REC.canvas = $('#recView'); REC.canvas.width = 1280; REC.canvas.height = 720;
   $('#stage').classList.add('recmode'); REC.canvas.hidden = false; face.classList.add('offscreen');
@@ -734,17 +805,7 @@ async function recBegin() {
   REC.mr.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
   REC.on = true;
   var ctx = REC.canvas.getContext('2d');
-  REC.vid = document.createElement('canvas'); REC.vid.width = 1280; REC.vid.height = 720; var vctx = REC.vid.getContext('2d');
-  (function loop() {
-    if (!REC.on) return;
-    try {
-      REC.fid = (REC.fid || 0) + 1; drawFrame(ctx);
-      // 영상용: 그림 없이 영어 단어만 크게 (아이 화면과 따로 그림)
-      var sv = V.view; V.view = 'word'; drawFrame(vctx); V.view = sv; octx.drawImage(REC.vid, 0, 0, 960, 540);
-    } catch (e) {}
-    REC.raf = requestAnimationFrame(loop);
-  })();
-  await segWait(4000);
+  (function loop() { if (!REC.on) return; try { drawFrame(ctx); octx.drawImage(REC.canvas, 0, 0, 960, 540); } catch (e) {} REC.raf = requestAnimationFrame(loop); })();
   REC.t0 = Date.now();
   REC.mr.start(1000);
   $('#recTag').hidden = false;
@@ -756,10 +817,20 @@ function recStop() {
     try { REC.mr.stop(); } catch (e) { res(null); }
   });
 }
+async function micBegin() {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !REC.actx) return;
+    REC.mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+    try { await REC.actx.resume(); } catch (e) {}
+    var src = REC.actx.createMediaStreamSource(REC.mic), hp = REC.actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 100;
+    var an = REC.actx.createAnalyser(); an.fftSize = 1024; src.connect(hp); hp.connect(an); REC.an = an; REC.vbuf = null;
+  } catch (e) { REC.an = null; }   // 마이크를 못 쓰면 생각 시간이 끝날 때 넘어갑니다
+}
 function recCleanup() {
   REC.on = false; cancelAnimationFrame(REC.raf); segStop();
   try { if (REC.mr && REC.mr.state !== 'inactive') { REC.mr.onstop = null; REC.mr.stop(); } } catch (e) {}
   try { REC.cam && REC.cam.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+  try { REC.mic && REC.mic.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
   try { REC.actx && REC.actx.close(); } catch (e) {}
   voice = new Audio(); // 오디오 연결을 끊은 새 재생기로 바꿉니다
   REC = { on: false, cam: null, actx: null, dest: null, mr: null, chunks: [], canvas: null, raf: 0 };
@@ -789,8 +860,8 @@ function drawFaceCircle(x, cx, cy, R) {
   if (!REC.cam || face.readyState < 2) return;
   var vw = face.videoWidth, vh = face.videoHeight, sq = Math.min(vw, vh), sx = (vw - sq) / 2, sy = (vh - sq) / 2, D = Math.round(R * 2);
   var a = FC.a; if (a.width !== D) { a.width = D; a.height = D; }
-  var ac = a.getContext('2d'), reuse = !!REC.fid && FC.fid === REC.fid; FC.fid = REC.fid;
-  if (reuse) { /* 이번 화면에서 이미 만든 얼굴 */ } else if (ac.clearRect(0, 0, D, D), SEG.ready) {
+  var ac = a.getContext('2d'); ac.clearRect(0, 0, D, D);
+  if (SEG.ready) {
     // 1) 흐린 배경: 아주 작게 줄였다가 크게 늘려 흐리게 만듭니다 (모든 기기에서 동작)
     var s = FC.s; s.width = 24; s.height = 24; var sc = s.getContext('2d'); sc.drawImage(face, sx, sy, sq, sq, 0, 0, 24, 24);
     ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s, 0, 0, D, D);
@@ -804,9 +875,6 @@ function drawFaceCircle(x, cx, cy, R) {
     bc.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
     bc.globalCompositeOperation = 'source-over';
     ac.drawImage(b, 0, 0);
-  } else if (SEG.on) {
-    var s0 = FC.s; s0.width = 20; s0.height = 20; s0.getContext('2d').drawImage(face, sx, sy, sq, sq, 0, 0, 20, 20);
-    ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(s0, 0, 0, D, D);
   } else {
     ac.drawImage(face, sx, sy, sq, sq, 0, 0, D, D);
   }
@@ -830,7 +898,7 @@ function drawBoard(x, B, now) {
   x.save(); x.globalAlpha = ct2; x.translate(ox, 0);
   x.fillStyle = '#fff'; x.fillRect(px, py, B.pw, B.ph);
   var vm = V.view || 'pic', ih0 = vm === 'both' ? B.ph * .7 : B.ph;
-  if (vm !== 'word' && V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight * (vm === 'both' ? .72 : 1), s2 = Math.min(B.pw / iw, ih0 / ih); x.drawImage(V.img, 0, 0, iw, ih, px + (B.pw - iw * s2) / 2, py + (ih0 - ih * s2) / 2, iw * s2, ih * s2); }   // 그림+단어: 카드 아래 한글 뜻(아래 28%)은 잘라 냄
+  if (vm !== 'word' && V.img && V.img.complete && V.img.naturalWidth) { var iw = V.img.naturalWidth, ih = V.img.naturalHeight, s2 = Math.min(B.pw / iw, ih0 / ih); x.drawImage(V.img, px + (B.pw - iw * s2) / 2, py + (ih0 - ih * s2) / 2, iw * s2, ih * s2); }
   if (vm !== 'pic' && V.word) {   // 영어 단어 (녹화 영상에는 그림과 함께)
     if (vm === 'both') { x.strokeStyle = '#dfe4ee'; x.lineWidth = 3; x.setLineDash([10, 8]); x.beginPath(); x.moveTo(px + 20, py + ih0); x.lineTo(px + B.pw - 20, py + ih0); x.stroke(); x.setLineDash([]); }
     var wy = vm === 'both' ? py + ih0 + (B.ph - ih0) / 2 : py + B.ph / 2;
@@ -850,7 +918,8 @@ function drawRing(x, rx, ry) {
 }
 function drawBubble(x, L, now) {
   if (!V.bubble) return;
-  var bt = ease((now - V.bubble.t) / 300), ans = V.bubble.kind === 'a', text = V.bubble.text;
+  var bt = ease((now - V.bubble.t) / 300), ans = V.bubble.kind === 'a', turn = V.bubble.kind === 'turn', text = V.bubble.text;
+  var sym = ans ? 'A' : turn ? '🎤' : 'Q', symC = ans ? '#ff6b4a' : turn ? '#2fb36b' : '#003C70';
   x.globalAlpha = bt;
   if (L.bubble === 'side') {
     // 오른쪽 세로 말풍선 (카메라가 위에 있을 때)
@@ -859,9 +928,9 @@ function drawBubble(x, L, now) {
     var lh = px2 * 1.2, h = 86 + lines.length * lh + (ans ? 20 : 86), bx = 976, by = 228 + (1 - bt) * 14, w = 288;
     x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 8, w, h, 28); x.fill();
     x.fillStyle = '#fff'; rr(x, bx, by, w, h, 28); x.fill();
-    x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx + 50, by + 46, 28, 0, Math.PI * 2); x.fill();
-    T(x, ans ? 'A' : 'Q', 26, by + 47, F_E, '#fff', { x: bx + 50 });
-    T(x, ans ? '대답' : (text === 'Say it in English!' ? '영어로 말해요' : '질문'), 22, by + 47, F_B9, '#66708a', { align: 'left', x: bx + 90 });
+    x.fillStyle = symC; x.beginPath(); x.arc(bx + 50, by + 46, 28, 0, Math.PI * 2); x.fill();
+    T(x, sym, 26, by + 47, turn ? F_B9 : F_E, '#fff', { x: bx + 50 });
+    T(x, ans ? '대답' : turn ? '내 차례' : '질문', 22, by + 47, F_B9, '#66708a', { align: 'left', x: bx + 90 });
     lines.forEach(function (ln, i) { T(x, ln, px2, by + 96 + i * lh + lh / 2 - 6, F_E, '#003C70', { align: 'left', x: bx + 26, max: 240 }); });
     if (!ans) drawRing(x, bx + w / 2, by + h - 46);
   } else {
@@ -870,8 +939,8 @@ function drawBubble(x, L, now) {
     var w2 = 14 + 58 + 14 + tw + 26 + (ans ? 0 : 64), h2 = 86, bx2 = L.cx - w2 / 2, by2 = 618 + (1 - bt) * 14;
     x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx2, by2 + 8, w2, h2, 43); x.fill();
     x.fillStyle = '#fff'; rr(x, bx2, by2, w2, h2, 43); x.fill();
-    x.fillStyle = ans ? '#ff6b4a' : '#003C70'; x.beginPath(); x.arc(bx2 + 43, by2 + 43, 29, 0, Math.PI * 2); x.fill();
-    T(x, ans ? 'A' : 'Q', 26, by2 + 44, F_E, '#fff', { x: bx2 + 43 });
+    x.fillStyle = symC; x.beginPath(); x.arc(bx2 + 43, by2 + 43, 29, 0, Math.PI * 2); x.fill();
+    T(x, sym, 26, by2 + 44, turn ? F_B9 : F_E, '#fff', { x: bx2 + 43 });
     T(x, text, fpx, by2 + 44, F_E, '#003C70', { align: 'left', x: bx2 + 86, max: 900 });
     if (!ans) drawRing(x, bx2 + w2 - 55, by2 + 43);
   }
@@ -983,11 +1052,11 @@ async function uploadVideo(blob, meta, onProg) {
   await postJson(HW_API + '/complete', { id: st.id, key: st.key, uploadId: st.uploadId, parts: parts });
   return st.id;
 }
-async function afterRecording(r, partial) {
-  overlay(partial ? '여기까지 저장하는 중…' : '녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
+async function afterRecording(r) {
+  overlay('녹화 마무리 중…', '잠시만 기다려 주세요.', [], 0);
   var dur = REC.t0 ? Date.now() - REC.t0 : 0;
   var blob = await recStop();
-  var meta = baseRec(); meta.mode = 'real'; if (partial) meta.done = Math.min(meta.done, cards.length);
+  var meta = baseRec(); meta.mode = 'real';
   // webm 은 길이 정보가 비어 있어 재생·건너뛰기가 느립니다 → 길이를 채워 넣습니다
   if (blob && /webm/.test(blob.type) && dur) {
     try { if (!window.ysFixWebmDuration) await loadScript('fixwebm.js'); blob = await ysFixWebmDuration(blob, dur, { logger: false }); } catch (e) {}
@@ -995,13 +1064,12 @@ async function afterRecording(r, partial) {
   recCleanup();
   if (!blob || blob.size < 1000) { overlay('녹화가 안 됐어요', '이 기기에서 녹화가 되지 않았어요. 크롬(안드로이드)이나 사파리(아이패드)로 다시 해 주세요.', [['처음 화면으로', exit]]); return; }
   var ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
-  var file = URL.createObjectURL(blob), fname = meta.name + '_파닉스_' + meta.level + '_Vol' + meta.vol + (partial ? '_' + meta.done + '장까지' : '') + '.' + ext;
+  var file = URL.createObjectURL(blob), fname = meta.name + '_파닉스_' + meta.level + '_Vol' + meta.vol + '.' + ext;
   async function go() {
     overlay('선생님께 보내는 중…', meta.name + ' · ' + meta.level + ' Vol.' + meta.vol + ' 영상 (' + (blob.size / 1048576).toFixed(0) + 'MB)', [], 0);
     try {
       await uploadVideo(blob, meta, function (p) { $('#ovFill').style.width = Math.round(p * 100) + '%'; });
       SES.logged = true;
-      if (partial) overlay('여기까지 선생님께 보냈어요', meta.done + '장까지 한 영상을 저장했어요. 다음엔 끝까지 도전해 봐요!', [['처음 화면으로', exit], ['영상 저장', null, 'sec', file, fname]]); else
       overlay('선생님께 보냈어요! 🎉', '멋지게 해냈어요. 선생님이 확인하고 부모님께 보내 드릴 거예요.', [['처음 화면으로', exit], ['영상 저장', null, 'sec', file, fname]]);
     } catch (e) {
       overlay('보내지 못했어요', (e && e.message ? e.message + ' ' : '') + '인터넷 연결을 확인하고 다시 보내 주세요.', [['다시 보내기', go], ['이 기기에 저장', null, 'sec', file, fname], ['그만두기', exit, 'sec']]);
@@ -1011,7 +1079,12 @@ async function afterRecording(r, partial) {
 }
 
 renderHome();
-if (opt.mode === 'real') setTimeout(function () { segWarm(); }, 600);
+(function () {
+  var h = null; try { h = JSON.parse(sessionStorage.getItem('sv.hand') || 'null'); sessionStorage.removeItem('sv.hand'); } catch (e) {}
+  if (h && h.me) { onLogin({ name: h.me.name, code: h.me.code, book: h.book }); return; }
+  var uu = +q.get('u'); if (uu >= 1 && uu <= 4) { opt.unit = uu; renderHome(); }
+  gateShow();
+})();
 
 /* ── 학습패드 앱 설치 ── */
 (function () {

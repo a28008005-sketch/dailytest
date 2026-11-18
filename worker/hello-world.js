@@ -897,6 +897,65 @@ async function findStudentByPhone4(env, phone4, payload) {
   return { name: one.name, code: one.code || await ensureCode(env, one.page, pages) };
 }
 
+// ── 센텐스뱅크·파닉스 서바이벌 카드 로그인 ──
+// 아이가 부모님 휴대폰 뒤 4자리를 누르면 이름과 함께 원생관리 '학습 현황판'에 적힌 지금 교재(레벨·권·Unit)를 돌려준다.
+// 카드 앱은 그 교재를 바로 열고, 아이는 Unit 만 고른다.
+const SV_LEVELS = { 0: 'Phonics', 1: '240', 2: '520', 3: '860', 4: '1240', 5: '1680' };
+function svBookInfo(book) {
+  const m = /^WE-L(\d+)V(\d+)$/.exec(book || '');
+  if (!m || !SV_LEVELS[m[1]]) return null;
+  return { key: book, level: SV_LEVELS[m[1]], vol: +m[2] };
+}
+function svBookFromTitle(t) {
+  t = String(t || '');
+  let m = /phonics\s*(\d)/i.exec(t);
+  if (m) return 'WE-L0V' + m[1];
+  m = /^\s*(\d{3,4})\s*vol\.?\s*(\d)/i.exec(t);
+  if (m) for (const k in SV_LEVELS) if (SV_LEVELS[k] === m[1]) return 'WE-L' + k + 'V' + m[2];
+  return '';
+}
+function svBookOfBoard(r) {
+  if (!r) return null;
+  const wt = r.wt || {};
+  const key = (wt.book && svBookInfo(wt.book) && wt.done !== wt.book) ? wt.book : svBookFromTitle(r.current && r.current.title);
+  const info = svBookInfo(key);
+  if (!info) return null;
+  // 웨일튜터 기록에서 이 교재로 가장 많이 나간 회차 → 그 회차의 Unit
+  let n = 0;
+  const days = wt.days || {};
+  for (const d of Object.keys(days)) {
+    const mm = /^WE-L(\d+)V(\d+)U(\d)D(\d)$/.exec((days[d] || [])[0] || '');
+    if (mm && 'WE-L' + mm[1] + 'V' + mm[2] === key) n = Math.max(n, (+mm[3] - 1) * 5 + +mm[4]);
+  }
+  let unit = n ? Math.min(4, Math.ceil(Math.min(n, 20) / 5)) : 0;
+  if (!unit && r.current && r.current.total) unit = Math.min(4, Math.floor((+r.current.done || 0) / 5) + 1);
+  return { level: info.level, vol: info.vol, unit: unit || 1 };
+}
+async function svBookOf(env, name) {
+  const key = env.SUPABASE_SERVICE_KEY;
+  if (!key) return null;
+  const list = (await cloudStudents(env)).filter(s => s.name === name && s.status !== '퇴원생' && !s.archived);
+  if (list.length !== 1) return null;
+  const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+  const res = await fetch(base + '?kind=eq.board&deleted=eq.false&id=eq.' + encodeURIComponent(list[0].id) + '&select=data', { headers: staffCloudHeaders(key) });
+  if (!res.ok) return null;
+  return svBookOfBoard(((await res.json())[0] || {}).data);
+}
+async function svLogin(env, payload) {
+  try {
+    const p4 = String((payload && payload.phone4) || '').trim();
+    if (!/^\d{4}$/.test(p4)) return { success: false, error: '부모님 휴대폰 뒤 4자리를 눌러 주세요' };
+    const st = await findStudentByPhone4(env, p4, payload || {});
+    if (st.choices) return { success: false, choices: st.choices };
+    if (st.error) return { success: false, error: st.error };
+    let book = null;
+    try { book = await svBookOf(env, st.name); } catch (e) { book = null; }
+    return { success: true, name: st.name, code: st.code, book };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // 학생이 부모님 휴대폰 뒤 4자리(또는 예전 학습코드)를 넣으면 이름과 지난 진도를 돌려준다.
 // 함께 돌려주는 code(단어장코드)로 앱이 진도를 저장하므로, 기기가 바뀌어도 이어서 한다.
 async function vocaLogin(env, payload) {
@@ -1736,6 +1795,9 @@ async function handleRequest(request, env) {
     if (path === '/api/voca/report' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
       return json(await reportVoca(env, payload));
+    }
+    if (path === '/api/sv/login' && request.method === 'POST') {
+      return json(await svLogin(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/voca/login' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
