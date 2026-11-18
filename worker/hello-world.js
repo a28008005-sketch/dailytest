@@ -669,7 +669,7 @@ async function findStudentByCode(env, code) {
   // 원생관리에만 등록된 학생의 코드(W로 시작)는 원생관리 명부에서 찾는다.
   if (/^W[A-Z0-9]{7}$/.test(clean)) {
     const hit = (await cloudStudents(env)).find(s => cloudCode(s.id) === clean);
-    if (hit) return { name: hit.name, code: clean };
+    if (hit) return { name: hit.name, code: clean, cls: clanOf(hit) };
   }
 
   const found = await notionQuery(env, DATABASES.students, {
@@ -681,7 +681,20 @@ async function findStudentByCode(env, code) {
   const page = found.results[0];
   if (textOf(page.properties['상태']) === '퇴원생') return { error: '지금은 쓸 수 없는 코드입니다' };
 
-  return { name: textOf(page.properties['이름']), code: clean };
+  return { name: textOf(page.properties['이름']), code: clean, cls: clanOf(page.properties) };
+}
+
+// 반(담당 선생님) 알아내기: 칸 이름에 반·담당·선생·class가 들어간 칸에서 Jinny/Binny(지니/비니)를 찾는다.
+// 못 찾으면 null — 앱이 아이에게 한 번 물어보고 그 답을 함께 보낸다.
+const CLANS = ['jinny', 'binny'];
+function clanOf(obj) {
+  for (const [label, v] of Object.entries(obj || {})) {
+    if (!/(반|담당|선생|teacher|class|cls|클래스)/i.test(label)) continue;
+    const t = v && typeof v === 'object' ? (v.type ? textOf(v) : JSON.stringify(v)) : String(v || '');
+    if (/jinny|지니/i.test(t)) return 'jinny';
+    if (/binny|비니/i.test(t)) return 'binny';
+  }
+  return null;
 }
 
 // ── 게임 순위표 (웨일리 아케이드 520·860, 바다 친구 잡기 파닉스·240) ──
@@ -754,6 +767,128 @@ async function gameScore(env, payload) {
     }
     const rows = await gameRows(env, game, month);
     return Object.assign({ success: true, date: today, saved: !!me }, gameBoard(rows, level, today, me));
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ── 고스트 배틀 · 반 대항전 (웨일리 원정대 1240·1680부터) ──
+// 고스트: 학생·Day마다 가장 잘한 판의 기록(kind=ghost). 문제마다 '몇 초에 맞혔는지/틀렸는지'(tl)만 남긴다.
+//   친구는 같은 Day·같은 문제 순서로 그 기록과 겨룬다. 같은 시간에 접속하지 않아도 된다.
+// 반 대항전: 학생·주마다 한 줄(kind=clanpt). 맞힌 문제 1개 = 1점, 고스트 승리 +5, 원정 탈출 +10.
+//   한 번에 최대 60점, 하루 최대 300점까지만 받는다(몰아서 점수 부풀리기 방지).
+function seoulWeek() {
+  const t = new Date(seoulToday() + 'T00:00:00Z'), dow = (t.getUTCDay() + 6) % 7;
+  t.setUTCDate(t.getUTCDate() - dow);
+  return t.toISOString().slice(0, 10);
+}
+function prevWeek(w) { const t = new Date(w + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() - 7); return t.toISOString().slice(0, 10); }
+const cloudBase = env => (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
+async function cloudGet(env, query) {
+  const res = await fetch(cloudBase(env) + '?' + query, { headers: staffCloudHeaders(env.SUPABASE_SERVICE_KEY) });
+  if (!res.ok) throw new Error('학원 클라우드 응답 ' + res.status);
+  return (await res.json()).map(r => Object.assign({ _id: r.id }, r.data || {}));
+}
+async function cloudPut(env, kind, id, data) {
+  const res = await fetch(cloudBase(env), {
+    method: 'POST',
+    headers: Object.assign(staffCloudHeaders(env.SUPABASE_SERVICE_KEY), { Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify([{ kind, id, data, deleted: false }]),
+  });
+  if (!res.ok) throw new Error('저장 실패 ' + res.status);
+}
+async function battleStudent(env, payload) {
+  if (!payload.code) return null;
+  const st = await findStudentByCode(env, payload.code);
+  if (st.error) throw new Error(st.error);
+  const asked = CLANS.includes(payload.cls) ? payload.cls : null;
+  return { sid: st.code, name: st.name, cls: st.cls || asked };
+}
+const DAY_RE = /^lv\d+-V\d+U\d+D\d+$/;
+async function ghostList(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const level = String(payload.level || ''), dayId = String(payload.dayId || '');
+    if (!GAME_LEVELS.includes(level) || !DAY_RE.test(dayId)) return { success: false, error: 'bad-request' };
+    const me = await battleStudent(env, payload);
+    const rows = await cloudGet(env, 'kind=eq.ghost&deleted=eq.false&data->>level=eq.' + encodeURIComponent(level) + '&select=id,data&limit=2000');
+    const others = rows.filter(r => !me || r.sid !== me.sid);
+    const same = others.filter(r => r.dayId === dayId).sort((a, b) => b.score - a.score);
+    const rest = others.filter(r => r.dayId !== dayId).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    const list = same.concat(rest).slice(0, 12).map(r => ({
+      gid: r.id, name: maskName(r.name), cls: r.cls || null, score: r.score, acc: r.acc, ms: r.ms, tl: r.tl || [],
+      dayId: r.dayId, sameDay: r.dayId === dayId, wins: r.wins || 0,
+    }));
+    const mine = me ? rows.find(r => r.sid === me.sid && r.dayId === dayId) : null;
+    return { success: true, ghosts: list, me: me ? { name: me.name, cls: me.cls, best: mine ? mine.score : 0 } : null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+async function ghostSave(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const level = String(payload.level || ''), dayId = String(payload.dayId || '');
+    if (!GAME_LEVELS.includes(level) || !DAY_RE.test(dayId)) return { success: false, error: 'bad-request' };
+    const me = await battleStudent(env, payload);
+    if (!me) return { success: false, error: 'no-code' };
+    const tl = (Array.isArray(payload.tl) ? payload.tl : []).slice(0, 40)
+      .map(x => [Math.max(0, Math.min(900000, Math.round(Number(x && x[0]) || 0))), x && x[1] ? 1 : 0]);
+    const score = Math.max(0, Math.min(100000, Math.round(Number(payload.score) || 0)));
+    const id = 'gh-' + me.sid + '-' + dayId;
+    const prev = (await cloudGet(env, 'kind=eq.ghost&id=eq.' + encodeURIComponent(id) + '&select=id,data'))[0] || null;
+    const better = !prev || score > (prev.score || 0);
+    const data = better ? {
+      id, sid: me.sid, name: me.name, cls: me.cls, level, dayId, score,
+      acc: Math.max(0, Math.min(100, Math.round(Number(payload.acc) || 0))),
+      ms: Math.max(0, Math.min(900000, Math.round(Number(payload.ms) || 0))), tl,
+    } : Object.assign({}, prev, { cls: me.cls || prev.cls });
+    delete data._id;
+    data.wins = ((prev && prev.wins) || 0) + (payload.win ? 1 : 0);
+    data.plays = ((prev && prev.plays) || 0) + 1;
+    data.date = seoulToday(); data.updatedAt = new Date().toISOString();
+    await cloudPut(env, 'ghost', id, data);
+    // 진 쪽 고스트 주인에게도 '방어 성공'을 적어 준다
+    if (payload.vs && !payload.win && /^gh-[A-Z0-9]+-lv/.test(String(payload.vs))) {
+      const opp = (await cloudGet(env, 'kind=eq.ghost&id=eq.' + encodeURIComponent(payload.vs) + '&select=id,data'))[0];
+      if (opp && opp.sid !== me.sid) { delete opp._id; opp.defends = (opp.defends || 0) + 1; await cloudPut(env, 'ghost', payload.vs, opp); }
+    }
+    return { success: true, best: data.score, improved: better, cls: me.cls };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+async function clanBoard(env, payload, add) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const week = seoulWeek(), last = prevWeek(week), today = seoulToday();
+    const me = await battleStudent(env, payload);
+    if (add && me && me.cls) {
+      const id = 'cp-' + me.sid + '-' + week;
+      const prev = (await cloudGet(env, 'kind=eq.clanpt&id=eq.' + encodeURIComponent(id) + '&select=id,data'))[0] || null;
+      const days = Object.assign({}, prev && prev.days);
+      const room = Math.max(0, 300 - (days[today] || 0));
+      const pts = Math.min(room, 60, Math.max(0, Math.round(Number(payload.pts) || 0)));
+      days[today] = (days[today] || 0) + pts;
+      const level = GAME_LEVELS.includes(payload.level) ? payload.level : ((prev && prev.level) || '');
+      await cloudPut(env, 'clanpt', id, { id, sid: me.sid, name: me.name, cls: me.cls, week, level, days,
+        pts: ((prev && prev.pts) || 0) + pts, updatedAt: new Date().toISOString() });
+    }
+    const rows = await cloudGet(env, 'kind=eq.clanpt&deleted=eq.false&data->>week=in.(' + week + ',' + last + ')&select=id,data&limit=5000');
+    const team = w => {
+      const out = {};
+      for (const c of CLANS) {
+        const m = rows.filter(r => r.week === w && r.cls === c).sort((a, b) => b.pts - a.pts);
+        out[c] = { pts: m.reduce((t, r) => t + (Number(r.pts) || 0), 0), members: m.length,
+          top: m.slice(0, 3).map(r => ({ name: maskName(r.name), pts: r.pts, me: !!me && r.sid === me.sid })) };
+      }
+      return out;
+    };
+    const now = team(week), before = team(last);
+    const lw = before.jinny.pts === before.binny.pts ? null : (before.jinny.pts > before.binny.pts ? 'jinny' : 'binny');
+    const mine = me ? rows.find(r => r.week === week && r.sid === me.sid) : null;
+    return { success: true, week, teams: now, lastWinner: lw, lastTeams: before,
+      me: me ? { name: me.name, cls: me.cls, pts: mine ? mine.pts : 0 } : null };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -1809,6 +1944,18 @@ async function handleRequest(request, env) {
     // 게임 순위표: 기록 올리기(학생 코드가 있으면 저장) + 순위 받기
     if (path === '/api/game/score' && request.method === 'POST') {
       return json(await gameScore(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/ghost/list' && request.method === 'POST') {
+      return json(await ghostList(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/ghost/save' && request.method === 'POST') {
+      return json(await ghostSave(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/clan/board' && request.method === 'POST') {
+      return json(await clanBoard(env, await request.json().catch(() => ({})), false));
+    }
+    if (path === '/api/clan/add' && request.method === 'POST') {
+      return json(await clanBoard(env, await request.json().catch(() => ({})), true));
     }
     if (path === '/api/voca/save' && request.method === 'POST') {
       const payload = await request.json().catch(() => ({}));
