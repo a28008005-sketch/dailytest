@@ -691,7 +691,7 @@ async function findStudentByCode(env, code) {
 //  · 다 함께: 오늘 모든 레벨 학생이 그 게임에서 쌓은 양의 합 (예: 함께 오른 계단 ○○층)
 // 이름은 가운데 글자를 가려서(김O수) 보낸다. 주소만 알면 누구나 볼 수 있는 화면이라서.
 const GAME_LEVELS = ['phonics', 'lv240', 'lv520', 'lv860', 'lv1240', 'lv1680'];
-const GAME_KINDS = ['stairs', 'run', 'obby', 'sea'];
+const GAME_KINDS = ['stairs', 'run', 'obby', 'sea', 'expedition'];
 function maskName(n) {
   const a = Array.from(String(n || '').trim());
   if (a.length <= 1) return a.join('') || '친구';

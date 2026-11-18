@@ -2814,6 +2814,11 @@ a.sb-entry{text-decoration:none}
         <span><b>웨일리 아케이드 게임</b><small>${day.label} 단어로 무한 계단·웨일리 런·문장 오비 · 코인이 여기 쌓여요</small></span>
         ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">오늘 완료 · ⭐${prog.gameDays[day.id]}</span>` : html`<span className="mg-go">›</span>`}
       </a>` : null}
+      ${(lv.id === 'lv1240' || lv.id === 'lv1680') ? html`<a className="sb-entry mg-entry" href=${'../expedition/?from=voca&d=' + encodeURIComponent(day.id)} style=${{ background: 'linear-gradient(135deg,#0c1d31,#16365a)', color: '#e9f2ff', borderColor: 'rgba(243,201,105,.6)' }}>
+        <img className="mg-ic" src="../expedition/img/hero.webp" alt="" style=${{ width: '76px', height: '58px', objectFit: 'contain', transform: 'scaleX(-1)' }}/>
+        <span><b style=${{ color: '#f3c969' }}>⚔ 웨일리 원정대</b><small style=${{ color: '#b9cbe3' }}>${day.label} 단어로 몬스터·룬 게이트·보스 크라켄·폭풍 탈출 · 코인이 여기 쌓여요</small></span>
+        ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">탈출 성공 · ⭐${prog.gameDays[day.id]}</span>` : html`<span className="mg-go" style=${{ color: '#f3c969' }}>›</span>`}
+      </a>` : null}
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>
