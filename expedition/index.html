@@ -32,9 +32,13 @@ button{font-family:inherit;cursor:pointer;border:0;color:inherit}
 
 /* ── 로비 ── */
 #lobby{background:#03080f url(img/title.jpg) center top/auto max(100vh,640px) no-repeat;overflow-y:auto}
-@media (max-aspect-ratio:3/4){#lobby{background-size:cover}}
-#lobby::before{content:'';position:fixed;inset:0;max-width:980px;margin:0 auto;background:linear-gradient(180deg,rgba(3,8,15,.15) 0%,rgba(3,8,15,.35) 34%,rgba(3,8,15,.92) 62%,#03080f 100%);pointer-events:none}
-.lob{position:relative;padding:calc(14px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:100%}
+.showcase{height:clamp(0px,8vh,80px);flex:0 0 auto}
+@media (max-aspect-ratio:3/4){#lobby{background-size:auto 104vh;background-position:center -24vh}.logo{margin-top:2px!important}.showcase{height:36vh}}
+.go{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));z-index:2}
+#lobby .blur{position:fixed;inset:0;max-width:980px;margin:0 auto;background:url(img/title.jpg) center/cover;filter:blur(28px) brightness(.55);transform:scale(1.15);pointer-events:none}
+@media (max-aspect-ratio:3/4){#lobby .blur{display:none}}
+#lobby::after{z-index:0;content:'';position:fixed;inset:0;max-width:980px;margin:0 auto;background:linear-gradient(180deg,rgba(3,8,15,.35) 0%,rgba(3,8,15,0) 14%,rgba(3,8,15,0) 40%,rgba(3,8,15,.85) 58%,#03080f 80%);pointer-events:none}
+.lob{position:relative;z-index:1;padding:calc(14px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:100%}
 .topbar{width:100%;display:flex;justify-content:space-between;align-items:center}
 .chip{font-size:13px;padding:6px 11px;border-radius:999px;background:rgba(6,18,31,.7);border:1px solid rgba(243,201,105,.35);color:var(--gold)}
 .logo{margin-top:clamp(70px,24vh,230px);text-align:center}
@@ -168,13 +172,14 @@ button{font-family:inherit;cursor:pointer;border:0;color:inherit}
   <div id="loading"><div class="gtitle en" style="font-size:22px">WHALEY EXPEDITION</div><div class="bar"><i id="ldbar"></i></div><div id="ldtxt">원정 장비를 챙기는 중…</div></div>
 
   <!-- 로비 -->
-  <section class="screen on" id="lobby"><div class="lob">
+  <section class="screen on" id="lobby"><div class="blur"></div><div class="blur" style="filter:none;transform:none;background:url(img/title.jpg) center top/auto max(100vh,640px) no-repeat"></div><div class="lob">
     <div class="topbar"><a class="chip" id="backVoca" href="../voca/" hidden>← 보카로</a><span></span><span class="chip" id="who">원정대원</span></div>
     <div class="logo">
       <div class="k gtitle">웨일리 원정대</div>
       <div class="e en">THE LOST UNDERSEA CITY</div>
       <div class="s">가라앉은 도시에서 단어 유물을 모아 폭풍 전에 탈출하라!</div>
     </div>
+    <div class="showcase"></div>
     <div class="box frame">
       <h3>⚓ 원정 레벨</h3>
       <div class="lvrow" id="lvrow">
