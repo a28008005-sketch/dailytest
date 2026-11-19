@@ -842,7 +842,10 @@ const MOLE_SVG = `<svg viewBox="0 0 120 100"><ellipse cx="60" cy="70" rx="44" ry
 function Mole(stage, target, list, cb) {
   stage.className = 'stage g-mole'; stage.innerHTML = '<div class="holes"></div>';
   const wrap = stage.querySelector('.holes');
-  let alive = true, timers = [], sinceTarget = 0, hinted = false;
+  // 정답 두더지가 언제 나올지 매번 다르게: 처음 0~2마리는 다른 두더지, 그 뒤로는 30% 확률(6마리 넘게 안 나오면 그때 꼭).
+  // 정답이 몇 번째에 나오는지 1~7번째로 고르게 퍼진다(가장 많은 경우도 20% 남짓).
+  // (예전엔 첫 번째나 두 번째가 늘 정답이라 잘하는 아이들이 패턴을 외워 버렸다)
+  let alive = true, timers = [], sinceTarget = 0, hinted = false, decoysFirst = Math.floor(Math.random() * 3);
   const H = Array.from({ length: 6 }, () => {
     const h = document.createElement('div'); h.className = 'hole';
     h.innerHTML = `<button class="mole"><div class="sign"></div><img class="mbody" src="${SEA}${pick(['otter', 'crab', 'seal', 'penguin', 'turtle', 'octo'])}.webp" alt="" draggable="false"></button>`;
@@ -879,10 +882,11 @@ function Mole(stage, target, list, cb) {
     if (free.length && upNow.length < 3) {
       const o = pick(free);
       const targetUp = upNow.some((x) => key(x.w) === key(target));
-      const showTarget = !targetUp && (sinceTarget >= 1 || Math.random() < .5 || !others.length);
+      const warm = decoysFirst > 0 && others.length;
+      const showTarget = !targetUp && !warm && (sinceTarget >= 6 || Math.random() < .3 || !others.length);
       if (!showTarget && !others.length) { timers.push(setTimeout(popOne, 400)); return; }
       o.w = showTarget ? target : pick(others);
-      sinceTarget = showTarget ? 0 : sinceTarget + 1;
+      sinceTarget = showTarget ? 0 : sinceTarget + 1; if (!showTarget && decoysFirst > 0) decoysFirst--;
       o.s.innerHTML = face(o.w);
       o.up = true; o.m.classList.add('up');
       if (hinted && showTarget) o.m.classList.add('glow');
@@ -891,7 +895,7 @@ function Mole(stage, target, list, cb) {
     }
     timers.push(setTimeout(popOne, (opts.slow ? 900 : 650) * rnd(.7, 1.3)));
   }
-  timers.push(setTimeout(popOne, 300)); timers.push(setTimeout(popOne, 700));
+  timers.push(setTimeout(popOne, rnd(250, 450))); timers.push(setTimeout(popOne, rnd(550, 850)));
   return {
     stop() { alive = false; timers.forEach(clearTimeout); },
     hint() { hinted = true; H.forEach((o) => { if (o.up && key(o.w) === key(target)) o.m.classList.add('glow'); }); },
