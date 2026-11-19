@@ -2831,6 +2831,11 @@ a.sb-entry{text-decoration:none}
         <span><b style=${{ color: '#f3c969' }}>⚔ 웨일리 원정대</b><small style=${{ color: '#b9cbe3' }}>${day.label} 단어로 원정·고스트 배틀·반 대항전 · 코인이 여기 쌓여요</small></span>
         ${(prog.gameDays || {})[day.id] != null ? html`<span className="tag" data-kind="ok">탈출 성공 · ⭐${prog.gameDays[day.id]}</span>` : html`<span className="mg-go" style=${{ color: '#f3c969' }}>›</span>`}
       </a>` : null}
+      <a className="sb-entry mg-entry" href="../voyage/" style=${{ background: 'linear-gradient(135deg,#fff6db,#ffe2b0)', borderColor: '#f3c969' }}>
+        <span className="mg-ic" style=${{ width: '64px', fontSize: '40px', textAlign: 'center' }}>⛵</span>
+        <span><b>오늘의 항해 · 티켓</b><small>항로를 지날 때마다 🎟 티켓! 배틀·자유 게임에 써요 · 칭찬 우편함</small></span>
+        <span className="mg-go">›</span>
+      </a>
       <button className="btn btn-ghost" onClick=${function () { props.go('shop'); }}>
         <${Icon} name="bag" size=${15}/> 웨일리 꾸미기 · 보유 코인 ${prog.coins || 0}
       </button>

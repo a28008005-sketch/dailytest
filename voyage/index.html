@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b4f8a">
+<title>오늘의 항해 — 웨일리</title>
+<link rel="icon" href="../voca/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../voca/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--ink:#16324f;--dim:#6b7f95;--gold:#ffc23d;--mint:#22c08a;--blue:#2b8de8;--coral:#ff7a5c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#0b4f8a url(../arcade/img/bgSea.jpg) center/cover fixed;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:700}
+button,a{font:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 14px 30px;display:grid;grid-template-columns:1fr;gap:12px}
+.top{display:flex;align-items:center;gap:10px;color:#fff}
+.top a{color:#fff;text-decoration:none;background:rgba(0,30,70,.35);padding:7px 12px;border-radius:999px;font-size:13px}
+.top h1{flex:1;margin:0;font-size:22px;font-weight:900;text-shadow:0 2px 8px rgba(0,30,70,.4)}
+.top h1 small{display:block;font-size:12px;font-weight:700;opacity:.85}
+.glass{background:rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:24px;padding:16px;box-shadow:0 12px 30px rgba(0,30,70,.18)}
+.mail{display:flex;align-items:center;gap:10px;cursor:pointer;border:0;width:100%;text-align:left}
+.mail .ic{font-size:30px;position:relative}
+.mail .ic b{position:absolute;right:-6px;top:-4px;background:#f2475b;color:#fff;font-size:11px;border-radius:999px;padding:1px 6px}
+.mail .tx{flex:1}
+.mail small{display:block;color:var(--dim);font-size:12px}
+/* 항해 지도 */
+.map h2,.tix h2{margin:0 0 4px;font-size:18px}
+.map .sub{color:var(--dim);font-size:13px;margin-bottom:10px}
+.route{position:relative;display:flex;flex-direction:column;gap:10px}
+.port{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:#f4f9ff;border:2px solid transparent;text-decoration:none;color:inherit;position:relative}
+.port .n{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:#dfeefc;flex:0 0 auto}
+.port .t{flex:1}
+.port .t b{display:block;font-size:16px}
+.port .t small{color:var(--dim);font-size:12px;font-weight:600}
+.port .r{font-size:12px;font-weight:900;padding:5px 10px;border-radius:999px;background:#fff3d6;color:#a46a00;white-space:nowrap}
+.port.done{background:#eafaf3}
+.port.done .n{background:var(--mint);color:#fff}
+.port.done .r{background:var(--mint);color:#fff}
+.port.now{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,194,61,.25)}
+.port.now .n{background:var(--gold)}
+.port.lock{opacity:.55}
+.ship{position:absolute;left:-6px;width:44px;transition:top .6s;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,30,70,.3))}
+.bar{height:12px;border-radius:8px;background:#e6eef7;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#22c08a,#7ee8c2);transition:width .6s}
+/* 티켓 */
+.wallet{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+.tk{width:46px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:18px;background:#eef3f8;color:#b9c7d6;border:2px dashed #cdd9e6}
+.tk.have{background:linear-gradient(135deg,#ffe08a,#ffb84d);border:2px solid #f0a020;color:#7a4a00;box-shadow:0 3px 0 #d08a10}
+.tk.used{background:#f3f3f3;border:2px solid #ddd;color:#bbb;text-decoration:line-through}
+.play{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbtn{border:0;border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:#fff;box-shadow:0 8px 18px rgba(0,30,70,.2)}
+.pbtn img{width:64px;height:54px;object-fit:contain}
+.pbtn b{font-size:16px}
+.pbtn small{font-size:11px;font-weight:700;opacity:.9}
+.pbtn.battle{background:linear-gradient(135deg,#7b5cff,#4a2fc0)}
+.pbtn.free{background:linear-gradient(135deg,#ff8a5c,#ff5f8f)}
+.pbtn:disabled{filter:grayscale(.8);opacity:.6;cursor:not-allowed}
+.rules{font-size:12px;color:var(--dim);line-height:1.7;margin-top:10px}
+.chal{display:flex;align-items:center;gap:10px}
+.chal .prog{flex:1;height:12px;border-radius:8px;background:#eef3f8;overflow:hidden}
+.chal .prog i{display:block;height:100%;background:linear-gradient(90deg,#ff8a2f,#ffc24d)}
+.modal{position:fixed;inset:0;background:rgba(5,20,40,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{width:100%;max-width:560px;max-height:80vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.letter{padding:12px;border-radius:16px;background:#fff7fb;border:1px solid #ffd6e7;margin-top:8px}
+.letter small{display:block;color:var(--dim);font-size:12px;margin-top:4px}
+.close{width:100%;border:0;border-radius:14px;padding:12px;background:#eef3f8;font-weight:900;margin-top:12px;cursor:pointer}
+.demo{background:#ffefc2;color:#7a4a00;border-radius:12px;padding:8px 12px;font-size:12px;text-align:center}
+.pop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);background:#fff;border-radius:22px;padding:18px 22px;text-align:center;font-size:18px;font-weight:900;box-shadow:0 20px 50px rgba(0,30,70,.35);opacity:0;pointer-events:none;transition:all .25s;z-index:30}
+.pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+@media (orientation:landscape) and (min-width:820px){
+  .wrap{grid-template-columns:1.25fr 1fr;align-items:start}
+  .top,.mail-card,.demo{grid-column:1/-1}
+  .map{grid-row:span 2}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="pop" id="pop"></div>
+<script>
+'use strict';
+const API = 'https://hello-world.a28008005.workers.dev';
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const QS = new URLSearchParams(location.search);
+const rd = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const today = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+const profile = rd('swv.profile'), code = localStorage.getItem('swv.code') || '';
+const DEMO = QS.get('demo') === '1' || !(profile && profile.studentId);
+const pkey = profile && profile.studentId ? 'swv.progress.' + profile.studentId : '';
+let P = DEMO ? { dayIdx: 3, partial: { date: today, steps: 3 }, gameDays: {}, voyage: { date: today, used: 0 }, coins: 120 } : (rd(pkey) || { dayIdx: 0 });
+const LV = (profile && profile.levelId) || 'lv520';
+const LV_KO = { phonics: '파닉스', lv240: '240', lv520: '520', lv860: '860', lv1240: '1240', lv1680: '1680' };
+const MAX_TICKETS = 5;
+
+// 오늘 공부할 Day (보카와 같은 순서). 레벨마다 자료 파일이 달라서 필요한 것만 불러온다.
+function loadDays() {
+  return new Promise((res) => {
+    const src = /^lv(520|860)$/.test(LV) ? '../arcade/data.js' : /^lv(1240|1680)$/.test(LV) ? '../expedition/data.js' : '../game/data.js';
+    const s = document.createElement('script'); s.src = src;
+    s.onload = () => {
+      let list = [];
+      if (window.ARCADE_DAYS) list = ARCADE_DAYS.filter((x) => x.L === LV).map((x) => ({ id: x.id, label: `Vol.${x.v} Unit${x.u} Day${x.d}` }));
+      else if (window.EXP_DAYS) list = EXP_DAYS.filter((x) => x.L === LV).map((x) => ({ id: x.id, label: `Vol.${x.v} Unit${x.u} Day${x.d}` }));
+      else if (window.GAME_DATA) { const l = GAME_DATA.levels.find((x) => x.id === LV) || GAME_DATA.levels[0]; list = l.days.map((x) => ({ id: x.id, label: x.label })); }
+      res(list);
+    };
+    s.onerror = () => res([]);
+    document.head.appendChild(s);
+  });
+}
+function gameLink(day) {
+  if (/^lv(1240|1680)$/.test(LV)) return { href: '../expedition/?from=voca&d=' + encodeURIComponent(day.id), name: '웨일리 원정대', img: '../expedition/img/hero.webp', battle: '../expedition/?from=voca&mode=ghost&d=' + encodeURIComponent(day.id), battleName: '고스트 배틀' };
+  if (/^lv(520|860)$/.test(LV)) return { href: '../arcade/?from=voca', name: '웨일리 아케이드', img: '../arcade/img/whale_swim.webp', battle: '../arcade/?from=voca', battleName: '친구랑 무한계단' };
+  return { href: '../game/?from=voca', name: '몬스터 잡기', img: '../arcade/img/octo_happy.webp', battle: '../game/?from=voca', battleName: '친구랑 바다 계단' };
+}
+
+/* 오늘의 항해 4개 항구 = 보카 4단계 + 게임 복습.
+   항구를 지날 때마다 티켓 1장, 다 끝내면 보너스 1장 (하루 최대 5장). 티켓은 배틀·자유 게임에 쓴다. */
+function ports(day) {
+  const pt = P.partial && P.partial.date === today ? (P.partial.steps || 0) : 0;
+  const allDone = P.lastDate === today;
+  const steps = allDone ? 4 : pt;
+  const g = gameLink(day);
+  const gameDone = day && (P.gameDays || {})[day.id] != null && (allDone || steps >= 2) ;
+  return [
+    { k: 'word', icon: '🐋', name: '단어 항해', desc: '오늘 단어 듣고 뜻 익히기 (STEP 1·2) · 약 7분', href: '../voca/', done: steps >= 2 },
+    { k: 'sent', icon: '✍️', name: '센텐스뱅크 문장 만들기', desc: '오늘 단어로 문장 완성 (STEP 3) · 약 5분', href: '../voca/', done: steps >= 3 },
+    { k: 'clear', icon: '🧹', name: '오답 클리어', desc: '틀린 것 다시 풀고 80% 넘기기 (STEP 4) · 약 3분', href: '../voca/', done: steps >= 4 },
+    { k: 'game', icon: '⚔️', name: g.name + ' 보스전', desc: '오늘 단어로 게임 복습 · 약 5분', href: g.href, done: !!gameDone },
+  ];
+}
+function tickets(list) {
+  const earned = Math.min(MAX_TICKETS, list.filter((x) => x.done).length + (list.every((x) => x.done) ? 1 : 0));
+  const v = P.voyage && P.voyage.date === today ? P.voyage : { date: today, used: 0 };
+  return { earned, used: Math.min(v.used || 0, earned), left: Math.max(0, earned - (v.used || 0)) };
+}
+function useTicket() {
+  const v = P.voyage && P.voyage.date === today ? P.voyage : { date: today, used: 0 };
+  v.used = (v.used || 0) + 1; P.voyage = v;
+  if (!DEMO && pkey) {
+    const cur = rd(pkey) || P; cur.voyage = v;
+    try { localStorage.setItem(pkey, JSON.stringify(cur)); } catch (e) {}
+    // 학원 서버에도 진도와 함께 올린다 (보카와 같은 저장 길)
+    if (code) fetch(API + '/api/voca/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ code, levelId: LV, dayIdx: cur.dayIdx || 0, progress: cur }) }).catch(() => {});
+  }
+}
+function pop(t) { const p = $('#pop'); p.innerHTML = t; p.classList.add('on'); setTimeout(() => p.classList.remove('on'), 1300); }
+
+let INBOX = null;
+async function inbox(markRead) {
+  if (DEMO || !code) return { praise: [{ from: 'teacher', fromName: 'Jinny 선생님', text: '오늘 문장 만들기 정말 잘했어 ✨', at: today + 'T10:00', read: false }, { from: 'parent', fromName: '엄마', text: '이번 주도 수고했어! 사랑해 💕', at: today + 'T09:00', read: true }], challenge: { goal: 5, reward: '주말 아이스크림' }, battleOpen: true };
+  try { const r = await fetch(API + '/api/praise/inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, markRead }) }); const d = await r.json(); return d && d.success ? d : null; } catch (e) { return null; }
+}
+
+async function render() {
+  const days = await loadDays();
+  const day = days[Math.min(P.dayIdx || 0, Math.max(0, days.length - 1))] || { id: '', label: '' };
+  const list = ports(day), T = tickets(list), g = gameLink(day);
+  const doneN = list.filter((x) => x.done).length, nowI = list.findIndex((x) => !x.done);
+  const ib = INBOX || {}, unread = (ib.praise || []).filter((p) => !p.read).length;
+  const ch = ib.challenge, battleOpen = ib.battleOpen !== false;
+  const doneDaysWeek = (() => { if (!P.doneDays) return 0; return Math.min(7, (P.streakDays || 0)); })();
+  $('#app').innerHTML = `
+  <div class="top"><a href="../voca/">← 보카</a><h1>오늘의 항해<small>${esc(profile ? profile.name : '웨일리')} · ${LV_KO[LV] || ''} · ${esc(day.label)}</small></h1></div>
+  ${DEMO ? '<div class="demo">👀 샘플 화면이에요. 보카에 로그인한 기기에서 열면 아이의 진짜 진도로 보여요.</div>' : ''}
+  <div class="glass mail-card"><button class="mail" id="mail" style="background:none;padding:0"><span class="ic">💌${unread ? `<b>${unread}</b>` : ''}</span><span class="tx">우편함<small>${unread ? `새 칭찬 ${unread}개가 도착했어요!` : (ib.praise && ib.praise.length ? '받은 칭찬 다시 보기' : '선생님·부모님 칭찬이 여기로 와요')}</small></span>
+    ${ch ? `<span style="text-align:right;font-size:12px;color:var(--dim)">🎯 이번 주 챌린지<br><b style="color:var(--ink)">${ch.goal}일 항해 → ${esc(ch.reward || '칭찬 듬뿍')}</b></span>` : ''}</button></div>
+  <div class="glass map">
+    <h2>⛵ 오늘의 항로 (약 20분)</h2>
+    <div class="sub">항구를 하나 지날 때마다 🎟 티켓 1장! 4곳을 다 지나면 보너스 1장을 더 받아요.</div>
+    <div class="route">
+      ${list.map((x, i) => `<a class="port ${x.done ? 'done' : i === nowI ? 'now' : nowI >= 0 && i > nowI ? 'lock' : ''}" href="${x.href}" data-i="${i}">
+        <span class="n">${x.done ? '✓' : x.icon}</span><span class="t"><b>${i + 1}. ${esc(x.name)}</b><small>${esc(x.desc)}</small></span>
+        <span class="r">${x.done ? '🎟 받음' : i === nowI ? '지금 출발 ›' : '🎟 +1'}</span></a>`).join('')}
+      <img class="ship" id="ship" src="../arcade/img/kidboat.webp" alt="">
+    </div>
+    <div class="bar"><i style="width:${doneN / 4 * 100}%"></i></div>
+    <div style="font-size:13px;color:var(--dim)">${doneN === 4 ? '🎉 오늘 항해 완주! 보너스 티켓을 받았어요' : `오늘 항로 ${doneN} / 4 · 다음은 <b style="color:var(--ink)">${esc(list[nowI].name)}</b>`}</div>
+  </div>
+  <div class="glass tix">
+    <h2>🎟 오늘의 티켓</h2>
+    <div class="wallet">${Array.from({ length: MAX_TICKETS }, (_, i) => `<span class="tk ${i < T.used ? 'used' : i < T.earned ? 'have' : ''}">🎟</span>`).join('')}</div>
+    <div style="font-size:14px">남은 티켓 <b style="font-size:22px;color:#d08a10">${T.left}</b>장 <span style="color:var(--dim);font-size:12px">(오늘 받은 ${T.earned}장 · 쓴 ${T.used}장)</span></div>
+    <div class="play" style="margin-top:12px">
+      <button class="pbtn battle" id="pb" ${!T.left || !battleOpen ? 'disabled' : ''}><img src="../expedition/img/gh_shark.webp" alt=""><b>⚔ ${esc(g.battleName)}</b><small>${!battleOpen ? '선생님이 배틀 시간을 닫았어요' : '티켓 1장'}</small></button>
+      <button class="pbtn free" id="pf" ${!T.left ? 'disabled' : ''}><img src="${g.img}" alt=""><b>🎮 자유 게임</b><small>${esc(g.name)} · 티켓 1장</small></button>
+    </div>
+    ${!T.earned ? '<div class="rules" style="color:#c9264a">아직 티켓이 없어요. 1번 항구부터 출발해 볼까요?</div>' : ''}
+    <div class="rules">· 티켓은 공부해야만 생겨요: 항구 하나에 1장, 다 끝내면 보너스 1장 (하루 최대 5장)<br>· 배틀과 자유 게임에 1장씩 쓰고, 티켓은 다음 날 새로 시작해요<br>· 밤 10시~아침 7시에는 배틀을 쉬어요</div>
+  </div>`;
+  // 배 위치: 지금 가야 할 항구 옆
+  const target = document.querySelector(`.port[data-i="${nowI < 0 ? 3 : nowI}"]`);
+  if (target) $('#ship').style.top = (target.offsetTop + target.offsetHeight / 2 - 22) + 'px';
+  const night = (() => { const h = new Date().getHours(); return h >= 22 || h < 7; })();
+  const go = (href, what) => {
+    if (what === 'battle' && night) return pop('🌙 밤에는 배틀을 쉬어요<br><small style="font-size:13px;color:#6b7f95">내일 아침 7시에 다시 열려요</small>');
+    useTicket(); pop('🎟 티켓 1장 사용!');
+    setTimeout(() => { if (DEMO) render(); else location.href = href; }, 700);
+  };
+  $('#pb').onclick = () => go(g.battle, 'battle');
+  $('#pf').onclick = () => go(g.href, 'free');
+  $('#mail').onclick = async () => {
+    const d = await inbox(true) || ib; INBOX = d;
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = `<div class="sheet"><h2 style="margin:0 0 6px">💌 우편함</h2>${(d.praise || []).length ? d.praise.map((p) => `<div class="letter">${p.from === 'teacher' ? '🧑‍🏫' : '💕'} ${esc(p.text)}<small>${esc(p.fromName)} · ${String(p.at).slice(5, 10).replace('-', '/')}</small></div>`).join('') : '<div style="color:var(--dim)">아직 받은 칭찬이 없어요. 오늘 항해를 끝내면 선생님이 칭찬해 주실지도? 🐋</div>'}
+      ${d.challenge ? `<div class="letter" style="background:#fff8ec;border-color:#ffd9a8">🎯 이번 주 챌린지: <b>${d.challenge.goal}일</b> 항해하면 <b>${esc(d.challenge.reward || '칭찬 듬뿍')}</b>!</div>` : ''}
+      <button class="close">닫기</button></div>`;
+    document.body.appendChild(m);
+    const close = () => { m.remove(); render(); };
+    m.querySelector('.close').onclick = close; m.onclick = (e) => { if (e.target === m) close(); };
+  };
+}
+(async () => { INBOX = await inbox(false); render(); })();
+</script>
+</body>
+</html>

@@ -41,7 +41,7 @@ function iconTile(icon, color, cls) {
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Dashboard-Password',
 };
 
 // 노션 속성은 종류(제목/텍스트/선택/날짜…)마다 값의 모양이 달라서, 종류를 보고 읽는다.
@@ -711,6 +711,14 @@ function maskName(n) {
   if (a.length === 2) return a[0] + 'O';
   return a[0] + 'O'.repeat(a.length - 2) + a[a.length - 1];
 }
+// 틀린 단어를 { 단어: 횟수 }로 모은다 (많아도 30개까지)
+function mergeWrong(prev, add) {
+  const out = Object.assign({}, prev || {});
+  (Array.isArray(add) ? add : []).slice(0, 15).forEach(w => {
+    const k = String(w || '').trim().slice(0, 40); if (k) out[k] = (out[k] || 0) + 1;
+  });
+  return Object.fromEntries(Object.entries(out).sort((a, b) => b[1] - a[1]).slice(0, 30));
+}
 async function gameRows(env, game, month) {
   const base = (env.SUPABASE_URL || STAFF_CLOUD_URL) + '/rest/v1/records';
   const res = await fetch(base + '?kind=eq.gamescore&deleted=eq.false&data->>game=eq.' + encodeURIComponent(game)
@@ -756,6 +764,8 @@ async function gameScore(env, payload) {
         best: Math.max(score, (prev && prev.best) || 0),
         amount: ((prev && prev.amount) || 0) + amount,
         plays: ((prev && prev.plays) || 0) + 1,
+        secs: ((prev && prev.secs) || 0) + Math.max(0, Math.min(3600, Math.round(Number(payload.sec) || 0))),
+        wrong: mergeWrong(prev && prev.wrong, payload.wrong),
         updatedAt: new Date().toISOString(),
       };
       const put = await fetch(base, {
@@ -975,6 +985,135 @@ async function stairsList(env, payload) {
       .map(r => ({ id: r.id, name: maskName(r.name), cls: r.cls || null, floors: r.floors, tl: r.tl || [], wear: r.wear || {} }));
     const mine = me ? rows.find(r => r.sid === me.sid) : null;
     return { success: true, friends: list, myBest: mine ? mine.floors : 0 };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+
+// ── 선생님 화면 · 학부모 주간 리포트 · 칭찬 우편함 · 주간 챌린지 · 배틀 스위치 ──
+// 선생님 화면은 원생관리와 같은 비밀번호(X-Dashboard-Password)로만 열린다.
+// 학습 시간 = 보카 학습 기록(kind=vocab)의 durationSec, 게임 시간 = 게임 기록(kind=gamescore)의 secs.
+function weekStart(day) { const t = new Date(day + 'T00:00:00Z'), dow = (t.getUTCDay() + 6) % 7; t.setUTCDate(t.getUTCDate() - dow); return t.toISOString().slice(0, 10); }
+function statBlank() { return { learnSec: 0, gameSec: 0, sessions: 0, done: 0, correct: 0, total: 0, plays: 0, days: new Set(), gameDays: new Set(), wrong: {}, games: {} }; }
+function addVocab(st, v) {
+  st.learnSec += Number(v.durationSec) || 0; st.sessions++;
+  if ((v.status || 'done') === 'done') { st.done++; st.days.add(v.date); }
+  st.correct += Number(v.correct) || 0; st.total += Number(v.total) || 0;
+}
+function addGame(st, g) {
+  st.gameSec += Number(g.secs) || 0; st.plays += Number(g.plays) || 0; st.gameDays.add(g.date);
+  st.games[g.game] = (st.games[g.game] || 0) + (Number(g.plays) || 0);
+  for (const [w, n] of Object.entries(g.wrong || {})) st.wrong[w] = (st.wrong[w] || 0) + n;
+}
+function statOut(st) {
+  const sum = st.learnSec + st.gameSec;
+  return {
+    learnMin: Math.round(st.learnSec / 60), gameMin: Math.round(st.gameSec / 60),
+    learnPct: sum ? Math.round(st.learnSec / sum * 100) : null,
+    sessions: st.sessions, done: st.done, acc: st.total ? Math.round(st.correct / st.total * 100) : null,
+    correct: st.correct, plays: st.plays, learnDays: st.days.size, games: st.games,
+    wrong: Object.entries(st.wrong).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([w, n]) => ({ w, n })),
+  };
+}
+async function teacherOverview(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const today = seoulToday(), from = payload.range === 'today' ? today : weekStart(today);
+    const [roster, vocab, games, clan, setting] = await Promise.all([
+      cloudStudents(env),
+      cloudGet(env, 'kind=eq.vocab&deleted=eq.false&data->>date=gte.' + from + '&select=id,data&limit=10000'),
+      cloudGet(env, 'kind=eq.gamescore&deleted=eq.false&data->>date=gte.' + from + '&select=id,data&limit=10000'),
+      cloudGet(env, 'kind=eq.clanpt&deleted=eq.false&data->>week=eq.' + weekStart(today) + '&select=id,data&limit=5000'),
+      cloudGet(env, 'kind=eq.setting&id=eq.battle&select=id,data'),
+    ]);
+    const students = roster.map(s => {
+      const code = cloudCode(s.id), st = statBlank();
+      vocab.filter(v => v.studentId === s.id).forEach(v => addVocab(st, v));
+      games.filter(g => g.sid === code).forEach(g => addGame(st, g));
+      const cp = clan.find(c => c.sid === code);
+      const lv = (games.find(g => g.sid === code) || {}).level || '';
+      return Object.assign({ id: s.id, code, name: s.name, cls: clanOf(s) || (cp && cp.cls) || null, level: lv, clanPts: cp ? cp.pts : 0 }, statOut(st));
+    });
+    return { success: true, from, today, students, battle: Object.assign({ open: true }, setting[0] || {}) };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function battleSet(env, payload) {
+  try {
+    const data = { open: !!payload.open, by: String(payload.by || '').slice(0, 20), updatedAt: new Date().toISOString() };
+    await cloudPut(env, 'setting', 'battle', data);
+    return { success: true, battle: data };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function battleStatus(env) {
+  try {
+    const r = (await cloudGet(env, 'kind=eq.setting&id=eq.battle&select=id,data'))[0];
+    return { success: true, open: r ? r.open !== false : true };
+  } catch (error) { return { success: true, open: true }; }
+}
+// 학부모 주간 리포트 (아이 코드로 연다 — 부모님 휴대폰 뒤 4자리로 로그인하면 코드를 받는다)
+async function familyReport(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const st0 = await findStudentByCode(env, payload.code);
+    if (st0.error) return { success: false, error: st0.error };
+    const today = seoulToday(), from = weekStart(today), code = st0.code;
+    const roster = await cloudStudents(env);
+    const me = roster.find(s => cloudCode(s.id) === code) || roster.find(s => s.name === st0.name);
+    const [vocab, games, clan, praise, ch] = await Promise.all([
+      me ? cloudGet(env, 'kind=eq.vocab&deleted=eq.false&data->>studentId=eq.' + encodeURIComponent(me.id) + '&data->>date=gte.' + from + '&select=id,data&limit=500') : [],
+      cloudGet(env, 'kind=eq.gamescore&deleted=eq.false&data->>sid=eq.' + encodeURIComponent(code) + '&data->>date=gte.' + from + '&select=id,data&limit=500'),
+      cloudGet(env, 'kind=eq.clanpt&deleted=eq.false&id=eq.' + encodeURIComponent('cp-' + code + '-' + from) + '&select=id,data'),
+      cloudGet(env, 'kind=eq.praise&deleted=eq.false&data->>sid=eq.' + encodeURIComponent(code) + '&select=id,data&limit=200'),
+      cloudGet(env, 'kind=eq.challenge&id=eq.' + encodeURIComponent('ch-' + code + '-' + from) + '&select=id,data'),
+    ]);
+    const st = statBlank(); vocab.forEach(v => addVocab(st, v)); games.forEach(g => addGame(st, g));
+    // 요일별 막대 (월~일)
+    const days = []; for (let i = 0; i < 7; i++) { const t = new Date(from + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + i); days.push(t.toISOString().slice(0, 10)); }
+    const daily = days.map(d => ({ date: d,
+      learnMin: Math.round(vocab.filter(v => v.date === d).reduce((a, v) => a + (Number(v.durationSec) || 0), 0) / 60),
+      gameMin: Math.round(games.filter(g => g.date === d).reduce((a, g) => a + (Number(g.secs) || 0), 0) / 60),
+      done: vocab.some(v => v.date === d && (v.status || 'done') === 'done') }));
+    const challenge = ch[0] ? Object.assign({}, ch[0], { _id: undefined, doneDays: st.days.size }) : null;
+    return { success: true, name: st0.name, code, cls: me ? clanOf(me) : null, from, today, daily,
+      week: statOut(st), clanPts: clan[0] ? clan[0].pts : 0, challenge,
+      praise: praise.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 20).map(p => ({ id: p._id, from: p.from, fromName: p.fromName, text: p.text, at: p.at, read: !!p.read })) };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function praiseSend(env, payload, teacher) {
+  try {
+    const text = String(payload.text || '').trim().slice(0, 120);
+    if (!text) return { success: false, error: 'empty' };
+    let code;
+    if (teacher) code = String(payload.sid || '');
+    else { const st = await findStudentByCode(env, payload.code); if (st.error) return { success: false, error: st.error }; code = st.code; }
+    if (!/^[A-Z0-9]{4,12}$/.test(code)) return { success: false, error: 'bad-request' };
+    const at = new Date().toISOString(), id = 'pr-' + code + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await cloudPut(env, 'praise', id, { id, sid: code, from: teacher ? 'teacher' : 'parent', fromName: String(payload.fromName || (teacher ? '선생님' : '엄마·아빠')).slice(0, 12), text, at, date: seoulToday(), read: false });
+    return { success: true };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+// 아이 쪽: 우편함 열기(열면 읽음으로) + 이번 주 챌린지 + 배틀 스위치
+async function praiseInbox(env, payload) {
+  try {
+    const st = await findStudentByCode(env, payload.code); if (st.error) return { success: false, error: st.error };
+    const code = st.code, wk = weekStart(seoulToday());
+    const [list, ch, bt] = await Promise.all([
+      cloudGet(env, 'kind=eq.praise&deleted=eq.false&data->>sid=eq.' + encodeURIComponent(code) + '&select=id,data&limit=200'),
+      cloudGet(env, 'kind=eq.challenge&id=eq.' + encodeURIComponent('ch-' + code + '-' + wk) + '&select=id,data'),
+      battleStatus(env),
+    ]);
+    const items = list.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 10);
+    if (payload.markRead) for (const p of items.filter(x => !x.read)) { const id = p._id; delete p._id; p.read = true; await cloudPut(env, 'praise', id, p); }
+    return { success: true, praise: items.map(p => ({ from: p.from, fromName: p.fromName, text: p.text, at: p.at, read: !!p.read })),
+      challenge: ch[0] ? { goal: ch[0].goal, reward: ch[0].reward } : null, battleOpen: bt.open };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function challengeSet(env, payload) {
+  try {
+    const st = await findStudentByCode(env, payload.code); if (st.error) return { success: false, error: st.error };
+    const goal = Math.max(1, Math.min(7, Math.round(Number(payload.goal) || 5)));
+    const reward = String(payload.reward || '').trim().slice(0, 40);
+    const wk = weekStart(seoulToday()), id = 'ch-' + st.code + '-' + wk;
+    await cloudPut(env, 'challenge', id, { id, sid: st.code, week: wk, goal, reward, setAt: new Date().toISOString() });
+    return { success: true };
   } catch (error) { return { success: false, error: error.message }; }
 }
 
@@ -2037,6 +2176,31 @@ async function handleRequest(request, env) {
     }
     if (path === '/api/clan/board' && request.method === 'POST') {
       return json(await clanBoard(env, await request.json().catch(() => ({})), false));
+    }
+    if (path === '/api/teacher/overview' && request.method === 'POST') {
+      if (!passwordOk(request, env)) return json({ success: false, error: '비밀번호가 맞지 않아요' }, 401);
+      return json(await teacherOverview(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/teacher/battle' && request.method === 'POST') {
+      if (!env.DASHBOARD_PASSWORD || !passwordOk(request, env)) return json({ success: false, error: '비밀번호가 맞지 않아요' }, 401);
+      return json(await battleSet(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/teacher/praise' && request.method === 'POST') {
+      if (!env.DASHBOARD_PASSWORD || !passwordOk(request, env)) return json({ success: false, error: '비밀번호가 맞지 않아요' }, 401);
+      return json(await praiseSend(env, await request.json().catch(() => ({})), true));
+    }
+    if (path === '/api/battle/status') return json(await battleStatus(env));
+    if (path === '/api/family/report' && request.method === 'POST') {
+      return json(await familyReport(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/praise/send' && request.method === 'POST') {
+      return json(await praiseSend(env, await request.json().catch(() => ({})), false));
+    }
+    if (path === '/api/praise/inbox' && request.method === 'POST') {
+      return json(await praiseInbox(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/challenge/set' && request.method === 'POST') {
+      return json(await challengeSet(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/look/save' && request.method === 'POST') {
       return json(await lookSave(env, await request.json().catch(() => ({}))));

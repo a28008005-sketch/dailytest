@@ -605,7 +605,7 @@ function startSession() {
   // 헷갈림 보기: 같은 날 단어 먼저, 모자라면 앞뒤 날에서
   const near = [];
   for (let k = -6; k <= 6; k++) { const dd = L.days[idx + k]; if (dd && k) dd.words.forEach((w) => near.push(w)); }
-  S = {
+  S = { t0: Date.now(),
     lv: sel.lv, day: d, course: courseFor(), round: 0, coins: 0, st: null,
     mons: d.words.map((w) => ({ w, gauge: 0, need: 3, miss: false, caught: false, shiny: false })),
     pool: near, queue: [], cur: -1, wrong: 0, game: null, busy: false, pending: [],
@@ -1047,7 +1047,7 @@ const RANK = (() => {
     box.innerHTML = '<div class="rk"><div class="rk-load">🏆 우리 학원 순위 불러오는 중…</div></div>';
     let d = null;
     try {
-      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? { code: c, game, level, score, amount } : { game, level }) });
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? Object.assign({ code: c, game, level, score, amount }, window.GAME_META || {}) : { game, level }) });
       d = await res.json();
     } catch (e) { d = null; }
     if (!d || !d.success) { box.innerHTML = ''; return; }
@@ -1099,6 +1099,7 @@ function finish() {
     <div class="row2"><button class="ghost" id="rAgain">다시 하기</button><button class="ghost" id="rDex">📖 도감</button><button class="ghost" id="rHome">처음으로</button></div>`;
   show('result');
   const onlyStairs = S.course.games.every((x) => x === 'stairs');
+  window.GAME_META = { sec: Math.round((Date.now() - (S.t0 || Date.now())) / 1000), wrong: S.mons.filter((m) => m.miss).map((m) => m.w.en) };
   RANK.show($('#rRank'), onlyStairs ? 'stairs' : 'sea', S.lv, onlyStairs ? (S.stEng ? S.stEng.floor() : 0) : S.coins, onlyStairs ? (S.stEng ? S.stEng.floor() : 0) : caught.length);
   $('#rAgain').onclick = startSession;
   $('#rHome').onclick = () => { S = null; show('home'); renderHome(); };

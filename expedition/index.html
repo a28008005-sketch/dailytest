@@ -1070,6 +1070,7 @@ function showResult(g, escaped, why) {
   ['정답률', '총 피해량', '강화 단계'].forEach((t, i) => { $(['#rlAcc', '#rlDmg', '#rlGear'][i]).textContent = t; });
   rewardVoca(g, stars, escaped);
   CLAN.add(g.correct + (escaped ? 10 : 0), escaped ? '탈출 성공 +10' : '');
+  window.GAME_META = { sec: Math.round(g.t || 0), wrong: g.wrong.map((w) => w.en) };
   RANK.show($('#resRank'), 'expedition', sel.lv, escaped ? g.score : 0, g.correct);
   G = null;
 }
@@ -1101,7 +1102,7 @@ const RANK = (() => {
     const c = Voca.code() || ''; box.style.display = '';
     box.innerHTML = '<div class="rk-load">🏆 우리 학원 원정 순위 불러오는 중…</div>';
     let d = null;
-    try { const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? { code: c, game, level, score, amount } : { game, level }) }); d = await res.json(); } catch (e) {}
+    try { const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? Object.assign({ code: c, game, level, score, amount }, window.GAME_META || {}) : { game, level }) }); d = await res.json(); } catch (e) {}
     if (!d || !d.success) { box.style.display = 'none'; return; }
     box.style.display = '';
     const my = (n, total) => n ? `<div class="rk-my">내 순위 <b>${n}등</b> / ${total}명</div>` : '';
@@ -1320,7 +1321,7 @@ function drawGhost(g, dt) {
 }
 let ghostImg = null;
 
-const startMode = store.get('mode', 'exp');
+const startMode = ['exp', 'ghost', 'clan'].includes(QS.get('mode')) ? QS.get('mode') : store.get('mode', 'exp');
 fillSel();
 if (startMode !== 'exp') { const b = document.querySelector(`#modes button[data-m="${startMode}"]`); if (b) b.onclick(); }
 loadAll(() => { $('#loading').style.display = 'none'; });

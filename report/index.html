@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우리 아이 웨일리 주간 리포트</title>
+<link rel="icon" href="../voca/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../voca/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--navy:#0b2a4a;--ink:#16324f;--dim:#6b7f95;--line:#e6edf5;--blue:#2b8de8;--mint:#22c08a;--orange:#ff8a2f;--pink:#f05d93}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#e9f5ff 0,#f6f9fc 280px);color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:600}
+button,input,select,textarea{font:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px 40px}
+.hero{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.hero img{width:74px;height:74px;object-fit:contain}
+.hero h1{margin:0;font-size:22px;font-weight:900}
+.hero small{color:var(--dim);font-size:13px}
+.card{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(20,60,110,.07);margin-bottom:12px}
+.card h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:6px}
+.big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.big div{background:#f4f9ff;border-radius:14px;padding:12px 6px;text-align:center}
+.big b{display:block;font-size:26px;font-weight:900;color:var(--blue)}
+.big span{font-size:12px;color:var(--dim)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:150px;margin-top:4px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.col{width:70%;max-width:34px;display:flex;flex-direction:column-reverse;border-radius:8px;overflow:hidden;background:#eef3f8;min-height:6px}
+.col i{display:block}
+.col .l{background:linear-gradient(0deg,#22c08a,#59dfae)}.col .g{background:linear-gradient(0deg,#ff8a2f,#ffb36b)}
+.day small{font-size:12px;color:var(--dim)}
+.day .ok{font-size:14px;height:18px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--dim);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.ratio{display:flex;height:16px;border-radius:9px;overflow:hidden;margin:8px 0 6px;background:#eef3f8;position:relative}
+.ratio i{display:block}
+.ratio::after{content:'';position:absolute;left:70%;top:-3px;bottom:-3px;width:2px;background:var(--navy);opacity:.45}
+.msg{font-size:14px;line-height:1.6;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:#fff1f2;color:#c9264a;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:800}
+.pr{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.pr:first-of-type{border-top:0}
+.pr .ic{font-size:22px}
+.pr .tx{flex:1}
+.pr .tx small{display:block;color:var(--dim);font-size:12px;margin-top:2px}
+textarea,input[type=text],input[type=tel],select{width:100%;border:2px solid var(--line);border-radius:12px;padding:11px;font-size:15px;background:#fff}
+textarea{min-height:76px}
+.btn{width:100%;border:0;border-radius:14px;padding:13px;font-weight:900;font-size:16px;background:var(--blue);color:#fff;cursor:pointer;margin-top:8px}
+.btn.pink{background:var(--pink)}.btn.orange{background:var(--orange)}.btn.ghost{background:#eef3f8;color:var(--ink)}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.quick button{border:1px solid var(--line);background:#f7fafd;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:700;cursor:pointer}
+.prog{height:14px;border-radius:8px;background:#eef3f8;overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,#ff8a2f,#ffc24d)}
+.hint{font-size:12px;color:var(--dim);line-height:1.6}
+.err{color:#e0344b;font-size:13px;min-height:18px;margin-top:6px}
+.center{text-align:center}
+.kids button{display:block;width:100%;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+'use strict';
+const API = 'https://hello-world.a28008005.workers.dev';
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const post = (p, b) => fetch(API + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json()).catch(() => null);
+const LV = { phonics: '파닉스', lv240: '240', lv520: '520', lv860: '860', lv1240: '1240', lv1680: '1680' };
+// 이 기기에서 아이가 보카에 로그인했으면 그 코드를, 아니면 부모님이 휴대폰 뒤 4자리로 들어온 코드를 쓴다
+let code = localStorage.getItem('wr.code') || localStorage.getItem('swv.code') || '';
+
+function loginView(msg, choices, phone4) {
+  $('#app').innerHTML = `<div class="hero"><img src="../voca/icons/apple-touch-icon.png" alt=""><div><h1>웨일리 주간 리포트</h1><small>우리 아이가 이번 주에 무엇을 얼마나 공부했는지 한눈에</small></div></div>
+  <div class="card"><h2>👪 부모님 로그인</h2>
+    <div class="hint">학원에 등록하신 부모님 휴대폰 번호 <b>뒤 4자리</b>를 넣어 주세요.</div>
+    <input type="tel" id="p4" maxlength="4" inputmode="numeric" placeholder="예: 1234" value="${esc(phone4 || '')}" style="margin-top:10px;font-size:22px;text-align:center;letter-spacing:.3em">
+    <div class="kids">${(choices || []).map((c) => `<button class="btn ghost" data-id="${esc(c.id)}">${esc(c.name)}${c.grade ? ' · ' + esc(c.grade) : ''}</button>`).join('')}</div>
+    <div class="err">${esc(msg || '')}</div><button class="btn" id="go">리포트 보기</button></div>`;
+  const go = async (id) => {
+    const p4 = $('#p4').value.trim(); if (!/^\d{4}$/.test(p4)) { $('.err').textContent = '숫자 4자리를 넣어 주세요'; return; }
+    $('.err').textContent = '찾는 중…';
+    const d = await post('/api/voca/login', id ? { phone4: p4, studentId: id } : { phone4: p4 });
+    if (d && d.choices) return loginView('아이 이름을 골라 주세요', d.choices, p4);
+    if (!d || !d.success) return loginView((d && d.error) || '찾지 못했어요', null, p4);
+    code = d.code; localStorage.setItem('wr.code', code); load();
+  };
+  $('#go').onclick = () => go();
+  document.querySelectorAll('.kids button').forEach((b) => b.onclick = () => go(b.dataset.id));
+}
+async function load() {
+  $('#app').innerHTML = '<div class="card center">리포트를 만드는 중… 🐋</div>';
+  const d = await post('/api/family/report', { code });
+  if (!d || !d.success) { localStorage.removeItem('wr.code'); return loginView((d && d.error) || '리포트를 불러오지 못했어요'); }
+  render(d);
+}
+function render(d) {
+  const w = d.week, sum = w.learnMin + w.gameMin, lp = sum ? Math.round(w.learnMin / sum * 100) : 0;
+  const max = Math.max(20, ...d.daily.map((x) => x.learnMin + x.gameMin));
+  const DOW = ['월', '화', '수', '목', '금', '토', '일'];
+  const ch = d.challenge;
+  const comment = !sum ? '이번 주는 아직 기록이 없어요. 오늘 함께 "오늘의 항해"를 열어 봐 주세요.'
+    : lp >= 70 ? `학습과 게임 비율이 아주 좋아요. 게임은 공부를 마친 뒤 받는 티켓으로만 할 수 있게 되어 있어요.`
+    : lp >= 50 ? `학습이 조금 더 많아요. 목표(학습 7 : 게임 3)까지 조금만 더 힘내면 돼요.`
+    : `이번 주는 게임 시간이 학습보다 많았어요. 다음 주 "오늘의 항해"를 먼저 끝내도록 응원해 주세요.`;
+  $('#app').innerHTML = `
+  <div class="hero"><img src="../voca/icons/apple-touch-icon.png" alt=""><div><h1>${esc(d.name)}의 이번 주 항해</h1><small>${d.from.slice(5).replace('-', '/')}(월) ~ 오늘 · ${d.cls ? (d.cls === 'jinny' ? 'Jinny반' : 'Binny반') : ''}</small></div></div>
+  <div class="card"><h2>📊 이번 주 한눈에</h2>
+    <div class="big"><div><b>${w.learnDays}<small style="font-size:14px">일</small></b><span>공부한 날</span></div><div><b>${w.correct}</b><span>맞힌 문제</span></div><div><b>${w.acc == null ? '-' : w.acc + '%'}</b><span>정답률</span></div></div>
+    <div class="week">${d.daily.map((x, i) => `<div class="day"><span class="ok">${x.done ? '⭐' : ''}</span><div class="col" style="height:${Math.max(6, (x.learnMin + x.gameMin) / max * 100)}%">${x.learnMin + x.gameMin ? `<i class="l" style="flex:${x.learnMin}"></i><i class="g" style="flex:${x.gameMin}"></i>` : ''}</div><small>${DOW[i]}</small></div>`).join('')}</div>
+    <div class="legend"><span><i style="background:#22c08a"></i>학습</span><span><i style="background:#ff8a2f"></i>게임</span><span>⭐ 그날 항해 완료</span></div>
+  </div>
+  <div class="card"><h2>⚖️ 학습과 게임</h2>
+    <div class="msg">학습 <b>${w.learnMin}분</b> · 게임 <b>${w.gameMin}분</b></div>
+    <div class="ratio">${sum ? `<i style="width:${lp}%;background:#22c08a"></i><i style="width:${100 - lp}%;background:#ff8a2f"></i>` : ''}</div>
+    <div class="msg">${comment}</div>
+    ${w.wrong.length ? `<div class="hint" style="margin-top:10px">게임에서 자주 틀린 단어 — 집에서 한 번만 같이 읽어 주세요</div><div class="chips">${w.wrong.map((x) => `<span class="chip">${esc(x.w)}</span>`).join('')}</div>` : ''}
+    ${d.clanPts ? `<div class="hint" style="margin-top:10px">🏰 이번 주 반 대항전에 보탠 점수 <b>${d.clanPts}점</b></div>` : ''}
+  </div>
+  <div class="card"><h2>🎯 이번 주 챌린지</h2>
+    ${ch ? `<div class="msg">이번 주 <b>${ch.goal}일</b> 항해하면 <b>${esc(ch.reward || '칭찬 듬뿍')}</b>!</div>
+      <div class="prog"><i style="width:${Math.min(100, ch.doneDays / ch.goal * 100)}%"></i></div><div class="hint">지금 ${ch.doneDays}일 / ${ch.goal}일 ${ch.doneDays >= ch.goal ? '— 🎉 달성했어요! 약속한 선물을 챙겨 주세요' : ''}</div>`
+      : '<div class="hint">아이와 이번 주 목표를 정해 보세요. 아이의 "오늘의 항해" 화면에 챌린지가 떠요.</div>'}
+    <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:10px"><select id="cg">${[3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${(ch ? ch.goal : 5) === n ? 'selected' : ''}>${n}일</option>`).join('')}</select>
+      <input type="text" id="cr" maxlength="40" placeholder="선물 (예: 주말 아이스크림)" value="${esc(ch ? ch.reward : '')}"></div>
+    <button class="btn orange" id="cset">${ch ? '챌린지 바꾸기' : '챌린지 걸기'}</button><div class="err" id="cerr"></div>
+  </div>
+  <div class="card"><h2>💌 칭찬 한마디 보내기</h2>
+    <div class="quick">${['이번 주도 수고했어! 사랑해 💕', '매일 꾸준히 하는 모습이 자랑스러워 🐋', '틀린 단어 다시 보는 거 최고야 👍', '이번 주 챌린지 꼭 성공하자! 🎯'].map((q) => `<button>${q}</button>`).join('')}</div>
+    <textarea id="ptx" maxlength="120" placeholder="아이 앱의 우편함으로 도착해요 (120자까지)"></textarea>
+    <input type="text" id="pfrom" maxlength="12" placeholder="보내는 사람 (예: 엄마)" value="${esc(localStorage.getItem('wr.from') || '')}" style="margin-top:8px">
+    <button class="btn pink" id="psend">보내기</button><div class="err" id="perr"></div>
+    ${d.praise.length ? `<div class="hint" style="margin:12px 0 4px">최근 받은 칭찬</div>${d.praise.slice(0, 6).map((p) => `<div class="pr"><span class="ic">${p.from === 'teacher' ? '🧑‍🏫' : '💕'}</span><div class="tx">${esc(p.text)}<small>${esc(p.fromName)} · ${p.at.slice(5, 10).replace('-', '/')} ${p.read ? '· 읽음' : '· 아직 안 읽음'}</small></div></div>`).join('')}` : ''}
+  </div>
+  <button class="btn ghost" id="out">다른 아이 보기 / 로그아웃</button>`;
+  document.querySelectorAll('.quick button').forEach((b) => b.onclick = () => { $('#ptx').value = b.textContent; });
+  $('#psend').onclick = async () => {
+    const text = $('#ptx').value.trim(); if (!text) { $('#perr').textContent = '칭찬을 적어 주세요'; return; }
+    const from = $('#pfrom').value.trim() || '엄마·아빠'; localStorage.setItem('wr.from', from);
+    const r = await post('/api/praise/send', { code, text, fromName: from });
+    if (r && r.success) load(); else $('#perr').textContent = (r && r.error) || '보내지 못했어요';
+  };
+  $('#cset').onclick = async () => {
+    const r = await post('/api/challenge/set', { code, goal: +$('#cg').value, reward: $('#cr').value });
+    if (r && r.success) load(); else $('#cerr').textContent = (r && r.error) || '저장하지 못했어요';
+  };
+  $('#out').onclick = () => { localStorage.removeItem('wr.code'); code = ''; loginView(); };
+}
+code ? load() : loginView();
+</script>
+</body>
+</html>

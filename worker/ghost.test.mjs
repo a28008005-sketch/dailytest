@@ -57,3 +57,28 @@ r = await call('/api/stairs/save', { code: A, level: 'lv520', floors: 37, tl: [9
 r = await call('/api/stairs/save', { code: A, level: 'lv520', floors: 12, tl: [1] }); assert.equal(r.best, 37, '최고 기록 유지');
 r = await call('/api/stairs/list', { code: B, level: 'lv520' }); assert.equal(r.friends.length, 1); assert.equal(r.friends[0].floors, 37); assert.deepEqual(r.friends[0].wear, { head: 'cap' });
 console.log('꾸미기·계단: 모두 통과');
+
+// 선생님 화면 · 학부모 리포트 · 칭찬 · 챌린지 · 배틀 스위치
+{
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  store.set('voc1', { kind: 'vocab', id: 'voc1', data: { studentId: 's1', date: today, durationSec: 840, correct: 18, total: 20, status: 'done' }, deleted: false });
+  await call('/api/game/score', { code: A, game: 'stairs', level: 'lv520', score: 30, amount: 30, sec: 360, wrong: ['apple', 'banana', 'apple'] });
+  const env2 = Object.assign({}, env, { DASHBOARD_PASSWORD: '고래' });
+  const tcall = async (path, body, pw) => (await worker.fetch(new Request('https://w' + path, { method: 'POST', headers: pw ? { 'X-Dashboard-Password': encodeURIComponent(pw) } : {}, body: JSON.stringify(body) }), env2)).json();
+  let t = await tcall('/api/teacher/overview', { range: 'week' }, '틀림'); assert.equal(t.success, false);
+  t = await tcall('/api/teacher/overview', { range: 'week' }, '고래');
+  const ha = t.students.find(x => x.name === '김하윤');
+  assert.equal(ha.learnMin, 14); assert.equal(ha.gameMin, 6); assert.equal(ha.learnPct, 70); assert.equal(ha.acc, 90); assert.equal(ha.cls, 'jinny');
+  assert.equal(ha.wrong[0].w, 'apple'); assert.equal(ha.wrong[0].n, 2);
+  t = await tcall('/api/teacher/battle', { open: false }, '고래'); assert.equal(t.battle.open, false);
+  t = await call('/api/battle/status', {}); assert.equal(t.open, false);
+  t = await tcall('/api/teacher/praise', { sid: A, text: '오늘 문장 최고!' }, '고래'); assert.equal(t.success, true);
+  t = await call('/api/praise/send', { code: A, text: '사랑해 우리 딸', fromName: '엄마' }); assert.equal(t.success, true);
+  t = await call('/api/challenge/set', { code: A, goal: 5, reward: '주말 아이스크림' }); assert.equal(t.success, true);
+  t = await call('/api/family/report', { code: A });
+  assert.equal(t.success, true); assert.equal(t.week.learnMin, 14); assert.equal(t.praise.length, 2); assert.equal(t.challenge.goal, 5); assert.equal(t.challenge.doneDays, 1);
+  assert.equal(t.daily.length, 7);
+  t = await call('/api/praise/inbox', { code: A, markRead: true }); assert.equal(t.praise.length, 2); assert.equal(t.challenge.reward, '주말 아이스크림'); assert.equal(t.battleOpen, false);
+  t = await call('/api/praise/inbox', { code: A }); assert.equal(t.praise.every(p => p.read), true);
+  console.log('선생님·학부모·칭찬·챌린지·배틀 스위치: 모두 통과');
+}

@@ -753,7 +753,7 @@ const RANK = (() => {
     box.innerHTML = '<div class="rk"><div class="rk-load">🏆 우리 학원 순위 불러오는 중…</div></div>';
     let d = null;
     try {
-      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? { code: c, game, level, score, amount } : { game, level }) });
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c ? Object.assign({ code: c, game, level, score, amount }, window.GAME_META || {}) : { game, level }) });
       d = await res.json();
     } catch (e) { d = null; }
     if (!d || !d.success) { box.innerHTML = ''; return; }
@@ -859,6 +859,7 @@ function endGame(g) {
   if (stars >= 2) SFX.win();
   show('result');
   const amount = g.name === 'stairs' ? g.score : g.name === 'run' ? (g.passed || 0) : (g.cleared ? g.total : (g.si || 0));
+  window.GAME_META = { sec: Math.round(g.t || 0), wrong: g.wrong.map((w) => w.en) };
   RANK.show($('#resRank'), g.name, sel.lv, g.score, amount);
   rewardVoca(g, stars);
 }

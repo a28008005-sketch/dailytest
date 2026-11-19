@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>웨일리 선생님 화면</title>
+<link rel="icon" href="../voca/icons/favicon-32.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--navy:#0b2a4a;--ink:#16324f;--dim:#6b7f95;--line:#e3ebf3;--bg:#f3f7fb;--card:#fff;--blue:#2b8de8;--mint:#22c08a;--red:#f2475b;--gold:#f5b520;--jinny:#18b7d8;--binny:#f05d93}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:600}
+button,input,select{font:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:20px;font-weight:900;flex:1;min-width:200px}
+.top h1 small{display:block;font-size:12px;font-weight:600;opacity:.7;margin-top:2px}
+.seg{display:flex;background:rgba(255,255,255,.12);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;color:#cfe0f3;padding:7px 12px;border-radius:8px;font-weight:800;cursor:pointer}
+.seg button.on{background:#fff;color:var(--navy)}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 20px 40px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+@media (max-width:520px){.cards{grid-template-columns:1fr 1fr}.cards>*:nth-last-child(-n+2){grid-column:1/-1}}
+.card{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:0 2px 10px rgba(20,50,90,.06)}
+.card .k{font-size:13px;color:var(--dim)}
+.card .v{font-size:28px;font-weight:900;margin-top:4px}
+.card .v small{font-size:13px;color:var(--dim);font-weight:700}
+.card.warn .v{color:var(--red)}
+.switch{display:flex;align-items:center;gap:12px}
+.tog{width:64px;height:34px;border-radius:999px;border:0;background:#c9d6e3;position:relative;cursor:pointer;transition:background .2s;flex:0 0 auto}
+.tog::after{content:'';position:absolute;left:4px;top:4px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:left .2s}
+.tog.on{background:var(--mint)}.tog.on::after{left:34px}
+.tbl{background:var(--card);border-radius:16px;box-shadow:0 2px 10px rgba(20,50,90,.06);overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(130px,1.1fr) 70px minmax(220px,2fr) 70px 70px minmax(160px,1.4fr) 92px;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.row.head{border-top:0;background:#f7fafd;font-size:12px;color:var(--dim);font-weight:800}
+.row.alert{background:#fff6f7}
+.nm{font-weight:900;font-size:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:900;padding:2px 7px;border-radius:999px;color:#fff}
+.badge.jinny{background:var(--jinny)}.badge.binny{background:var(--binny)}.badge.none{background:#9aabbd}
+.lv{font-size:13px;color:var(--dim)}
+.ratio{display:flex;flex-direction:column;gap:4px}
+.bar{position:relative;height:14px;border-radius:8px;background:#edf2f7;overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar .l{background:linear-gradient(90deg,#3ad29f,#22c08a)}.bar .g{background:linear-gradient(90deg,#ffb04d,#ff7a2f)}
+.bar::after{content:'';position:absolute;left:70%;top:-2px;bottom:-2px;width:2px;background:var(--navy);opacity:.5}
+.rt{font-size:12px;color:var(--dim)}
+.rt b{color:var(--ink)}
+.rt .bad{color:var(--red)}
+.num{font-size:15px;font-weight:900;text-align:center}
+.num small{display:block;font-size:11px;color:var(--dim);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:12px;padding:3px 8px;border-radius:999px;background:#fff1f2;color:#c9264a;font-weight:800}
+.chip.none{background:#eef4fa;color:var(--dim)}
+.praise{border:0;border-radius:10px;background:#fff4dc;color:#a46a00;padding:8px 10px;font-weight:900;cursor:pointer}
+.empty{padding:30px;text-align:center;color:var(--dim)}
+.login{max-width:380px;margin:12vh auto;background:#fff;border-radius:20px;padding:26px;box-shadow:0 10px 30px rgba(20,50,90,.1);text-align:center}
+.login input{width:100%;padding:13px;border:2px solid var(--line);border-radius:12px;margin:14px 0 10px;font-size:16px}
+.login button,.btn{width:100%;padding:13px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:900;font-size:16px;cursor:pointer}
+.err{color:var(--red);font-size:13px;min-height:18px}
+.modal{position:fixed;inset:0;background:rgba(5,20,40,.5);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.sheet{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:440px}
+.sheet h3{margin:0 0 10px}
+.sheet textarea{width:100%;min-height:90px;border:2px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:15px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.quick button{border:1px solid var(--line);background:#f7fafd;border-radius:999px;padding:6px 10px;cursor:pointer;font-size:13px;font-weight:700}
+.note{font-size:12px;color:var(--dim);line-height:1.6;margin-top:14px}
+@media (max-width:900px){
+  .row{grid-template-columns:1fr 1fr;grid-auto-rows:auto}
+  .row.head{display:none}
+  .row>*:nth-child(3),.row>*:nth-child(6){grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+const API = 'https://hello-world.a28008005.workers.dev';
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LV = { phonics: '파닉스', lv240: '240', lv520: '520', lv860: '860', lv1240: '1240', lv1680: '1680' };
+const GAME = { stairs: '계단', run: '런', obby: '오비', sea: '몬스터', expedition: '원정대' };
+let pw = sessionStorage.getItem('tch.pw') || '';
+const st = { range: 'today', cls: 'all', data: null };
+
+async function api(path, body) {
+  try {
+    const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Dashboard-Password': encodeURIComponent(pw) }, body: JSON.stringify(body || {}) });
+    return await r.json();
+  } catch (e) { return { success: false, error: '서버에 연결하지 못했어요' }; }
+}
+function login(msg) {
+  $('#app').innerHTML = `<div class="login"><div style="font-size:42px">🐋</div><h2 style="margin:8px 0 0">웨일리 선생님 화면</h2>
+    <div style="color:var(--dim);font-size:14px;margin-top:6px">원생관리와 같은 비밀번호를 넣어 주세요</div>
+    <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password"><div class="err">${esc(msg || '')}</div><button id="go">들어가기</button></div>`;
+  const go = () => { pw = $('#pw').value; sessionStorage.setItem('tch.pw', pw); load(); };
+  $('#go').onclick = go; $('#pw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  $('#pw').focus();
+}
+async function load() {
+  $('#app').innerHTML = '<div class="empty">불러오는 중…</div>';
+  const d = await api('/api/teacher/overview', { range: st.range });
+  if (!d || !d.success) return login(d && d.error ? d.error : '');
+  st.data = d; render();
+}
+function render() {
+  const d = st.data;
+  let list = d.students.filter((s) => st.cls === 'all' || s.cls === st.cls);
+  const active = list.filter((s) => s.sessions || s.plays);
+  // 게임 비중이 큰 아이를 위로, 그다음 아무것도 안 한 아이, 나머지는 학습 시간 순
+  const warn = (s) => s.learnPct != null && s.learnPct < 50;
+  list = list.slice().sort((a, b) => (warn(b) - warn(a)) || ((!a.sessions && !a.plays) - (!b.sessions && !b.plays)) || (b.learnMin - a.learnMin));
+  const avg = active.length ? Math.round(active.reduce((t, s) => t + s.learnMin, 0) / active.length) : 0;
+  const totL = active.reduce((t, s) => t + s.learnMin, 0), totG = active.reduce((t, s) => t + s.gameMin, 0);
+  const jinnyPts = d.students.filter((s) => s.cls === 'jinny').reduce((t, s) => t + (s.clanPts || 0), 0);
+  const binnyPts = d.students.filter((s) => s.cls === 'binny').reduce((t, s) => t + (s.clanPts || 0), 0);
+  const rangeKo = st.range === 'today' ? '오늘' : '이번 주';
+  $('#app').innerHTML = `
+  <div class="top">
+    <h1>🐋 웨일리 선생님 화면<small>${rangeKo} · 학습과 게임 시간, 정답률, 자주 틀린 단어</small></h1>
+    <div class="seg" id="rng"><button data-v="today" class="${st.range === 'today' ? 'on' : ''}">오늘</button><button data-v="week" class="${st.range === 'week' ? 'on' : ''}">이번 주</button></div>
+    <div class="seg" id="cls"><button data-v="all" class="${st.cls === 'all' ? 'on' : ''}">전체</button><button data-v="jinny" class="${st.cls === 'jinny' ? 'on' : ''}">Jinny반</button><button data-v="binny" class="${st.cls === 'binny' ? 'on' : ''}">Binny반</button></div>
+  </div>
+  <div class="wrap">
+    <div class="cards">
+      <div class="card"><div class="k">${rangeKo} 공부한 학생</div><div class="v">${active.length}<small> / ${list.length}명</small></div></div>
+      <div class="card"><div class="k">평균 학습 시간</div><div class="v">${avg}<small>분</small></div></div>
+      <div class="card ${totL + totG && totL / (totL + totG) < .7 ? 'warn' : ''}"><div class="k">학습 : 게임 (목표 7:3)</div><div class="v">${totL + totG ? Math.round(totL / (totL + totG) * 10) : '-'} : ${totL + totG ? 10 - Math.round(totL / (totL + totG) * 10) : '-'}</div></div>
+      <div class="card warn"><div class="k">게임이 학습보다 많은 학생</div><div class="v">${list.filter(warn).length}<small>명</small></div></div>
+      <div class="card"><div class="k">이번 주 반 대항전</div><div class="v" style="font-size:20px"><span style="color:var(--jinny)">Jinny ${jinnyPts}</span> : <span style="color:var(--binny)">${binnyPts} Binny</span></div></div>
+      <div class="card switch"><button class="tog ${d.battle.open ? 'on' : ''}" id="bt" aria-label="배틀 시간"></button><div><div style="font-weight:900">배틀 ${d.battle.open ? '열림' : '닫힘'}</div><div class="k">고스트 배틀·친구랑 계단을 아이들이 ${d.battle.open ? '할 수 있어요' : '할 수 없어요'}</div></div></div>
+    </div>
+    <div class="tbl">
+      <div class="row head"><div>학생</div><div>레벨</div><div>학습 : 게임 시간</div><div style="text-align:center">정답률</div><div style="text-align:center">학습 일수</div><div>자주 틀린 단어 (게임)</div><div></div></div>
+      ${list.length ? list.map((s) => {
+        const sum = s.learnMin + s.gameMin, lp = sum ? s.learnMin / sum * 100 : 0;
+        const games = Object.entries(s.games || {}).map(([k, n]) => (GAME[k] || k) + ' ' + n + '판').join(' · ');
+        return `<div class="row ${warn(s) ? 'alert' : ''}">
+          <div class="nm">${esc(s.name)} <span class="badge ${s.cls || 'none'}">${s.cls === 'jinny' ? 'Jinny' : s.cls === 'binny' ? 'Binny' : '반 미정'}</span></div>
+          <div class="lv">${esc(LV[s.level] || '-')}</div>
+          <div class="ratio">${sum ? `<div class="bar"><i class="l" style="width:${lp}%"></i><i class="g" style="width:${100 - lp}%"></i></div>` : ''}
+            <div class="rt">${sum ? `학습 <b>${s.learnMin}분</b> · 게임 <b>${s.gameMin}분</b> ${warn(s) ? '<span class="bad">· 게임이 더 많아요</span>' : ''}${games ? '<br>' + esc(games) : ''}` : '<span>아직 기록이 없어요</span>'}</div></div>
+          <div class="num">${s.acc == null ? '-' : s.acc + '%'}<small>${s.done}회 완료</small></div>
+          <div class="num">${s.learnDays}<small>일</small></div>
+          <div class="chips">${s.wrong.length ? s.wrong.map((w) => `<span class="chip">${esc(w.w)}${w.n > 1 ? ' ×' + w.n : ''}</span>`).join('') : '<span class="chip none">없음</span>'}</div>
+          <div><button class="praise" data-sid="${esc(s.code)}" data-nm="${esc(s.name)}">💌 칭찬</button></div>
+        </div>`;
+      }).join('') : '<div class="empty">학생이 없어요</div>'}
+    </div>
+    <div class="note">· 학습 시간은 웨일리 보카에서 공부한 시간, 게임 시간은 아케이드·몬스터 잡기·원정대에서 한 시간입니다. 목표는 학습 7 : 게임 3이고, 게임이 학습보다 많은 학생은 맨 위에 빨갛게 보입니다.<br>
+    · 자주 틀린 단어는 게임에서 틀린 단어를 모은 것입니다. 수업 시작 때 함께 짚어 주시면 좋아요.<br>
+    · 💌 칭찬을 보내면 아이의 '오늘의 항해' 우편함에 도착합니다.</div>
+  </div>`;
+  $('#rng').onclick = (e) => { const b = e.target.closest('button'); if (b) { st.range = b.dataset.v; load(); } };
+  $('#cls').onclick = (e) => { const b = e.target.closest('button'); if (b) { st.cls = b.dataset.v; render(); } };
+  $('#bt').onclick = async () => { const r = await api('/api/teacher/battle', { open: !d.battle.open, by: '선생님' }); if (r && r.success) { d.battle = r.battle; render(); } else alert(r && r.error || '바꾸지 못했어요'); };
+  document.querySelectorAll('.praise').forEach((b) => b.onclick = () => praise(b.dataset.sid, b.dataset.nm));
+}
+function praise(sid, name) {
+  const m = document.createElement('div'); m.className = 'modal';
+  const quick = ['오늘 집중력 최고였어! 👍', '문장 만들기 정말 잘했어 ✨', '꾸준히 하는 모습이 멋져요 🐋', '틀린 단어 다시 보는 거 대단해!', '이번 주 반 대항전 MVP! 🏆'];
+  m.innerHTML = `<div class="sheet"><h3>💌 ${esc(name)}에게 칭찬 보내기</h3><div class="quick">${quick.map((q) => `<button>${q}</button>`).join('')}</div>
+    <textarea id="ptx" maxlength="120" placeholder="칭찬 한마디 (120자까지)"></textarea><div class="err" id="perr"></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="background:#c9d6e3;color:var(--ink)" id="pc">취소</button><button class="btn" id="ps">보내기</button></div></div>`;
+  document.body.appendChild(m);
+  m.querySelectorAll('.quick button').forEach((b) => b.onclick = () => { $('#ptx').value = b.textContent; });
+  $('#pc').onclick = () => m.remove();
+  m.onclick = (e) => { if (e.target === m) m.remove(); };
+  $('#ps').onclick = async () => {
+    const text = $('#ptx').value.trim(); if (!text) return;
+    const r = await api('/api/teacher/praise', { sid, text, fromName: '선생님' });
+    if (r && r.success) { m.querySelector('.sheet').innerHTML = `<h3>보냈어요! 💌</h3><div style="color:var(--dim)">${esc(name)}의 우편함에 도착했어요.</div><button class="btn" style="margin-top:14px">닫기</button>`; m.querySelector('.btn').onclick = () => m.remove(); }
+    else $('#perr').textContent = r && r.error || '보내지 못했어요';
+  };
+}
+pw ? load() : login();
+</script>
+</body>
+</html>
