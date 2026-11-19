@@ -98,7 +98,8 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 /* ── 버블팡 ── */
 .g-bubble{background:url(../arcade/img/bgSea.jpg) center/cover}
 /* ── 바다 계단 ── */
-.g-stairs{background:url(../arcade/img/bgSky.jpg) center/cover}
+.g-stairs{background:#bfe4ff}
+.wst-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 .stw{position:absolute; left:0; top:0; width:100%; height:100%; will-change:transform}
 .step{position:absolute; height:20px; border-radius:12px; background:linear-gradient(#fff,#cfe9ff); box-shadow:0 6px 0 #8fc1ec, 0 12px 18px rgba(0,40,90,.18)}
 .step.on{background:linear-gradient(#fff6c8,#ffd35a); box-shadow:0 6px 0 #e3a92a, 0 12px 18px rgba(120,80,0,.2)}
@@ -248,6 +249,18 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 .rk-my b{color:#ff7a2f}
 .rk-note{font-size:12px;font-weight:500;color:#6c84a6;margin-top:6px;text-align:center}
 .rk-empty{font-size:13.5px;font-weight:600;color:#6c84a6;text-align:center;padding:10px 4px}
+
+/* ── 태블릿 가로 화면: 화면을 꽉 채운다 ── */
+@media (orientation:landscape) and (min-width:820px){
+  .home-in{max-width:1180px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:20px;align-items:start;grid-auto-flow:row dense}
+  .home-in>*{grid-column:1}
+  .home-in>.title,.home-in>.who,.home-in>#backVoca{grid-column:1 / -1}
+  .home-in>.panel:has(#gpick){grid-column:2;grid-row:span 4}
+  .home-in>#startBtn,.home-in>.row2{grid-column:2}
+  .g-stairs .stbtns{top:64px;bottom:14px;left:14px;right:14px;justify-content:space-between;align-items:flex-end;pointer-events:none}
+  .g-stairs .stb{flex:0 0 27%;height:min(46vh,330px);pointer-events:auto}
+  .g-stairs .wst-bar{right:14px;top:58px;flex-direction:row}
+}
 </style>
 </head>
 <body>
@@ -309,6 +322,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 
 <script src="data.js"></script>
 <script src="../arcade/sound.js"></script>
+<script src="../shared/wear-data.js"></script>
+<script src="../shared/look.js"></script>
+<script src="../shared/stairs.js"></script>
 <script>
 'use strict';
 /* ═════════════ 기본 ═════════════ */
@@ -739,6 +755,7 @@ const face = (w) => (w.p ? `<img class="pic" src="pic/${w.p}.jpg" alt="">` : `<d
 
 /* ═════════════ 게임 1: 버블팡 ═════════════ */
 function Bubble(stage, target, list, cb) {
+  if (WSOUND.music.isOn && S && !S.course.games.every((x) => x === 'stairs')) WSOUND.music.play('sea');
   stage.className = 'stage g-bubble'; stage.innerHTML = '';
   const W = stage.clientWidth, H = stage.clientHeight;
   const bs = Math.min(W / 4.2, H / 3.2, 190);
@@ -782,54 +799,52 @@ function Bubble(stage, target, list, cb) {
 /* ═════════════ 게임 4: 바다 계단 (무한 계단) ═════════════ */
 // 소리를 듣고 맞는 그림이 있는 쪽 계단으로 한 칸씩 올라간다. 계단은 한 판 동안 계속 이어진다.
 function Stairs(stage, target, list, cb) {
-  stage.className = 'stage g-stairs';
-  const W = stage.clientWidth, H = stage.clientHeight;
-  const sw = Math.min(W * .3, 150), sh = Math.min(H * .1, 70), ch = Math.min(H * .16, 96);
-  if (!S.st) S.st = { steps: [{ x: 0, y: 0 }], i: 0, floor: 0 };
-  const st = S.st, cur = st.steps[st.i];
-  // 다음 계단 방향: 화면 밖으로 나가지 않게
-  let dir = Math.random() < .5 ? -1 : 1;
-  if (cur.x + dir * sw * .7 > W / 2 - sw * .6 || cur.x + dir * sw * .7 < -W / 2 + sw * .6) dir = -dir;
-  st.steps = st.steps.slice(0, st.i + 1); st.steps.push({ x: cur.x + dir * sw * .7, y: cur.y + sh });
+  // 520·860 무한계단과 같은 공용 계단 엔진(shared/stairs.js). 파닉스는 slow 로 조금 천천히 움직인다.
+  // 정답 그림이 왼쪽·오른쪽 어디에 있을지는 무작위(계단 방향과 상관없음).
+  const fresh = !stage.classList.contains('g-stairs') || !stage.querySelector('.wst-cv') || !S.stEng;
+  if (fresh) {
+    stage.className = 'stage g-stairs';
+    stage.innerHTML = `<canvas class="wst-cv"></canvas><div class="stfl">🪜 <span>0</span>층</div><div class="stbtns"></div>`;
+    WSOUND.music.play('stairs');   // 계단은 520 무한계단과 같은 신나는 계단 음악
+    if (!S.stEng) S.stEng = WSTAIRS.create({ slow: true, level: /240/.test(sel.lv) ? 'lv240' : 'phonics' });
+    WSTAIRS.toolbar(stage, S.stEng);
+    const cv = stage.querySelector('.wst-cv'), c = cv.getContext('2d');
+    let last = performance.now();
+    (function frame(now) {
+      if (!cv.isConnected) return;
+      const r = stage.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+      const dt = Math.min(.05, (now - last) / 1000); last = now;
+      S.stEng.update(dt); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // 버튼이 화면 아래를 가리므로 계단은 위쪽 공간에 맞춰 그린다
+      const land = r.width > r.height * 1.15, bh = land ? 0 : (stage.querySelector('.stbtns') || { offsetHeight: 0 }).offsetHeight + 16;
+      c.clearRect(0, 0, r.width, r.height); c.save(); S.stEng.draw(c, r.width, Math.max(160, r.height - bh * .55)); c.restore();
+      requestAnimationFrame(frame);
+    })(last);
+  }
+  const E = S.stEng;
+  const side = Math.random() < .5 ? -1 : 1;
   const other = list.find((w) => key(w) !== key(target)) || target;
-  const sideL = dir < 0 ? target : other, sideR = dir < 0 ? other : target;
-  const baseY = H * .56;
-  const camOf = (i) => -(st.steps[i].y);
-  stage.innerHTML = `<div class="stfl">🪜 <span>${st.floor}</span>층</div><div class="stw"></div>
-    <div class="stbtns"><button class="stb l"><span class="arr">◀</span>${face(sideL)}</button><button class="stb r"><span class="arr">▶</span>${face(sideR)}</button></div>`;
-  const world = stage.querySelector('.stw');
-  const from = Math.max(0, st.i - 9);
-  st.steps.forEach((p, i) => {
-    if (i < from || i > st.i) return; // 다음 계단은 미리 보여 주지 않아요(정답 쪽이 들키니까)
-    const e = document.createElement('div'); e.className = 'step' + (i === st.i ? ' on' : '');
-    e.style.cssText = `left:${W / 2 + p.x - sw / 2}px;top:${baseY - p.y}px;width:${sw}px`;
-    world.append(e);
-  });
-  const kid = document.createElement('img'); kid.className = 'stc'; kid.src = SEA + 'whale_happy.webp';
-  const place = (p, flip) => { kid.style.cssText = `left:${W / 2 + p.x - ch / 2}px;top:${baseY - p.y - ch + 6}px;width:${ch}px;transform:scaleX(${flip ? -1 : 1})`; };
-  place(cur, dir < 0); world.append(kid);
-  world.style.transform = `translateY(${-camOf(st.i)}px)`;
+  const sideL = side < 0 ? target : other, sideR = side < 0 ? other : target;
+  stage.querySelector('.stfl span').textContent = E.floor();
+  const bx = stage.querySelector('.stbtns');
+  bx.innerHTML = `<button class="stb l"><span class="arr">◀</span>${face(sideL)}</button><button class="stb r"><span class="arr">▶</span>${face(sideR)}</button>`;
   let alive = true;
-  const btns = stage.querySelectorAll('.stb');
+  const btns = bx.querySelectorAll('.stb');
   btns.forEach((b, bi) => {
     const w = bi ? sideR : sideL;
     b.onpointerdown = (e) => {
       e.preventDefault(); if (!alive) return;
       if (key(w) === key(target)) {
-        alive = false; st.i++; st.floor++;
-        kid.style.transition = 'left .38s ease-out, top .38s ease-out'; place(st.steps[st.i], dir < 0);
-        kid.classList.add('hop'); SFX.jump(); WSOUND.music.tempo(1 + Math.min(st.floor, 40) / 80);
-        world.style.transition = 'transform .45s ease-out'; world.style.transform = `translateY(${-camOf(st.i)}px)`;
-        stage.querySelector('.stfl span').textContent = st.floor;
-        const ne = document.createElement('div'); ne.className = 'step on'; const np = st.steps[st.i];
-        ne.style.cssText = `left:${W / 2 + np.x - sw / 2}px;top:${baseY - np.y}px;width:${sw}px;animation:appear .25s`; world.insertBefore(ne, kid);
-        setTimeout(() => cb(true), 480);
-      } else { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); kid.classList.remove('oops'); void kid.offsetWidth; kid.classList.add('oops'); cb(false); }
+        alive = false; E.step(); SFX.jump(); WSOUND.music.tempo(1 + Math.min(E.floor(), 40) / 80);
+        stage.querySelector('.stfl span').textContent = E.floor();
+        setTimeout(() => cb(true), 560);
+      } else { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); E.oops(); cb(false); }
     };
   });
   return {
     stop() { alive = false; },
-    hint() { btns[dir < 0 ? 0 : 1].classList.add('glow'); },
+    hint() { btns[side < 0 ? 0 : 1].classList.add('glow'); },
   };
 }
 
@@ -840,6 +855,7 @@ const MOLE_SVG = `<svg viewBox="0 0 120 100"><ellipse cx="60" cy="70" rx="44" ry
   <ellipse cx="30" cy="68" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/><ellipse cx="90" cy="68" rx="6" ry="4" fill="#FF8FA8" opacity=".6"/>
   <ellipse cx="24" cy="40" rx="9" ry="12" fill="#7E5233"/><ellipse cx="96" cy="40" rx="9" ry="12" fill="#7E5233"/></svg>`;
 function Mole(stage, target, list, cb) {
+  if (WSOUND.music.isOn && S && !S.course.games.every((x) => x === 'stairs')) WSOUND.music.play('sea');
   stage.className = 'stage g-mole'; stage.innerHTML = '<div class="holes"></div>';
   const wrap = stage.querySelector('.holes');
   // 정답 두더지가 언제 나올지 매번 다르게: 처음 0~2마리는 다른 두더지, 그 뒤로는 30% 확률(6마리 넘게 안 나오면 그때 꼭).
@@ -911,6 +927,7 @@ function fishSVG(col) {
     <path d="M10 54 Q16 58 22 54" stroke="#1E2430" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 }
 function Fish(stage, target, list, cb) {
+  if (WSOUND.music.isOn && S && !S.course.games.every((x) => x === 'stairs')) WSOUND.music.play('sea');
   stage.className = 'stage g-fish';
   stage.innerHTML = `<div class="wave"></div><div class="bubbles-bg">${Array.from({ length: 10 }, () => `<i style="left:${rnd(0, 100)}%;animation-duration:${rnd(5, 10)}s;animation-delay:${rnd(0, 6)}s"></i>`).join('')}</div>
     <img class="boat" src="../arcade/img/kidboat.webp" alt="">
@@ -1035,6 +1052,7 @@ const RANK = (() => {
 })();
 
 function finish() {
+  if (S && S.stEng) { WSTAIRS.saveRun(S.stEng); }
   WSOUND.music.stop();
   if (S.game) { S.game.stop(); S.game = null; }
   const caught = S.mons.filter((m) => m.caught), shiny = caught.filter((m) => m.shiny).length;
@@ -1063,7 +1081,7 @@ function finish() {
     <div class="row2"><button class="ghost" id="rAgain">다시 하기</button><button class="ghost" id="rDex">📖 도감</button><button class="ghost" id="rHome">처음으로</button></div>`;
   show('result');
   const onlyStairs = S.course.games.every((x) => x === 'stairs');
-  RANK.show($('#rRank'), onlyStairs ? 'stairs' : 'sea', S.lv, onlyStairs ? (S.st ? S.st.floor : 0) : S.coins, onlyStairs ? (S.st ? S.st.floor : 0) : caught.length);
+  RANK.show($('#rRank'), onlyStairs ? 'stairs' : 'sea', S.lv, onlyStairs ? (S.stEng ? S.stEng.floor() : 0) : S.coins, onlyStairs ? (S.stEng ? S.stEng.floor() : 0) : caught.length);
   $('#rAgain').onclick = startSession;
   $('#rHome').onclick = () => { S = null; show('home'); renderHome(); };
   $('#rDex').onclick = () => showDex(S.lv);

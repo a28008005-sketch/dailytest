@@ -45,3 +45,15 @@ assert.equal(r.teams.jinny.pts, 300, 'daily cap'); assert.equal(r.me.cls, 'jinny
 r = await call('/api/clan/add', { code: B, pts: 10 }); // 반을 안 보내도 기록된 반은 없음 → 점수 없음(이서아 명부엔 반 없음)
 assert.equal(r.teams.binny.pts, 25);
 console.log('고스트·반 대항전: 모두 통과');
+
+// 꾸미기 자랑 · 계단 같이 오르기
+r = await call('/api/look/save', { code: A, level: 'phonics', wear: { skin: 'skin_gold', head: 'crown', bad: 'x', face: '<script>' } });
+assert.equal(r.success, true);
+assert.deepEqual(store.get('lk-' + A).data.wear, { skin: 'skin_gold', head: 'crown' });
+r = await call('/api/look/like', { code: B, cls: 'binny', id: 'lk-' + A }); assert.equal(r.hearts, 1);
+r = await call('/api/look/like', { code: B, cls: 'binny', id: 'lk-' + A }); assert.equal(r.hearts, 1, '하트는 한 번만');
+r = await call('/api/look/list', { code: B, level: 'phonics' }); assert.equal(r.looks.length, 1); assert.equal(r.looks[0].liked, true);
+r = await call('/api/stairs/save', { code: A, level: 'lv520', floors: 37, tl: [900, 1800], wear: { head: 'cap' } }); assert.equal(r.best, 37);
+r = await call('/api/stairs/save', { code: A, level: 'lv520', floors: 12, tl: [1] }); assert.equal(r.best, 37, '최고 기록 유지');
+r = await call('/api/stairs/list', { code: B, level: 'lv520' }); assert.equal(r.friends.length, 1); assert.equal(r.friends[0].floors, 37); assert.deepEqual(r.friends[0].wear, { head: 'cap' });
+console.log('꾸미기·계단: 모두 통과');

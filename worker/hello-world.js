@@ -894,6 +894,90 @@ async function clanBoard(env, payload, add) {
   }
 }
 
+// ── 꾸미기 자랑 · 계단 친구와 같이 오르기 ──
+// look: 학생마다 한 줄(kind=look). 아이가 '꾸미기 저장'을 누른 그 모습(wear)을 친구들이 구경하고 하트를 준다.
+// stairsghost: 학생·레벨마다 가장 높이 오른 기록(kind=stairsghost). 층마다 오른 시각(tl)으로 친구가 함께 오른다.
+const WEAR_SLOTS = ['skin', 'head', 'face', 'hand', 'back', 'fx'];
+function cleanWear(w) {
+  const out = {};
+  for (const k of WEAR_SLOTS) { const v = w && w[k]; if (typeof v === 'string' && /^[a-z0-9_]{1,30}$/.test(v)) out[k] = v; }
+  return out;
+}
+async function lookSave(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const me = await battleStudent(env, payload);
+    if (!me) return { success: false, error: 'no-code' };
+    const id = 'lk-' + me.sid;
+    const prev = (await cloudGet(env, 'kind=eq.look&id=eq.' + encodeURIComponent(id) + '&select=id,data'))[0] || null;
+    const level = GAME_LEVELS.includes(payload.level) ? payload.level : ((prev && prev.level) || '');
+    const data = { id, sid: me.sid, name: me.name, cls: me.cls, level, wear: cleanWear(payload.wear),
+      hearts: (prev && prev.hearts) || 0, likedBy: (prev && prev.likedBy) || [], updatedAt: new Date().toISOString() };
+    await cloudPut(env, 'look', id, data);
+    return { success: true };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function lookList(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const me = await battleStudent(env, payload).catch(() => null);
+    const rows = await cloudGet(env, 'kind=eq.look&deleted=eq.false&select=id,data&limit=1000');
+    const lv = GAME_LEVELS.includes(payload.level) ? payload.level : '';
+    const list = rows.filter(r => !lv || r.level === lv)
+      .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 80)
+      .map(r => ({ id: r.id, name: maskName(r.name), cls: r.cls || null, level: r.level, wear: r.wear || {}, hearts: r.hearts || 0,
+        me: !!me && r.sid === me.sid, liked: !!me && (r.likedBy || []).includes(me.sid) }));
+    return { success: true, looks: list };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function lookLike(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const me = await battleStudent(env, payload);
+    if (!me) return { success: false, error: 'no-code' };
+    const id = String(payload.id || '');
+    if (!/^lk-[A-Z0-9]+$/.test(id) || id === 'lk-' + me.sid) return { success: false, error: 'bad-request' };
+    const r = (await cloudGet(env, 'kind=eq.look&id=eq.' + encodeURIComponent(id) + '&select=id,data'))[0];
+    if (!r) return { success: false, error: 'not-found' };
+    delete r._id; r.likedBy = r.likedBy || [];
+    if (!r.likedBy.includes(me.sid)) { r.likedBy.push(me.sid); r.hearts = (r.hearts || 0) + 1; await cloudPut(env, 'look', id, r); }
+    return { success: true, hearts: r.hearts };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function stairsSave(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const level = String(payload.level || '');
+    if (!GAME_LEVELS.includes(level)) return { success: false, error: 'bad-request' };
+    const me = await battleStudent(env, payload);
+    if (!me) return { success: false, error: 'no-code' };
+    const floors = Math.max(0, Math.min(2000, Math.round(Number(payload.floors) || 0)));
+    const tl = (Array.isArray(payload.tl) ? payload.tl : []).slice(0, 400).map(x => Math.max(0, Math.min(3600000, Math.round(Number(x) || 0))));
+    const id = 'sg-' + me.sid + '-' + level;
+    const prev = (await cloudGet(env, 'kind=eq.stairsghost&id=eq.' + encodeURIComponent(id) + '&select=id,data'))[0] || null;
+    const better = !prev || floors > (prev.floors || 0);
+    const data = better ? { id, sid: me.sid, name: me.name, cls: me.cls, level, floors, tl } : Object.assign({}, prev);
+    delete data._id;
+    data.wear = cleanWear(payload.wear || (prev && prev.wear));
+    data.plays = ((prev && prev.plays) || 0) + 1; data.date = seoulToday(); data.updatedAt = new Date().toISOString();
+    await cloudPut(env, 'stairsghost', id, data);
+    return { success: true, best: data.floors, improved: better };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+async function stairsList(env, payload) {
+  try {
+    if (!env.SUPABASE_SERVICE_KEY) return { success: false, error: 'not-configured' };
+    const level = String(payload.level || '');
+    if (!GAME_LEVELS.includes(level)) return { success: false, error: 'bad-request' };
+    const me = await battleStudent(env, payload).catch(() => null);
+    const rows = await cloudGet(env, 'kind=eq.stairsghost&deleted=eq.false&data->>level=eq.' + encodeURIComponent(level) + '&select=id,data&limit=1000');
+    const list = rows.filter(r => !me || r.sid !== me.sid).sort((a, b) => b.floors - a.floors).slice(0, 20)
+      .map(r => ({ id: r.id, name: maskName(r.name), cls: r.cls || null, floors: r.floors, tl: r.tl || [], wear: r.wear || {} }));
+    const mine = me ? rows.find(r => r.sid === me.sid) : null;
+    return { success: true, friends: list, myBest: mine ? mine.floors : 0 };
+  } catch (error) { return { success: false, error: error.message }; }
+}
+
 // ── 부모님 휴대폰 뒤 4자리 로그인 ──
 // 출결 번호와 같은 번호를 쓴다. 아이가 번호 하나만 기억하면 되게 하기 위함이다.
 // 학생 명부의 칸 이름을 코드에 박아 두지 않고, 이름에 학부모·부모·보호자가 들어간
@@ -1953,6 +2037,21 @@ async function handleRequest(request, env) {
     }
     if (path === '/api/clan/board' && request.method === 'POST') {
       return json(await clanBoard(env, await request.json().catch(() => ({})), false));
+    }
+    if (path === '/api/look/save' && request.method === 'POST') {
+      return json(await lookSave(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/look/list' && request.method === 'POST') {
+      return json(await lookList(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/look/like' && request.method === 'POST') {
+      return json(await lookLike(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/stairs/save' && request.method === 'POST') {
+      return json(await stairsSave(env, await request.json().catch(() => ({}))));
+    }
+    if (path === '/api/stairs/list' && request.method === 'POST') {
+      return json(await stairsList(env, await request.json().catch(() => ({}))));
     }
     if (path === '/api/clan/add' && request.method === 'POST') {
       return json(await clanBoard(env, await request.json().catch(() => ({})), true));

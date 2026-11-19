@@ -119,6 +119,23 @@ button{font-family:inherit;cursor:pointer;border:0}
 .rk-my b{color:#ff7a2f}
 .rk-note{font-size:12px;font-weight:500;color:#6c84a6;margin-top:6px;text-align:center}
 .rk-empty{font-size:13.5px;font-weight:600;color:#6c84a6;text-align:center;padding:10px 4px}
+
+/* ── 태블릿 가로 화면: 화면을 꽉 채운다 ── */
+@media (orientation:landscape) and (min-width:820px){
+  #app{max-width:none}
+  #home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:min-content;column-gap:28px;align-content:start;justify-content:center;padding:calc(18px + env(safe-area-inset-top)) 4vw 20px}
+  #home>*{grid-column:1;max-width:none}
+  #home>.games,#home>.backvoca,#home>.foot{grid-column:2}
+  #home>.games{grid-row:1 / span 6;align-self:center;gap:16px;margin:0}
+  #home .gcard{padding:20px 22px}
+  #home .gcard h3{font-size:24px}
+  #mascot{max-width:520px;justify-self:center}
+  #game[data-g="stairs"] #ctrl{justify-content:space-between;padding:0 18px calc(18px + env(safe-area-inset-bottom))}
+  #game[data-g="stairs"] .choice{flex:0 0 30%;min-height:110px;font-size:30px}
+  #game[data-g="run"] #ctrl,#game[data-g="obby"] #ctrl{max-width:900px;margin:0 auto}
+  #prompt{top:calc(64px + env(safe-area-inset-top))}
+  #prompt{font-size:30px}
+}
 </style>
 </head>
 <body>
@@ -186,6 +203,9 @@ button{font-family:inherit;cursor:pointer;border:0}
 <script src="data.js"></script>
 <script src="audio.js"></script>
 <script src="sound.js"></script>
+<script src="../shared/wear-data.js"></script>
+<script src="../shared/look.js"></script>
+<script src="../shared/stairs.js"></script>
 <script>
 'use strict';
 /* ───────── 기본 도구 ───────── */
@@ -418,86 +438,49 @@ const CONF = ['#ffc83d', '#ff7aa8', '#3ed6a0', '#2f8cf0', '#9b5cff', '#ff9a3c'];
 
 /* ═══════════ 게임 1: 무한 계단 ═══════════ */
 function StairsGame() {
+  // 계단 화면은 파닉스 바다 계단과 같은 공용 엔진(shared/stairs.js)을 쓴다.
+  // 정답 단어가 왼쪽·오른쪽 어디에 있을지는 계단 방향과 상관없이 무작위 — 계단만 보고는 못 맞힌다.
   const P = poolWords(); let queue = [];
   const nextWord = () => { if (!queue.length) queue = shuffle(P.words); return queue.pop(); };
-  const SW = 58, SH = 44; // 계단 한 칸 가로·세로 간격
-  const g = { name: 'stairs', score: 0, hearts: 3, maxH: 3, combo: 0, best: 0, wrong: [], correct: 0, tries: 0, energy: 1, over: false, t: 0,
-    stairs: [{ x: 0, y: 0 }], i: 0, from: { x: 0, y: 0 }, hop: 1, mood: 'idle', moodT: 0, camY: 0, fallV: 0, fallY: 0, shake: 0, q: null, dir: 1, locked: false };
-  const addStair = () => { const l = g.stairs[g.stairs.length - 1]; const turn = g.stairs.length < 3 ? 1 : (Math.random() < .5 ? -1 : 1); let nx = l.x + turn * SW; if (Math.abs(nx) > 3 * SW) nx = l.x - turn * SW; g.stairs.push({ x: nx, y: l.y - SH, hue: (g.stairs.length * 23) % 360 }); };
-  for (let k = 0; k < 14; k++) addStair();
+  const E = WSTAIRS.create({ slow: false, level: sel.lv });
+  const g = { name: 'stairs', score: 0, hearts: 3, maxH: 3, combo: 0, best: 0, wrong: [], correct: 0, tries: 0, energy: 1, over: false, t: 0, q: null, side: 1, locked: false, eng: E };
+  // 계단 꾸미기 버튼 줄 (배경·발자국·펫·계단·친구랑)
+  document.querySelectorAll('#game .wst-bar').forEach((x) => x.remove());
+  WSTAIRS.toolbar($('#game'), E, { onOpen: () => { g.paused = true; setTimeout(() => { g.paused = false; }, 0); } });
   function ask() {
-    g.q = nextWord(); const a = g.stairs[g.i], b = g.stairs[g.i + 1]; g.dir = b.x > a.x ? 1 : -1;
+    g.q = nextWord(); g.side = Math.random() < .5 ? -1 : 1;
     const wrongW = distractorFor(g.q.en, P.distract, 1)[0] || '???';
-    const L = g.dir < 0 ? g.q.en : wrongW, R = g.dir > 0 ? g.q.en : wrongW;
-    UI.prompt(`${shortKo(g.q.ko)}<small>맞는 단어 쪽으로 올라가요</small>`);
-    $('#ctrl').innerHTML = `<button class="choice" data-s="-1"><span class="arr">◀ 왼쪽</span>${L}</button><button class="choice" data-s="1"><span class="arr">오른쪽 ▶</span>${R}</button>`;
+    const L = g.side < 0 ? g.q.en : wrongW, R = g.side > 0 ? g.q.en : wrongW;
+    UI.prompt(`${shortKo(g.q.ko)}<small>맞는 단어를 골라 한 칸 올라가요</small>`);
+    $('#ctrl').innerHTML = `<button class="choice" data-s="-1"><span class="arr">◀</span>${L}</button><button class="choice" data-s="1"><span class="arr">▶</span>${R}</button>`;
     $('#ctrl').querySelectorAll('.choice').forEach((b) => b.onpointerdown = (e) => { e.preventDefault(); answer(+b.dataset.s, b); });
     g.locked = false;
   }
   function answer(side, btn) {
     if (g.locked || g.over) return; g.tries++;
-    if (side === g.dir) {
-      g.correct++; g.combo++; g.score += 1 + (g.combo >= 10 ? 1 : 0); g.from = { ...g.stairs[g.i] }; g.i++; g.hop = 0;
-      g.energy = Math.min(1, g.energy + .16); g.mood = 'happy'; g.moodT = .5; SFX.jump(); VOICE.say(g.q.en, 1);
+    if (side === g.side) {
+      g.correct++; g.combo++; g.score += 1 + (g.combo >= 10 ? 1 : 0); E.step();
+      g.energy = Math.min(1, g.energy + .16); SFX.jump(); VOICE.say(g.q.en, 1);
       if (g.combo % 10 === 0) { UI.toast('🔥 피버! x2'); SFX.win(); }
-      while (g.stairs.length < g.i + 14) addStair();
       btn.classList.add('ok'); UI.score(g.score); UI.combo(g.combo);
       g.locked = true; setTimeout(ask, 110);
-    } else {
-      miss(btn);
-    }
+    } else miss(btn);
   }
   function miss(btn) {
-    g.combo = 0; UI.combo(0); g.hearts--; UI.hearts(g.hearts, g.maxH); SFX.bad(); g.shake = .35; g.mood = 'sad'; g.moodT = .9;
+    g.combo = 0; UI.combo(0); g.hearts--; UI.hearts(g.hearts, g.maxH); SFX.bad(); E.oops();
     if (g.q && !g.wrong.find((w) => w.en === g.q.en)) g.wrong.push(g.q);
-    if (btn) { btn.classList.add('bad'); const ok = $('#ctrl').querySelector(`[data-s="${g.dir}"]`); if (ok) ok.classList.add('ok'); }
+    if (btn) { btn.classList.add('bad'); const ok = $('#ctrl').querySelector(`[data-s="${g.side}"]`); if (ok) ok.classList.add('ok'); }
     g.locked = true;
-    if (g.hearts <= 0) { g.over = true; g.falling = true; g.fallV = -260; SFX.fall(); setTimeout(() => endGame(g), 1300); }
+    if (g.hearts <= 0) { g.over = true; E.fall(); SFX.fall(); WSTAIRS.saveRun(E); setTimeout(() => endGame(g), 1300); }
     else { VOICE.say(g.q.en, .85); setTimeout(ask, 900); g.energy = Math.max(g.energy, .55); }
   }
   g.start = () => { UI.energy(1); UI.hearts(g.hearts, g.maxH); ask(); };
   g.update = (dt) => {
-    g.t += dt; g.hop = Math.min(1, g.hop + dt * 7); g.moodT -= dt; if (g.moodT <= 0) g.mood = 'idle'; g.shake = Math.max(0, g.shake - dt);
-    if (!g.over && !g.locked) { g.energy -= dt * (.07 + Math.min(g.score, 120) * .0011); if (g.energy <= 0) { g.energy = 0; UI.toast('⏰ 시간 초과!'); miss(null); } }
+    g.t += dt; E.update(dt);
+    if (!g.over && !g.locked && !document.querySelector('.wst-pop')) { g.energy -= dt * (.07 + Math.min(g.score, 120) * .0011); if (g.energy <= 0) { g.energy = 0; UI.toast('⏰ 시간 초과!'); miss(null); } }
     UI.energy(g.energy);
-    if (g.falling) { g.fallV += 900 * dt; g.fallY += g.fallV * dt; }
-    const cur = g.stairs[g.i]; g.camY = lerp(g.camY, cur.y, Math.min(1, dt * 6));
   };
-  g.draw = (c) => {
-    // 하늘: 높이에 따라 낮 → 노을 → 우주
-    const h = clamp(g.score / 80, 0, 1);
-    const top = h < .5 ? mix('#7cc8ff', '#ff9a8a', h * 2) : mix('#ff9a8a', '#1b1550', (h - .5) * 2);
-    const bot = h < .5 ? mix('#dff3ff', '#ffd59a', h * 2) : mix('#ffd59a', '#3a2a7a', (h - .5) * 2);
-    const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, top); gr.addColorStop(1, bot); c.fillStyle = gr; c.fillRect(0, 0, W, H);
-    if (drawBg(c, 'bgSky', 0, -g.camY * .04 + 40, 1.15)) { c.globalAlpha = h * .75; c.fillStyle = gr; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
-    if (h > .55) { c.fillStyle = 'rgba(255,255,255,' + (h - .55) * 2 + ')'; for (let i = 0; i < 40; i++) { const sx = (i * 97) % W, sy = (i * 151 + g.camY * .05) % H; c.fillRect(sx, (sy + H) % H, 2, 2); } }
-    // 구름 (패럴랙스)
-    c.fillStyle = 'rgba(255,255,255,.45)';
-    for (let i = 0; i < 4; i++) { const cy0 = ((i * 170 - g.camY * .35) % (H + 200) + H + 200) % (H + 200) - 100; cloud(c, (i * 131 + 40) % W, cy0, 1 + (i % 3) * .3); }
-    c.save();
-    const sx = g.shake > 0 ? Math.sin(g.t * 80) * 6 * g.shake : 0;
-    const ox = W / 2 - g.stairs[g.i].x * .6 + sx, oy = H * .62 - g.camY;
-    c.translate(ox, oy);
-    // 계단
-    for (let k = Math.max(0, g.i - 8); k < g.stairs.length; k++) {
-      const s = g.stairs[k], hue = s.hue || 200;
-      c.fillStyle = 'rgba(0,0,0,.12)'; rr(c, s.x - 30, s.y + 6, 60, 20, 8); c.fill();
-      c.fillStyle = `hsl(${hue} 80% 62%)`; rr(c, s.x - 30, s.y - 2, 60, 20, 8); c.fill();
-      c.fillStyle = `hsl(${hue} 90% 78%)`; rr(c, s.x - 30, s.y - 2, 60, 8, 6); c.fill();
-      if (k > 0 && k % 10 === 0) { c.fillStyle = '#fff'; c.font = '800 13px Pretendard, sans-serif'; c.textAlign = 'center'; c.fillText(k + '층', s.x, s.y + 14); }
-    }
-    for (let k = 10; k < g.stairs.length; k += 10) { // 10층마다 바다 친구가 기다려요
-      const s = g.stairs[k], fk = otherChars()[(k / 10 - 1) % 5], side = (k / 10) % 2 ? 1 : -1;
-      drawChar(c, s.x + side * 50, s.y - 2 - Math.abs(Math.sin(g.t * 3 + k)) * 6, 40, { k: fk, t: g.t + k, mood: g.i >= k ? 'happy' : 'idle' });
-    }
-    // 웨일리
-    const cur = g.stairs[g.i], e = easeOut(g.hop);
-    const px = lerp(g.from.x, cur.x, e), py = lerp(g.from.y, cur.y, e) - Math.sin(e * Math.PI) * 30 + g.fallY;
-    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(cur.x, cur.y + 1, 22, 5, 0, 0, Math.PI * 2); c.fill();
-    drawChar(c, px, py, 64, { t: g.t, mood: g.over ? 'fall' : g.mood, squash: g.hop < 1 ? (g.hop < .5 ? -.4 : .3) : Math.sin(g.t * 5) * .08, flip: g.dir < 0, rot: g.falling ? g.t * 6 : 0 });
-    drawParts(c);
-    c.restore();
-  };
+  g.draw = (c) => { E.draw(c, W, H); drawParts(c); };
   return g;
 }
 
@@ -712,13 +695,15 @@ function shade(col, p) { const A = hex(col); return `rgb(${A.map((v) => clamp(v 
 /* ───────── 실행 루프 ───────── */
 let G = null, last = 0, running = false, curGame = 'stairs';
 const INFO = {
-  stairs: ['🪜 무한 계단', '위에 나온 뜻을 보고, 맞는 영어 단어 쪽(왼쪽/오른쪽)을 눌러 한 칸씩 올라가요.<br>시간 막대가 다 줄면 하트가 깎여요. 10콤보마다 피버!'],
+  stairs: ['🪜 무한 계단', '위에 나온 뜻을 보고 맞는 영어 단어를 눌러 한 칸씩 올라가요.<br>시간 막대가 다 줄면 하트가 깎여요. 10콤보마다 피버!<br>오른쪽 버튼으로 배경·발자국·펫·계단을 바꾸고, 👫 친구랑 같이 올라 봐요!'],
   run: ['🐳 웨일리 런', '웨일리가 바다를 달려요. 뜻에 맞는 단어 문이 있는 줄로 옮겨서 통과!<br>별 젤리를 먹으면 점수 UP. 20문 통과하면 골인!'],
   obby: ['🌋 문장 오비', '한국어 문장을 보고 영어 단어 발판을 순서대로 골라 건너요.<br>틀리면 용암에 풍덩, 체크포인트부터 다시! 문장 5개를 건너면 클리어.']
 };
 function startGame(name) {
   curGame = name; SFX.unlock(); VOICE.prime(); show('game'); resize(); parts = [];
   $('#ctrl').innerHTML = ''; UI.prompt(''); UI.built(''); UI.energy(null); UI.combo(0); UI.score(0);
+  document.querySelectorAll('#game .wst-bar, #game .wst-pop').forEach((x) => x.remove());
+  $('#game').dataset.g = name;
   G = name === 'stairs' ? StairsGame() : name === 'run' ? RunGame() : ObbyGame();
   UI.hearts(G.hearts, G.maxH);
   $('#rImg').src = 'img/' + curChar + (name === 'run' ? '_swim' : '_happy') + '.webp'; $('#rImg').style.transform = name === 'run' && !SWIM_RIGHT[curChar] ? 'scaleX(-1)' : ''; $('#rTitle').textContent = INFO[name][0]; $('#rDesc').innerHTML = INFO[name][1]; $('#ready').classList.add('on');
