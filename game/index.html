@@ -100,6 +100,11 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer; p
 /* ── 바다 계단 ── */
 .g-stairs{background:#bfe4ff}
 .wst-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ste{position:absolute;left:14px;right:14px;top:4px;height:12px;border-radius:8px;background:rgba(255,255,255,.55);overflow:hidden;z-index:5;box-shadow:inset 0 1px 3px rgba(0,30,70,.2)}
+.ste i{display:block;height:100%;width:100%;transform-origin:left;background:linear-gradient(90deg,#3ad29f,#7ee8c2);transition:background .3s}
+.ste.low i{background:linear-gradient(90deg,#ff6b6b,#ffb36b);animation:stblink .45s infinite alternate}
+@keyframes stblink{to{opacity:.55}}
+.g-stairs .stfl{top:22px}
 .stw{position:absolute; left:0; top:0; width:100%; height:100%; will-change:transform}
 .step{position:absolute; height:20px; border-radius:12px; background:linear-gradient(#fff,#cfe9ff); box-shadow:0 6px 0 #8fc1ec, 0 12px 18px rgba(0,40,90,.18)}
 .step.on{background:linear-gradient(#fff6c8,#ffd35a); box-shadow:0 6px 0 #e3a92a, 0 12px 18px rgba(120,80,0,.2)}
@@ -673,7 +678,7 @@ async function answer(ok) {
   if (!S) return;
   const m = S.mons[S.cur];
   if (!ok) {
-    m.miss = true; S.wrong++; SFX.no();
+    m.miss = true; S.wrong++; SFX.bad();
     setTimeout(() => say(m.w), 400);
     if (S.wrong >= 2 && S.game && S.game.hint) S.game.hint();
     return;
@@ -804,7 +809,7 @@ function Stairs(stage, target, list, cb) {
   const fresh = !stage.classList.contains('g-stairs') || !stage.querySelector('.wst-cv') || !S.stEng;
   if (fresh) {
     stage.className = 'stage g-stairs';
-    stage.innerHTML = `<canvas class="wst-cv"></canvas><div class="stfl">🪜 <span>0</span>층</div><div class="stbtns"></div>`;
+    stage.innerHTML = `<canvas class="wst-cv"></canvas><div class="ste"><i></i></div><div class="stfl">🪜 <span>0</span>층</div><div class="stbtns"></div>`;
     WSOUND.music.play('stairs');   // 계단은 520 무한계단과 같은 신나는 계단 음악
     if (!S.stEng) S.stEng = WSTAIRS.create({ slow: true, level: /240/.test(sel.lv) ? 'lv240' : 'phonics' });
     WSTAIRS.toolbar(stage, S.stEng);
@@ -830,6 +835,19 @@ function Stairs(stage, target, list, cb) {
   const bx = stage.querySelector('.stbtns');
   bx.innerHTML = `<button class="stb l"><span class="arr">◀</span>${face(sideL)}</button><button class="stb r"><span class="arr">▶</span>${face(sideR)}</button>`;
   let alive = true;
+  // 시간 막대: 520 무한계단과 같은 방식, 파닉스라 더 넉넉하게 (천천히 모드 12초 · 보통 9초).
+  // 다 줄면 틀린 것과 같이 소리를 다시 들려주고(두 번째부터 정답이 반짝), 막대는 다시 채워 준다.
+  const bar = stage.querySelector('.ste i'), dur = (opts.slow ? 12 : 9) * 1000;
+  let left = dur, tPrev = performance.now();
+  (function tick(now) {
+    if (!alive || !bar.isConnected) return;
+    const dt = now - tPrev; tPrev = now;
+    if (!stage.querySelector('.wst-pop')) left -= dt;            // 꾸미기 창이 열려 있으면 멈춤
+    const p = Math.max(0, left / dur);
+    bar.style.transform = `scaleX(${p})`; bar.parentNode.classList.toggle('low', p < .3);
+    if (left <= 0) { left = dur; E.oops(); cb(false); }
+    requestAnimationFrame(tick);
+  })(tPrev);
   const btns = bx.querySelectorAll('.stb');
   btns.forEach((b, bi) => {
     const w = bi ? sideR : sideL;
