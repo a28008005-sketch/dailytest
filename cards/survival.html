@@ -87,6 +87,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .recnote{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-2px}
 #face{position:absolute;width:216px;height:216px;border-radius:50%;object-fit:cover;transform:scaleX(-1);filter:brightness(1.12) contrast(1.03) saturate(1.12);border:6px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#000;left:1040px;top:222px;z-index:3}
 #face.low{top:482px}
+#face.pcprev{left:1018px;top:86px;width:246px;height:150px;border-radius:18px;border:5px solid #fff;z-index:4}
 #face.offscreen{left:0;top:0;width:160px;height:120px;opacity:.01;z-index:0;border:0;box-shadow:none}
 #recView{position:absolute;inset:0;width:1280px;height:720px;z-index:2}
 #stage.recmode .scene,#stage.recmode .bgw{visibility:hidden}
@@ -197,6 +198,11 @@ body.pc .camopt{display:flex}
 .campv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .campv .lvl{position:absolute;left:10px;right:10px;bottom:10px;height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
 .campv .lvl i{display:block;height:100%;width:0;background:var(--mint);transition:width .08s}
+.camstat{font-size:13px;font-weight:800;border-radius:12px;padding:10px 12px;line-height:1.55;background:#eef6ff;color:#1b3a8a}
+.camstat.bad{background:#fff0f0;color:#c0262d}
+.camstat.ok{background:#eafaf1;color:#137a43}
+.inapp{display:none;background:#ffd21f;color:#0b1f5e;font-weight:900;font-size:15px;padding:12px 16px;text-align:center;line-height:1.5}
+body.inappb .inapp{display:block}
 .pcbadge{display:none;font-size:12px;font-weight:900;background:var(--gold);color:var(--ink);border-radius:999px;padding:3px 10px;margin-left:6px}
 body.pc .pcbadge{display:inline-block}
 body.pc .rot{display:none!important}
@@ -216,7 +222,8 @@ body.pc .rot{display:none!important}
 
 <div id="home">
   <div class="wrap">
-    <div class="brand"><img src="logo.png" alt="고래영어"><b>SENTENCE BANK</b><span class="pcbadge">💻 컴퓨터 모드</span></div>
+    <div class="inapp">⚠ 이 화면(카카오톡·네이버 등 앱 안 브라우저)에서는 카메라가 안 켜질 수 있어요. 오른쪽 위 메뉴에서 [다른 브라우저로 열기] → 크롬으로 열어 주세요.</div>
+      <div class="brand"><img src="logo.png" alt="고래영어"><b>SENTENCE BANK</b><span class="pcbadge">💻 컴퓨터 모드</span></div>
     <div class="inst" id="inst" hidden><button type="button" id="instBtn">📲 이 학습패드에 앱으로 설치</button><span class="hint" id="instHint"></span></div>
     <div>
       <h1>센텐스뱅크 <em>서바이벌</em> 영상</h1>
@@ -247,7 +254,8 @@ body.pc .rot{display:none!important}
           </div></div>
         <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
         <div class="opt camopt" id="camOpt"><span>카메라 · 마이크 (컴퓨터)</span>
-          <div class="camrow"><select id="camSel" aria-label="카메라"><option value="">기본 카메라</option></select><select id="micSel" aria-label="마이크"><option value="">기본 마이크</option></select><button type="button" id="camTest">📷 카메라 확인</button></div>
+          <div class="camrow"><select id="camSel" aria-label="카메라"><option value="">기본 카메라</option></select><select id="micSel" aria-label="마이크"><option value="">기본 마이크</option></select><button type="button" id="camTest">📷 카메라 켜기</button></div>
+          <div class="camstat" id="camStat">📷 카메라 켜기를 누르면 브라우저 위쪽에 [허용] 창이 떠요. 꼭 [허용]을 눌러 주세요.</div>
           <div class="campv" id="camPv" hidden><video id="camVid" muted playsinline autoplay></video><span id="camPvMsg">카메라를 켜는 중…</span><div class="lvl"><i id="micLvl"></i></div></div>
           <div class="recnote">노트북 카메라나 컴퓨터에 꽂은 USB 카메라를 고를 수 있어요. 카메라는 모니터 위 가운데에 두면 녹화 화면의 얼굴 창과 시선이 잘 맞아요. 말할 때 초록 막대가 움직이면 마이크도 잘 되는 거예요.</div>
         </div>
@@ -537,7 +545,7 @@ function micLevel() {
 function preload(c) { if (!c) return; var l = sel.lv; new Image().src = 'img/' + l + '/' + c.no + '.webp'; if (c.aa) fetch('audio/' + c.aa + '.mp3').catch(function () {}); if (c.qLang === 'en' && c.qa) fetch('audio/' + c.qa + '.mp3').catch(function () {}); }
 
 async function start() {
-  if (typeof camPvStop === 'function') { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 확인'; }
+  if (typeof camPvStop === 'function') { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 켜기'; }
   if (opt.mode === 'real' && !kidName()) { gateShow(); gMsg('실전 녹화는 먼저 들어와 주세요'); return; }
   var l = level(); cards = volCards().slice();
   if (opt.order === 'rand') for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
@@ -561,11 +569,12 @@ async function start() {
   var r = ++run;
   await waitLandscape(r); if (!alive(r)) return;
   SES = { startedAt: Date.now(), logged: false, mode: opt.mode };
+  if (IS_PC && opt.mode !== 'real') pcPrev(r);   // 컴퓨터 연습: 오른쪽 위에 내 얼굴 보기 (녹화는 안 해요)
   if (opt.mode === 'real') {
     try { await recBegin(); }
     catch (e) {
       recCleanup();
-      overlay('카메라를 쓸 수 없어요', '카메라·마이크 사용을 허용해 주세요. 주소창 옆 🔒(또는 설정)에서 허용한 뒤 다시 시작하면 됩니다.', [['처음 화면으로', exit]]);
+      overlay('카메라를 쓸 수 없어요', IS_PC ? camErrText(e) : '카메라·마이크 사용을 허용해 주세요. 주소창 옆 🔒(또는 설정)에서 허용한 뒤 다시 시작하면 됩니다.', [['처음 화면으로', exit]]);
       return;
     }
     if (!alive(r)) return;
@@ -833,13 +842,41 @@ async function camTest() {
     var AC = window.AudioContext || window.webkitAudioContext; PV.ac = new AC(); var an = PV.ac.createAnalyser(); an.fftSize = 512;
     PV.ac.createMediaStreamSource(PV.s).connect(an); var buf = new Uint8Array(an.fftSize);
     (function lv() { an.getByteTimeDomainData(buf); var m = 0; for (var i = 0; i < buf.length; i++) m = Math.max(m, Math.abs(buf[i] - 128)); $('#micLvl').style.width = Math.min(100, m * 1.6) + '%'; PV.raf = requestAnimationFrame(lv); })();
-    $('#camTest').textContent = '■ 확인 끄기';
+    $('#camTest').textContent = '■ 카메라 끄기'; camStat('✅ 카메라·마이크가 켜졌어요. 얼굴이 잘 보이면 바로 시작하면 돼요.', 'ok');
   } catch (e) {
-    $('#camPvMsg').hidden = false; $('#camPvMsg').textContent = '카메라를 켤 수 없어요. 주소창 왼쪽 자물쇠 → 카메라·마이크 [허용]을 눌러 주세요.';
+    $('#camPvMsg').hidden = false; $('#camPvMsg').textContent = '카메라를 켤 수 없어요';
+    camStat(camErrText(e), 'bad');
   }
 }
+function camStat(t, k) { var el = $('#camStat'); if (!el) return; el.textContent = t; el.className = 'camstat' + (k ? ' ' + k : ''); }
+function camErrText(e) {
+  var n = (e && e.name) || '';
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return '⚠ 이 브라우저에서는 카메라를 쓸 수 없어요. 크롬이나 엣지로 이 주소를 열어 주세요.';
+  if (n === 'NotAllowedError' || n === 'SecurityError') return '⚠ 카메라가 막혀 있어요. ① 주소창 왼쪽 자물쇠(또는 카메라 모양) 아이콘 → 카메라·마이크를 [허용]으로 바꾸고 F5로 새로고침 ② 그래도 안 되면 윈도우 [설정 → 개인 정보 → 카메라]에서 "앱이 카메라에 액세스" 와 "데스크톱 앱이 카메라에 액세스"를 켜 주세요.';
+  if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'DevicesNotFoundError') return '⚠ 카메라를 찾지 못했어요. USB 카메라라면 다시 꽂고, 노트북이라면 카메라 가림막(덮개)·카메라 끄기 키(F10 등)를 확인한 뒤 F5로 새로고침해 주세요.';
+  if (n === 'NotReadableError' || n === 'TrackStartError' || n === 'AbortError') return '⚠ 다른 프로그램(줌·카톡 영상통화·카메라 앱 등)이 카메라를 쓰고 있어요. 그 프로그램을 끄고 다시 눌러 주세요.';
+  return '⚠ 카메라를 켤 수 없어요 (' + (n || '알 수 없는 오류') + '). 크롬으로 열고 F5로 새로고침해 주세요.';
+}
+(function () {
+  var ua = navigator.userAgent || '';
+  if (/KAKAOTALK|NAVER\(|Line\/|Instagram|FBAN|FBAV|DaumApps|Whale\/.*inapp|; wv\)/i.test(ua)) document.body.classList.add('inappb');
+})();
+async function camPerm() {
+  if (!IS_PC) return;
+  try {
+    var st = await navigator.permissions.query({ name: 'camera' });
+    var upd = function () {
+      if (PV.s) return;
+      if (st.state === 'denied') camStat(camErrText({ name: 'NotAllowedError' }), 'bad');
+      else if (st.state === 'granted') camStat('✅ 카메라 허용됨. [📷 카메라 켜기]로 얼굴이 잘 나오는지 확인해 보세요.', 'ok');
+      else camStat('📷 카메라 켜기를 누르면 브라우저 위쪽에 [허용] 창이 떠요. 꼭 [허용]을 눌러 주세요.', '');
+    };
+    upd(); st.onchange = upd;
+  } catch (e) {}
+}
 if (IS_PC) {
-  $('#camTest').onclick = function () { if (PV.s) { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 확인'; } else camTest(); };
+  camPerm();
+  $('#camTest').onclick = function () { if (PV.s) { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 켜기'; } else camTest(); };
   $('#camSel').onchange = function () { LS.set('camId', this.value); if (PV.s) camTest(); };
   $('#micSel').onchange = function () { LS.set('micId', this.value); if (PV.s) camTest(); };
   camList().catch(function () {});
@@ -900,6 +937,15 @@ async function micBegin() {
     var an = REC.actx.createAnalyser(); an.fftSize = 1024; src.connect(hp); hp.connect(an); REC.an = an; REC.vbuf = null;
   } catch (e) { REC.an = null; }   // 마이크를 못 쓰면 생각 시간이 끝날 때 넘어갑니다
 }
+async function pcPrev(r) {
+  try {
+    var st = await navigator.mediaDevices.getUserMedia({ video: camC(true).video });
+    if (!alive(r)) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+    REC.cam = st; var f = $('#face'); f.srcObject = st; f.classList.add('pcprev'); f.hidden = false; try { await f.play(); } catch (e) {}
+  } catch (e) {
+    try { var st2 = await navigator.mediaDevices.getUserMedia({ video: true }); if (!alive(r)) { st2.getTracks().forEach(function (t) { t.stop(); }); return; } REC.cam = st2; var f2 = $('#face'); f2.srcObject = st2; f2.classList.add('pcprev'); f2.hidden = false; try { await f2.play(); } catch (x) {} } catch (e2) {}
+  }
+}
 function recCleanup() {
   REC.on = false; cancelAnimationFrame(REC.raf); segStop();
   try { if (REC.mr && REC.mr.state !== 'inactive') { REC.mr.onstop = null; REC.mr.stop(); } } catch (e) {}
@@ -908,7 +954,7 @@ function recCleanup() {
   try { REC.actx && REC.actx.close(); } catch (e) {}
   voice = new Audio(); // 오디오 연결을 끊은 새 재생기로 바꿉니다
   REC = { on: false, cam: null, actx: null, dest: null, mr: null, chunks: [], canvas: null, raf: 0 };
-  $('#face').hidden = true; $('#face').srcObject = null; $('#face').classList.remove('offscreen'); $('#recTag').hidden = true;
+  $('#face').hidden = true; $('#face').srcObject = null; $('#face').classList.remove('offscreen', 'pcprev'); $('#recTag').hidden = true;
   $('#recView').hidden = true; $('#stage').classList.remove('recmode');
 }
 
