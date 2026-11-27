@@ -724,7 +724,8 @@ function lay() {
   var c = opt.cam || 'top';
   if (c === 'left') return { face: { cx: 172, cy: 340, r: 142 }, board: { x: 346, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 795 };
   if (c === 'right') return { face: { cx: 1108, cy: 340, r: 142 }, board: { x: 120, y: 16, pw: 760, ph: 525 }, bubble: 'bottom', cx: 485 };
-  return { face: { cx: 640, cy: 96, r: 84 }, board: { x: 248, y: 190, pw: 660, ph: 456 }, bubble: 'side', cx: 640 };
+  // 위 카메라: 직사각형 카메라 창 + 가운데 큰 카드 (오른쪽 Your turn 칸 없음)
+  return { face: { cx: 640, cy: 100, r: 84, rect: { x: 482, y: 8, w: 316, h: 178 } }, board: { x: 277, y: 198, pw: 672, ph: 464 }, bubble: 'none', cx: 640 };
 }
 
 /* 얼굴을 밝게: 노출·화이트밸런스 자동 + 노출 살짝 올리기 (되는 기기만) */
@@ -874,6 +875,46 @@ function drawFaceCircle(x, cx, cy, R) {
   var nm = kidName();
   if (nm) { x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, cy + R - 4, nw, 36, 18); x.fill(); T(x, nm, 22, cy + R + 14, F_B9, V.lvInk || '#003C70', { x: cx }); }
 }
+/* 직사각형 카메라 창: 조금 넓게 찍어 뒤 배경이 살짝 보이게 (사람 뒤는 흐리게) */
+var FR = { a: document.createElement('canvas'), b: document.createElement('canvas'), s: document.createElement('canvas') };
+function drawFaceRect(x, R) {
+  var face = $('#face');
+  var W = Math.round(R.w), H = Math.round(R.h), rad = 22;
+  x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; rr(x, R.x - 6, R.y + 4, W + 12, H + 12, rad + 6); x.fill();
+  x.fillStyle = '#fff'; rr(x, R.x - 6, R.y - 6, W + 12, H + 12, rad + 6); x.fill(); x.restore();
+  if (REC.cam && face.readyState >= 2) {
+    var vw = face.videoWidth, vh = face.videoHeight, ar = W / H, sw, sh;
+    if (vw / vh > ar) { sh = vh; sw = vh * ar; } else { sw = vw; sh = vw / ar; }
+    var sx = (vw - sw) / 2, sy = Math.max(0, (vh - sh) * 0.35);
+    var a = FR.a; if (a.width !== W || a.height !== H) { a.width = W; a.height = H; }
+    var ac = a.getContext('2d'); ac.clearRect(0, 0, W, H);
+    if (SEG.ready) {
+      var sm = FR.s; sm.width = 64; sm.height = Math.round(64 / ar); var sc = sm.getContext('2d'); sc.drawImage(face, sx, sy, sw, sh, 0, 0, sm.width, sm.height);
+      ac.imageSmoothingEnabled = true; ac.imageSmoothingQuality = 'high'; ac.drawImage(sm, 0, 0, W, H);
+      ac.fillStyle = 'rgba(20,40,110,.10)'; ac.fillRect(0, 0, W, H);
+      var b = FR.b; if (b.width !== W || b.height !== H) { b.width = W; b.height = H; }
+      var bc = b.getContext('2d'); bc.globalCompositeOperation = 'source-over'; bc.clearRect(0, 0, W, H);
+      var mk = SEG.mask, kx = mk.width / vw, ky = mk.height / vh;
+      bc.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, W, H);
+      bc.globalCompositeOperation = 'source-in'; bc.drawImage(face, sx, sy, sw, sh, 0, 0, W, H);
+      bc.globalCompositeOperation = 'source-over'; ac.drawImage(b, 0, 0);
+    } else {
+      ac.drawImage(face, sx, sy, sw, sh, 0, 0, W, H);
+    }
+    x.save(); rr(x, R.x, R.y, W, H, rad); x.clip();
+    x.translate(R.x + W / 2, R.y + H / 2); x.scale(-1, 1);
+    if (CANVAS_FILTER === null) { try { x.filter = 'brightness(1.1)'; CANVAS_FILTER = x.filter === 'brightness(1.1)'; x.filter = 'none'; } catch (e) { CANVAS_FILTER = false; } }
+    if (CANVAS_FILTER) x.filter = 'brightness(1.12) contrast(1.03) saturate(1.12)';
+    x.drawImage(a, -W / 2, -H / 2, W, H);
+    if (CANVAS_FILTER) { x.filter = 'blur(5px) brightness(1.15)'; x.globalAlpha = .2; x.globalCompositeOperation = 'screen'; x.drawImage(a, -W / 2, -H / 2, W, H); x.filter = 'none'; x.globalAlpha = 1; }
+    x.globalCompositeOperation = 'soft-light'; x.fillStyle = 'rgba(255,196,160,.18)'; x.fillRect(-W / 2, -H / 2, W, H); x.globalCompositeOperation = 'source-over';
+    x.restore();
+  } else {
+    x.save(); x.fillStyle = '#2a3f8f'; rr(x, R.x, R.y, W, H, rad); x.fill(); x.restore();
+  }
+  var nm = kidName();
+  if (nm) { x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28, cx = R.x + W / 2, ny = R.y + H - 44; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, ny, nw, 34, 17); x.fill(); T(x, nm, 22, ny + 18, F_B9, V.lvInk || '#003C70', { x: cx }); }
+}
 function drawBoard(x, B, now) {
   var bw = B.pw + 54, bh = B.ph + 54, bx = B.x, by = B.y;
   x.fillStyle = 'rgba(0,0,0,.25)'; rr(x, bx, by + 10, bw, bh, 18); x.fill();
@@ -929,7 +970,7 @@ function drawBubble(x, L, now) {
   x.globalAlpha = 1;
 }
 function drawFrame(x) {
-  var now = performance.now(), L = lay(), F = L.face, CX = L.cx, MW = L.bubble === 'side' ? 1200 : 860;
+  var now = performance.now(), L = lay(), F = L.face, CX = L.cx, MW = L.bubble !== 'bottom' ? 1200 : 860;
   x.setTransform(1, 0, 0, 1, 0, 0);
   var outro = V.scene === 'scOutro';
   if (outro) { x.fillStyle = '#fff'; x.fillRect(0, 0, 1280, 720); }
@@ -937,7 +978,7 @@ function drawFrame(x) {
   var words = outro ? ['WHALE', 'ENGLISH'] : ['SENTENCE', 'BANK', 'SURVIVAL'];
   words.forEach(function (w, i) { T(x, w, 176, 360 + (i - (words.length - 1) / 2) * 158, F_E, outro ? '#e9effb' : 'rgba(255,255,255,.06)', { max: 1400 }); });
   var a = ease((now - V.sceneT) / 550); x.globalAlpha = a; var dy = (1 - a) * 18;
-  var topCam = L.bubble === 'side', y0 = topCam ? 40 : 0; // 카메라가 위면 글자를 조금 내립니다
+  var topCam = L.bubble !== 'bottom', y0 = topCam ? 90 : 0; // 카메라가 위면 글자를 조금 내립니다
   if (V.scene === 'scTitle') {
     T(x, '큰 목소리로, 자신 있게, 끝까지 도전하는', 40, 320 + y0 + dy, F_B7, '#fff', { x: CX, max: MW });
     T(x, '센텐스뱅크 서바이벌', 124, 420 + y0 + dy, F_D, '#fff', { x: CX, max: MW });
@@ -962,7 +1003,7 @@ function drawFrame(x) {
     if (opt.cam === 'left') T(x, V.page || '', 22, 80, F_E, 'rgba(255,255,255,.85)', { align: 'left', x: 30 });
     else T(x, V.page || '', 22, opt.cam === 'right' ? 80 : 41, F_E, 'rgba(255,255,255,.85)', { align: 'right', x: 1250 });
     drawBoard(x, L.board, now);
-    drawBubble(x, L, now);
+    if (L.bubble !== 'none') drawBubble(x, L, now);
   } else if (V.scene === 'scClear') {
     if (V.ps) V.ps.forEach(function (p) { x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); });
     T(x, 'MISSION CLEAR!', 124, 280 + y0 + dy, F_E, '#ffd21f', { x: CX, max: MW });
@@ -973,7 +1014,7 @@ function drawFrame(x) {
     T(x, 'SENTENCE BANK SURVIVAL', 30, 340 + 120 + dy, F_E, '#5d6b90');
   }
   x.globalAlpha = 1;
-  if (!outro) drawFaceCircle(x, F.cx, F.cy, F.r);
+  if (!outro) { if (F.rect) drawFaceRect(x, F.rect); else drawFaceCircle(x, F.cx, F.cy, F.r); }
 }
 
 /* 얼굴 보정: 밝기 · 대비 · 혈색 + 살짝 뽀얀 빛 + 따뜻한 톤 */
