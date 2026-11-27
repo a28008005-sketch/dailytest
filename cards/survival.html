@@ -188,6 +188,18 @@ details.more{border-top:1px dashed var(--line);padding-top:8px}
 details.more summary{cursor:pointer;font-size:13px;font-weight:800;color:var(--muted)}
 details.more .opt{margin-top:10px}
 .say.turn .who2{background:#2fb36b;font-size:30px}
+.camopt{display:none}
+body.pc .camopt{display:flex}
+.camrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.camrow select{font:inherit;font-weight:700;font-size:14px;padding:9px 10px;border:2px solid var(--line);border-radius:12px;color:#1b2440;background:#fff;flex:1;min-width:150px;max-width:100%}
+.camrow button{border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:900;font-size:14px;padding:10px 14px}
+.campv{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#0b1f5e;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+.campv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.campv .lvl{position:absolute;left:10px;right:10px;bottom:10px;height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.campv .lvl i{display:block;height:100%;width:0;background:var(--mint);transition:width .08s}
+.pcbadge{display:none;font-size:12px;font-weight:900;background:var(--gold);color:var(--ink);border-radius:999px;padding:3px 10px;margin-left:6px}
+body.pc .pcbadge{display:inline-block}
+body.pc .rot{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -204,7 +216,7 @@ details.more .opt{margin-top:10px}
 
 <div id="home">
   <div class="wrap">
-    <div class="brand"><img src="logo.png" alt="고래영어"><b>SENTENCE BANK</b></div>
+    <div class="brand"><img src="logo.png" alt="고래영어"><b>SENTENCE BANK</b><span class="pcbadge">💻 컴퓨터 모드</span></div>
     <div class="inst" id="inst" hidden><button type="button" id="instBtn">📲 이 학습패드에 앱으로 설치</button><span class="hint" id="instHint"></span></div>
     <div>
       <h1>센텐스뱅크 <em>서바이벌</em> 영상</h1>
@@ -234,6 +246,11 @@ details.more .opt{margin-top:10px}
             <div class="whomsg ok" id="whoMsg">학생을 고르면 연습 기록이 선생님 화면에 남아요.</div>
           </div></div>
         <div class="opt"><span>방식</span><div class="seg" id="oMode"></div><div class="recnote" id="modeNote"></div></div>
+        <div class="opt camopt" id="camOpt"><span>카메라 · 마이크 (컴퓨터)</span>
+          <div class="camrow"><select id="camSel" aria-label="카메라"><option value="">기본 카메라</option></select><select id="micSel" aria-label="마이크"><option value="">기본 마이크</option></select><button type="button" id="camTest">📷 카메라 확인</button></div>
+          <div class="campv" id="camPv" hidden><video id="camVid" muted playsinline autoplay></video><span id="camPvMsg">카메라를 켜는 중…</span><div class="lvl"><i id="micLvl"></i></div></div>
+          <div class="recnote">노트북 카메라나 컴퓨터에 꽂은 USB 카메라를 고를 수 있어요. 카메라는 모니터 위 가운데에 두면 녹화 화면의 얼굴 창과 시선이 잘 맞아요. 말할 때 초록 막대가 움직이면 마이크도 잘 되는 거예요.</div>
+        </div>
         <div class="opt"><span>범위</span><div class="seg" id="oUnit"></div></div>
         <div class="opt" id="ansOpt"><span>정답</span><div class="seg" id="oAns"></div></div>
         <details class="more"><summary>선생님 설정 (생각 시간 · 카드 순서)</summary>
@@ -475,7 +492,7 @@ function sleep(ms, r) {
 }
 function waitPaused(r) { return new Promise(function (res) { (function loop() { if (!alive(r)) return; if (!paused) return res(); setTimeout(loop, 120); })(); }); }
 function show(id) { V.scene = id; V.sceneT = performance.now(); $('#face').classList.toggle('low', id !== 'scCard'); Array.prototype.forEach.call(document.querySelectorAll('.scene'), function (s) { s.hidden = s.id !== id; }); var el = $('#' + id); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
-function waitLandscape(r) { return new Promise(function (res) { (function loop() { if (!alive(r)) return res(); if (innerWidth >= innerHeight) return res(); setTimeout(loop, 300); })(); }); }
+function waitLandscape(r) { return new Promise(function (res) { (function loop() { if (!alive(r)) return res(); if (IS_PC || innerWidth >= innerHeight) return res(); setTimeout(loop, 300); })(); }); }
 function fit() { var w = document.documentElement.clientWidth || innerWidth, h = innerHeight; var s = Math.min(w / 1280, h / 720); $('#stage').style.transform = 'translate(-50%,-50%) scale(' + s + ')'; }
 addEventListener('orientationchange', function () { setTimeout(fit, 300); });
 addEventListener('resize', fit);
@@ -520,6 +537,7 @@ function micLevel() {
 function preload(c) { if (!c) return; var l = sel.lv; new Image().src = 'img/' + l + '/' + c.no + '.webp'; if (c.aa) fetch('audio/' + c.aa + '.mp3').catch(function () {}); if (c.qLang === 'en' && c.qa) fetch('audio/' + c.qa + '.mp3').catch(function () {}); }
 
 async function start() {
+  if (typeof camPvStop === 'function') { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 확인'; }
   if (opt.mode === 'real' && !kidName()) { gateShow(); gMsg('실전 녹화는 먼저 들어와 주세요'); return; }
   var l = level(); cards = volCards().slice();
   if (opt.order === 'rand') for (var i = cards.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
@@ -764,13 +782,66 @@ async function voiceChain(mic, dest) {
   var prev = mic; chain.forEach(function (n) { prev.connect(n); prev = n; }); prev.connect(dest);
   REC.voiceNodes = chain;
 }
+/* ── 컴퓨터 모드: 카메라 · 마이크 고르기 ── */
+var IS_PC = (function () { try { return !(navigator.maxTouchPoints > 0) || (matchMedia('(pointer:fine)').matches && !/Android|iPad|iPhone|Mobile/i.test(navigator.userAgent) && !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); } catch (e) { return false; } })();
+if (IS_PC) document.body.classList.add('pc');
+function camC(withDev) {
+  var vid = { width: { ideal: 1280 }, height: { ideal: 720 } }, cam = LS.get('camId', ''), mic = LS.get('micId', '');
+  if (withDev && cam) vid.deviceId = { exact: cam }; else vid.facingMode = 'user';
+  // 아이 목소리만: 잡음 제거 · 울림 제거 · 음량 자동 + (지원 기기) 음성 분리
+  var aud = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true };
+  if (withDev && mic) aud.deviceId = { exact: mic };
+  return { video: vid, audio: aud };
+}
+async function getCam() {
+  try { return await navigator.mediaDevices.getUserMedia(camC(true)); }
+  catch (e) { if (LS.get('camId', '') || LS.get('micId', '')) return await navigator.mediaDevices.getUserMedia(camC(false)); throw e; }
+}
+async function camList() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  var ds = await navigator.mediaDevices.enumerateDevices();
+  [['videoinput', '#camSel', 'camId', '카메라'], ['audioinput', '#micSel', 'micId', '마이크']].forEach(function (t) {
+    var el = $(t[1]), cur = LS.get(t[2], ''), n = 0;
+    el.innerHTML = '<option value="">기본 ' + t[3] + '</option>';
+    ds.filter(function (d) { return d.kind === t[0] && d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications'; }).forEach(function (d) {
+      var o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || (t[3] + ' ' + (++n)); el.appendChild(o);
+    });
+    el.value = Array.prototype.some.call(el.options, function (o) { return o.value === cur; }) ? cur : '';
+  });
+}
+var PV = { s: null, ac: null, raf: 0 };
+function camPvStop() { cancelAnimationFrame(PV.raf); if (PV.s) PV.s.getTracks().forEach(function (t) { t.stop(); }); PV.s = null; if (PV.ac) { try { PV.ac.close(); } catch (e) {} PV.ac = null; } var v = $('#camVid'); if (v) v.srcObject = null; }
+async function camTest() {
+  camPvStop(); $('#camPv').hidden = false; $('#camPvMsg').textContent = '카메라를 켜는 중…'; $('#camPvMsg').hidden = false;
+  try {
+    PV.s = await getCam(); var v = $('#camVid'); v.srcObject = PV.s; try { await v.play(); } catch (e) {}
+    $('#camPvMsg').hidden = true; await camList();
+    var AC = window.AudioContext || window.webkitAudioContext; PV.ac = new AC(); var an = PV.ac.createAnalyser(); an.fftSize = 512;
+    PV.ac.createMediaStreamSource(PV.s).connect(an); var buf = new Uint8Array(an.fftSize);
+    (function lv() { an.getByteTimeDomainData(buf); var m = 0; for (var i = 0; i < buf.length; i++) m = Math.max(m, Math.abs(buf[i] - 128)); $('#micLvl').style.width = Math.min(100, m * 1.6) + '%'; PV.raf = requestAnimationFrame(lv); })();
+    $('#camTest').textContent = '■ 확인 끄기';
+  } catch (e) {
+    $('#camPvMsg').hidden = false; $('#camPvMsg').textContent = '카메라를 켤 수 없어요. 주소창 왼쪽 자물쇠 → 카메라·마이크 [허용]을 눌러 주세요.';
+  }
+}
+if (IS_PC) {
+  $('#camTest').onclick = function () { if (PV.s) { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 확인'; } else camTest(); };
+  $('#camSel').onchange = function () { LS.set('camId', this.value); if (PV.s) camTest(); };
+  $('#micSel').onchange = function () { LS.set('micId', this.value); if (PV.s) camTest(); };
+  camList().catch(function () {});
+  try { navigator.mediaDevices.addEventListener('devicechange', function () { camList().catch(function () {}); }); } catch (e) {}
+  // 키보드로 번호 누르기 (들어오기 화면)
+  addEventListener('keydown', function (e) {
+    if ($('#gate').hidden) return;
+    var k = e.key; if (/^[0-9]$/.test(k)) { if (G.p.length < 4) { G.p += k; gDraw(); if (G.p.length === 4) gateLogin(); } e.preventDefault(); }
+    else if (k === 'Backspace') { G.p = G.p.slice(0, -1); gDraw(); gMsg(''); $('#gCh').innerHTML = ''; e.preventDefault(); }
+    else if (k === 'Enter') { if (G.p.length === 4) gateLogin(); e.preventDefault(); }
+  });
+}
 async function recBegin() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) throw new Error('unsupported');
-  REC.cam = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-    // 아이 목소리만: 잡음 제거 · 울림 제거 · 음량 자동 + (지원 기기) 음성 분리
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, voiceIsolation: true }
-  });
+  camPvStop();
+  REC.cam = await getCam();
   camBright(REC.cam);
   var face = $('#face'); face.srcObject = REC.cam; face.hidden = false; try { await face.play(); } catch (e) {}
   try { await Promise.all([document.fonts.load('124px "Black Han Sans"'), document.fonts.load('40px "Archivo Black"'), document.fonts.load('900 40px "Noto Sans KR"'), document.fonts.load('700 40px "Noto Sans KR"')]); } catch (e) {}
@@ -809,7 +880,8 @@ function recStop() {
 async function micBegin() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !REC.actx) return;
-    REC.mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+    var ma = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }, mid = LS.get('micId', ''); if (mid) ma.deviceId = { exact: mid };
+    try { REC.mic = await navigator.mediaDevices.getUserMedia({ audio: ma }); } catch (e) { delete ma.deviceId; REC.mic = await navigator.mediaDevices.getUserMedia({ audio: ma }); }
     try { await REC.actx.resume(); } catch (e) {}
     var src = REC.actx.createMediaStreamSource(REC.mic), hp = REC.actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 100;
     var an = REC.actx.createAnalyser(); an.fftSize = 1024; src.connect(hp); hp.connect(an); REC.an = an; REC.vbuf = null;
@@ -1119,10 +1191,11 @@ renderHome();
   var inApp = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV/i.test(ua);
   if (inApp) { box.hidden = false; btn.hidden = true; hint.textContent = '카카오톡·네이버 앱 안에서는 설치가 안 돼요. 오른쪽 위 메뉴에서 [다른 브라우저로 열기]를 눌러 주세요.'; return; }
   if (ios) { box.hidden = false; btn.hidden = true; hint.textContent = '아이패드: 사파리에서 공유 버튼(네모에 위쪽 화살표) → [홈 화면에 추가] → [추가]를 누르면 앱처럼 열려요.'; return; }
-  addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; box.hidden = false; btn.hidden = false; hint.textContent = '한 번 설치하면 홈 화면의 아이콘으로 바로 열려요.'; });
+  addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; box.hidden = false; btn.hidden = false; hint.textContent = IS_PC ? '한 번 설치하면 바탕화면·시작 메뉴 아이콘으로 바로 열려요.' : '한 번 설치하면 홈 화면의 아이콘으로 바로 열려요.'; });
   btn.onclick = function () { if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function () { deferred = null; box.hidden = true; }); };
   addEventListener('appinstalled', function () { box.hidden = true; });
-  setTimeout(function () { if (!deferred) { box.hidden = false; btn.hidden = true; hint.textContent = '설치 버튼이 안 보이면 크롬·삼성 인터넷 오른쪽 위 ⋮ 메뉴에서 [앱 설치] 또는 [홈 화면에 추가]를 눌러 주세요.'; } }, 2500);
+  if (IS_PC) btn.textContent = '💻 이 컴퓨터에 앱으로 설치';
+  setTimeout(function () { if (!deferred) { box.hidden = false; btn.hidden = true; hint.textContent = IS_PC ? '컴퓨터: 크롬·엣지 주소창 오른쪽의 설치 아이콘(모니터에 ↓)이나 ⋮ 메뉴 → [앱 설치]를 누르면 바탕화면 아이콘으로 바로 열려요.' : '설치 버튼이 안 보이면 크롬·삼성 인터넷 오른쪽 위 ⋮ 메뉴에서 [앱 설치] 또는 [홈 화면에 추가]를 눌러 주세요.'; } }, 2500);
 })();
 </script>
 </body>
