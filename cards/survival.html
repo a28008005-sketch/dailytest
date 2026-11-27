@@ -198,7 +198,7 @@ body.pc .camopt{display:flex}
 .campv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .campv .lvl{position:absolute;left:10px;right:10px;bottom:10px;height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
 .campv .lvl i{display:block;height:100%;width:0;background:var(--mint);transition:width .08s}
-.camstat{font-size:13px;font-weight:800;border-radius:12px;padding:10px 12px;line-height:1.55;background:#eef6ff;color:#1b3a8a}
+.camstat{white-space:pre-line;font-size:13px;font-weight:800;border-radius:12px;padding:10px 12px;line-height:1.55;background:#eef6ff;color:#1b3a8a}
 .camstat.bad{background:#fff0f0;color:#c0262d}
 .camstat.ok{background:#eafaf1;color:#137a43}
 .inapp{display:none;background:#ffd21f;color:#0b1f5e;font-weight:900;font-size:15px;padding:12px 16px;text-align:center;line-height:1.5}
@@ -571,6 +571,12 @@ async function start() {
   SES = { startedAt: Date.now(), logged: false, mode: opt.mode };
   if (IS_PC && opt.mode !== 'real') pcPrev(r);   // 컴퓨터 연습: 오른쪽 위에 내 얼굴 보기 (녹화는 안 해요)
   if (opt.mode === 'real') {
+    if (IS_PC && !(await hasCam())) {
+      var goOn = await new Promise(function (res) { overlay('이 컴퓨터에 카메라가 없어요', '연결된 카메라를 찾지 못했어요. 카메라 없이 카드 화면 + 목소리만 녹화할 수 있어요. (얼굴도 찍으려면 USB 카메라를 꽂거나 노트북 카메라를 켠 뒤 F5로 새로고침)', [['🎤 목소리만 녹화하기', function () { $('#over').hidden = true; res(true); }], ['처음 화면으로', function () { res(false); }]]); });
+      if (!goOn) { exit(); return; }
+      if (!alive(r)) return;
+      REC.noCam = true;
+    }
     try { await recBegin(); }
     catch (e) {
       recCleanup();
@@ -804,9 +810,11 @@ function camC(withDev) {
   if (withDev && mic) aud.deviceId = { exact: mic };
   return { video: vid, audio: aud };
 }
+async function hasCam() { try { var ds = await navigator.mediaDevices.enumerateDevices(); return ds.some(function (d) { return d.kind === 'videoinput'; }); } catch (e) { return true; } }
 var IR_RE = /\bIR\b|infrared|적외선|hello/i;
 async function getCam() {
   var st;
+  if (REC.noCam) return await navigator.mediaDevices.getUserMedia({ audio: camC(true).audio });   // 카메라 없는 컴퓨터: 목소리만
   try { st = await navigator.mediaDevices.getUserMedia(camC(true)); }
   catch (e) { if (LS.get('camId', '') || LS.get('micId', '')) st = await navigator.mediaDevices.getUserMedia(camC(false)); else throw e; }
   // 노트북이 얼굴 인식용(IR) 카메라를 먼저 잡으면 화면이 까맣게 나옵니다 → 일반 카메라로 바꿉니다
@@ -849,11 +857,12 @@ async function camTest() {
   }
 }
 function camStat(t, k) { var el = $('#camStat'); if (!el) return; el.textContent = t; el.className = 'camstat' + (k ? ' ' + k : ''); }
+var NOCAM_TXT = '⚠ 이 컴퓨터에서 카메라가 하나도 안 보여요. 카메라가 연결 안 됐거나 꺼져 있는 상태예요.\n· 데스크톱 PC: USB 웹캠을 꽂아야 해요 (꽂은 뒤 F5)\n· 노트북: 카메라 덮개 열기 · 키보드 카메라 키(F10 등) 누르기 · 윈도우 [설정 → 개인 정보 → 카메라] 켜기 · [장치 관리자 → 카메라]에서 사용 안 함이면 사용으로\n· 카메라 없이도 [실전 녹화]에서 목소리만 녹화할 수 있어요.';
 function camErrText(e) {
   var n = (e && e.name) || '';
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return '⚠ 이 브라우저에서는 카메라를 쓸 수 없어요. 크롬이나 엣지로 이 주소를 열어 주세요.';
   if (n === 'NotAllowedError' || n === 'SecurityError') return '⚠ 카메라가 막혀 있어요. ① 주소창 왼쪽 자물쇠(또는 카메라 모양) 아이콘 → 카메라·마이크를 [허용]으로 바꾸고 F5로 새로고침 ② 그래도 안 되면 윈도우 [설정 → 개인 정보 → 카메라]에서 "앱이 카메라에 액세스" 와 "데스크톱 앱이 카메라에 액세스"를 켜 주세요.';
-  if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'DevicesNotFoundError') return '⚠ 카메라를 찾지 못했어요. USB 카메라라면 다시 꽂고, 노트북이라면 카메라 가림막(덮개)·카메라 끄기 키(F10 등)를 확인한 뒤 F5로 새로고침해 주세요.';
+  if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'DevicesNotFoundError') return NOCAM_TXT;
   if (n === 'NotReadableError' || n === 'TrackStartError' || n === 'AbortError') return '⚠ 다른 프로그램(줌·카톡 영상통화·카메라 앱 등)이 카메라를 쓰고 있어요. 그 프로그램을 끄고 다시 눌러 주세요.';
   return '⚠ 카메라를 켤 수 없어요 (' + (n || '알 수 없는 오류') + '). 크롬으로 열고 F5로 새로고침해 주세요.';
 }
@@ -875,7 +884,7 @@ async function camPerm() {
   } catch (e) {}
 }
 if (IS_PC) {
-  camPerm();
+  camPerm().then(function () { return hasCam(); }).then(function (h) { if (!h && !PV.s) camStat(NOCAM_TXT, 'bad'); });
   $('#camTest').onclick = function () { if (PV.s) { camPvStop(); $('#camPv').hidden = true; $('#camTest').textContent = '📷 카메라 켜기'; } else camTest(); };
   $('#camSel').onchange = function () { LS.set('camId', this.value); if (PV.s) camTest(); };
   $('#micSel').onchange = function () { LS.set('micId', this.value); if (PV.s) camTest(); };
@@ -1013,7 +1022,7 @@ function drawFaceRect(x, R) {
   var W = Math.round(R.w), H = Math.round(R.h), rad = 22;
   x.save(); x.fillStyle = 'rgba(0,0,0,.3)'; rr(x, R.x - 6, R.y + 4, W + 12, H + 12, rad + 6); x.fill();
   x.fillStyle = '#fff'; rr(x, R.x - 6, R.y - 6, W + 12, H + 12, rad + 6); x.fill(); x.restore();
-  if (REC.cam && face.readyState >= 2) {
+  if (REC.cam && !REC.noCam && face.readyState >= 2 && face.videoWidth) {
     var vw = face.videoWidth, vh = face.videoHeight, ar = W / H, sw, sh;
     if (vw / vh > ar) { sh = vh; sw = vh * ar; } else { sw = vw; sh = vw / ar; }
     var sx = (vw - sw) / 2, sy = Math.max(0, (vh - sh) * 0.35);
@@ -1043,6 +1052,7 @@ function drawFaceRect(x, R) {
     x.restore();
   } else {
     x.save(); x.fillStyle = '#2a3f8f'; rr(x, R.x, R.y, W, H, rad); x.fill(); x.restore();
+    if (REC.noCam) { T(x, '🎤', 46, R.y + H / 2 - 22, F_B9, '#fff', { x: R.x + W / 2 }); T(x, '목소리로 도전 중', 24, R.y + H / 2 + 24, F_B9, '#ffd21f', { x: R.x + W / 2 }); }
   }
   var nm = kidName();
   if (nm) { x.font = F_B9.replace('#', '22px'); var nw = x.measureText(nm).width + 28, cx = R.x + W / 2, ny = R.y + H - 44; x.fillStyle = V.lvColor || '#ffd21f'; rr(x, cx - nw / 2, ny, nw, 34, 17); x.fill(); T(x, nm, 22, ny + 18, F_B9, V.lvInk || '#003C70', { x: cx }); }
